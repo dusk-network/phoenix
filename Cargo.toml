@@ -1,0 +1,28 @@
+[package]
+name = "phoenix-core"
+version = "0.1.0"
+authors = ["zer0 <matteo@dusk.network>", "Victor Lopez <victor@dusk.network"]
+edition = "2018"
+
+[dependencies]
+rand = "^0.7"
+kelvin = "0.18"
+poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", tag = "v0.6.0" }
+dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.1.0" }
+thiserror = "1.0"
+
+[dependencies.dusk-plonk]
+version = "0.2.6"
+features = ["trace-print"]
+
+[profile.release]
+opt-level = 3
+incremental = false
+codegen-units = 1
+debug = false
+lto = true
+overflow-checks = false
+debug-assertions = false
+
+[profile.dev]
+overflow-checks = false
