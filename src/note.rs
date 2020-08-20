@@ -181,10 +181,8 @@ impl Note {
         let stealth_address = psk.gen_stealth_address(r);
 
         let value_commitment = JubJubScalar::from(value);
-        let value_commitment = JubJubExtended::from(JubJubAffine::from(
-            &(GENERATOR_EXTENDED * value_commitment)
-                + &(GENERATOR_NUMS_EXTENDED * blinding_factor),
-        ));
+        let value_commitment = &(GENERATOR_EXTENDED * value_commitment)
+            + &(GENERATOR_NUMS_EXTENDED * blinding_factor);
 
         // Output notes have undefined position
         let pos = 0;
@@ -268,14 +266,15 @@ impl Note {
     /// Return a hash represented by `H(value_commitment, pos, H([R]),
     /// H([pskr]))`
     pub fn hash(&self) -> BlsScalar {
-        let pk_r = JubJubAffine::from(self.stealth_address.pk_r());
+        let value_commitment = self.value_commitment().to_hash_inputs();
+        let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
         sponge_hash(&[
-            self.value_commitment().get_x(),
-            self.value_commitment().get_y(),
+            value_commitment[0],
+            value_commitment[1],
             BlsScalar::from(self.pos()),
-            pk_r.get_x(),
-            pk_r.get_y(),
+            pk_r[0],
+            pk_r[1],
         ])
     }
 
