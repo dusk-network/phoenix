@@ -1,11 +1,11 @@
-use phoenix_core::{Note, NoteType};
+use phoenix_core::{Error, Note, NoteType};
 use std::io::{Read, Write};
 
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::jubjub::Fr as JubJubScalar;
 
 #[test]
-fn transparent_note() -> Result<(), std::io::Error> {
+fn transparent_note() -> Result<(), Error> {
     let ssk = SecretSpendKey::default();
     let psk = ssk.public_key();
     let value = 25;
@@ -22,13 +22,13 @@ fn transparent_note() -> Result<(), std::io::Error> {
     assert_eq!(note, deser_note);
 
     assert_eq!(deser_note.note(), NoteType::Transparent);
-    assert_eq!(value, deser_note.value(None));
+    assert_eq!(value, deser_note.value(None)?);
 
     Ok(())
 }
 
 #[test]
-fn obfuscated_note() -> Result<(), std::io::Error> {
+fn obfuscated_note() -> Result<(), Error> {
     let ssk = SecretSpendKey::default();
     let psk = ssk.public_key();
     let vk = ssk.view_key();
@@ -49,13 +49,13 @@ fn obfuscated_note() -> Result<(), std::io::Error> {
     assert_eq!(note, deser_note);
 
     assert_eq!(deser_note.note(), NoteType::Obfuscated);
-    assert_eq!(value, deser_note.value(Some(&vk)));
+    assert_eq!(value, deser_note.value(Some(&vk))?);
 
     Ok(())
 }
 
 #[test]
-fn obfuscated_deterministic_note() -> Result<(), std::io::Error> {
+fn obfuscated_deterministic_note() -> Result<(), Error> {
     let ssk = SecretSpendKey::default();
     let psk = ssk.public_key();
     let vk = ssk.view_key();
@@ -74,8 +74,8 @@ fn obfuscated_deterministic_note() -> Result<(), std::io::Error> {
         blinding_factor,
     );
 
-    assert_eq!(value, note.value(Some(&vk)));
-    assert_eq!(blinding_factor, note.blinding_factor(Some(&vk)));
+    assert_eq!(value, note.value(Some(&vk))?);
+    assert_eq!(blinding_factor, note.blinding_factor(Some(&vk))?);
 
     Ok(())
 }

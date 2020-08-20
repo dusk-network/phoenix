@@ -10,13 +10,12 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
 use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::sponge::sponge_hash;
-use rand::Rng;
 
 use crate::{
     chunk_of, BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar,
 };
 
-const ENCRYPTED_DATA_SIZE: usize = 96;
+use poseidon252::cipher::ENCRYPTED_DATA_SIZE;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum NoteType {
@@ -224,7 +223,7 @@ impl Note {
         }
     }
 
-    fn decrypt_data(&self, vk: &ViewKey) -> (u64, JubJubScalar) {
+    fn decrypt_data(&self, vk: &ViewKey) -> Result<(u64, JubJubScalar), Error> {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
         let nonce = BlsScalar::from(self.nonce);
@@ -233,25 +232,25 @@ impl Note {
         // array.
         let mut cipher = PoseidonCipher::default();
 
-        // TODO: improve the error handling
-        cipher
-            .write(&self.encrypted_data[..])
-            .expect("Cannot write the PoseidonCipher");
+        cipher.write(&self.encrypted_data[..])?;
 
-        let data = cipher.decrypt(&shared_secret, &nonce);
+        let data = cipher.decrypt(&shared_secret, &nonce)?;
 
-        // TODO: need to figure out what we want to do in case the decryption
-        // fails
-        return if data.is_err() {
-            (0u64, JubJubScalar::zero())
-        } else {
-            let data = data.unwrap();
-            let bytes = data[0].to_bytes();
-            let value = u64::from_le_bytes(chunk_of!(8; bytes[..8]));
-            let blinding_factor =
-                JubJubScalar::from_bytes(&data[1].to_bytes()).unwrap();
-            (value, blinding_factor)
-        };
+        // Converts the least significant bytes of the decrypted value
+        // into `u64`, therefore even with a wrong `vk` cannot fails.
+        let value = u64::from_le_bytes(chunk_of!(8; data[0].to_bytes()[..8]));
+
+        // Converts the BLS Scalar into a JubJub Scalar.
+        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes());
+
+        // If the `vk` is wrong it might fails since the resulting BLS Scalar
+        // might not fit into a JubJub Scalar.
+        if blinding_factor.is_none().into() {
+            return Err(Error::InvalidBlindingFactor);
+        }
+
+        // Safe to unwrap
+        Ok((value, blinding_factor.unwrap()))
     }
 
     /// Create a unique nullifier for the note
@@ -305,37 +304,36 @@ impl Note {
     }
 
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
-    /// succeeds for transparent notes, and will return random values for
-    /// obfuscated notes provided the wrong view key.
-    pub fn value(&self, vk: Option<&ViewKey>) -> u64 {
+    /// succeeds for transparent notes, might fails or return random values for
+    /// obfuscated notes if the provided view key is wrong.
+    pub fn value(&self, vk: Option<&ViewKey>) -> Result<u64, Error> {
         match self.note_type {
             NoteType::Transparent => {
                 let bytes = chunk_of!(8; &self.encrypted_data);
-                u64::from_le_bytes(bytes)
+                Ok(u64::from_le_bytes(bytes))
             }
             NoteType::Obfuscated if vk.is_some() => {
-                let (value, _) = self.decrypt_data(vk.unwrap());
-                value
+                let (value, _) = self.decrypt_data(vk.unwrap())?;
+                Ok(value)
             }
-            _ => {
-                let mut rng = rand::thread_rng();
-                let value: u64 = rng.gen();
-                value
-            }
+            _ => Err(Error::MissingViewKey),
         }
     }
 
     /// Decrypt the blinding factor with the provided [`ViewKey`]
     ///
     /// If the decrypt fails, a random value is returned
-    pub fn blinding_factor(&self, vk: Option<&ViewKey>) -> JubJubScalar {
+    pub fn blinding_factor(
+        &self,
+        vk: Option<&ViewKey>,
+    ) -> Result<JubJubScalar, Error> {
         match self.note_type {
-            NoteType::Transparent => JubJubScalar::zero(),
+            NoteType::Transparent => Ok(JubJubScalar::zero()),
             NoteType::Obfuscated if vk.is_some() => {
-                let (_, blinding_factor) = self.decrypt_data(vk.unwrap());
-                blinding_factor
+                let (_, blinding_factor) = self.decrypt_data(vk.unwrap())?;
+                Ok(blinding_factor)
             }
-            _ => JubJubScalar::random(&mut rand::thread_rng()),
+            _ => Err(Error::MissingViewKey),
         }
     }
 }
