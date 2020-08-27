@@ -1,3 +1,6 @@
+// Copyright (c) DUSK NETWORK. All rights reserved.
+// Licensed under the MPL 2.0 license. See LICENSE file in the project root for details.
+
 #[macro_export]
 /// Creates an array of `n` bytes, copying the content from the `b` slice given.
 ///
