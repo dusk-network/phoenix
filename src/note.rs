@@ -1,5 +1,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
-// Licensed under the MPL 2.0 license. See LICENSE file in the project root for details.
+// Licensed under the MPL 2.0 license. See LICENSE file in the project root for
+// details.
 
 use kelvin::{ByteHash, Content, Sink, Source};
 use std::convert::TryFrom;
@@ -216,6 +217,25 @@ impl Note {
             }
         };
 
+        Note {
+            note_type,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
+        }
+    }
+
+    /// Reconstruct a Note from its individual fields.
+    pub fn reconstruct(
+        note_type: NoteType,
+        value_commitment: JubJubExtended,
+        nonce: JubJubScalar,
+        stealth_address: StealthAddress,
+        pos: u64,
+        encrypted_data: [u8; ENCRYPTED_DATA_SIZE],
+    ) -> Self {
         Note {
             note_type,
             value_commitment,
