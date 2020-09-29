@@ -1,5 +1,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
-// Licensed under the MPL 2.0 license. See LICENSE file in the project root for details.
+// Licensed under the MPL 2.0 license. See LICENSE file in the project root for
+// details.
 
 use kelvin::{ByteHash, Content, Sink, Source};
 use std::convert::TryFrom;
@@ -304,6 +305,11 @@ impl Note {
     /// Return the value commitment `H(value, blinding_factor)`
     pub fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
+    }
+
+    /// Return the encrypted data of the note.
+    pub fn encrypted_data(&self) -> [u8; ENCRYPTED_DATA_SIZE] {
+        self.encrypted_data
     }
 
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
