@@ -228,7 +228,7 @@ impl Note {
     }
 
     /// Reconstruct a Note from its individual fields.
-    pub fn reconstruct(
+    pub fn from_fields(
         note_type: NoteType,
         value_commitment: JubJubExtended,
         nonce: JubJubScalar,
