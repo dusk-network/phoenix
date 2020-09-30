@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![allow(clippy::unused_io_amount)]
+
 use phoenix_core::{Error, Note, NoteType};
 use std::io::{Read, Write};
 
