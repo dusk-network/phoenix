@@ -1,5 +1,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
-// Licensed under the MPL 2.0 license. See LICENSE file in the project root for details.
+// Licensed under the MPL 2.0 license. See LICENSE file in the project root for
+// details.
 
 use kelvin::{ByteHash, Content, Sink, Source};
 use std::convert::TryFrom;
@@ -13,6 +14,7 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
 use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::sponge::sponge_hash;
+use poseidon252::StorageScalar;
 
 use crate::{
     chunk_of, BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar,
@@ -390,5 +392,17 @@ impl<H: ByteHash> Content<H> for Note {
             pos,
             encrypted_data,
         })
+    }
+}
+
+impl From<&Note> for StorageScalar {
+    fn from(value: &Note) -> Self {
+        StorageScalar(value.hash())
+    }
+}
+
+impl From<Note> for StorageScalar {
+    fn from(value: Note) -> Self {
+        (&value).into()
     }
 }
