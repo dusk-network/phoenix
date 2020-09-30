@@ -8,8 +8,6 @@
 
 /// Phoenix's Core Errors
 pub mod error;
-/// Macros
-pub mod macros;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
