@@ -21,9 +21,12 @@ use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 use poseidon252::cipher::{CIPHER_SIZE, ENCRYPTED_DATA_SIZE};
 
+/// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum NoteType {
+    /// Defines a Transparent type of Note
     Transparent = 0,
+    /// Defines an Obfuscated type of Note
     Obfuscated = 1,
 }
 
@@ -50,12 +53,12 @@ impl TryFrom<i32> for NoteType {
 /// A note that does not encrypt its value
 #[derive(Clone, Copy, Debug)]
 pub struct Note {
-    note_type: NoteType,
-    value_commitment: JubJubExtended,
-    nonce: JubJubScalar,
-    stealth_address: StealthAddress,
-    pos: u64,
-    encrypted_data: PoseidonCipher,
+    pub(crate) note_type: NoteType,
+    pub(crate) value_commitment: JubJubExtended,
+    pub(crate) nonce: JubJubScalar,
+    pub(crate) stealth_address: StealthAddress,
+    pub(crate) pos: u64,
+    pub(crate) encrypted_data: PoseidonCipher,
 }
 
 impl PartialEq for Note {

@@ -6,11 +6,16 @@
 
 #![allow(clippy::unused_io_amount)]
 
-use phoenix_core::{Error, Note, NoteType};
+use dusk_pki::Ownable;
+use std::convert::TryInto;
+
+use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 use std::io::{Read, Write};
 
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
 use dusk_plonk::jubjub::Fr as JubJubScalar;
+
+use assert_matches::*;
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
@@ -105,4 +110,92 @@ fn note_keys_consistency() {
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
+}
+
+#[test]
+fn fee_and_crossover_generation() -> Result<(), Error> {
+    let ssk = SecretSpendKey::default();
+    let psk = ssk.public_key();
+    let vk = ssk.view_key();
+    let value = 25;
+
+    let note = Note::obfuscated(&psk, value);
+    let (fee, crossover): (Fee, Crossover) = note.try_into()?;
+
+    let wrong_fee = Fee::default();
+    let wrong_note: Note = (wrong_fee, crossover).into();
+
+    assert_ne!(note, wrong_note);
+    assert_matches!(
+        wrong_note.value(Some(&vk)),
+        Err(Error::CipherError(_)),
+        "Expected to fail the decryption of the cipher"
+    );
+
+    let correct_note: Note = (fee, crossover).into();
+
+    assert_eq!(note, correct_note);
+    assert_eq!(value, correct_note.value(Some(&vk))?);
+    Ok(())
+}
+
+#[test]
+fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
+    let ssk = SecretSpendKey::default();
+    let psk = ssk.public_key();
+    let value = 25;
+
+    let note = Note::transparent(&psk, value);
+    let result: Result<(Fee, Crossover), Error> = note.try_into();
+
+    assert_matches!(
+        result,
+        Err(Error::InvalidNoteConversion),
+        "Expected to fail the Note Conversion"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn transparent_from_fee_remainder() -> Result<(), Error> {
+    let ssk = SecretSpendKey::default();
+    let psk = ssk.public_key();
+    let vk = ssk.view_key();
+
+    let gas_consumed = 3;
+    let gas_limit = 10;
+    let gas_price = 2;
+
+    let fee = Fee::new(gas_limit, gas_price, &psk);
+
+    let note: Note = fee.gen_remainder(gas_consumed).into();
+
+    assert_eq!(note.stealth_address(), fee.stealth_address());
+    assert_eq!(
+        note.value(Some(&vk))?,
+        (gas_limit - gas_consumed) * gas_price
+    );
+
+    Ok(())
+}
+
+#[test]
+fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
+    let ssk = SecretSpendKey::default();
+    let psk = ssk.public_key();
+    let vk = ssk.view_key();
+
+    let gas_consumed = 30;
+    let gas_limit = 10;
+    let gas_price = 2;
+
+    let fee = Fee::new(gas_limit, gas_price, &psk);
+
+    let note: Note = fee.gen_remainder(gas_consumed).into();
+
+    assert_eq!(note.stealth_address(), fee.stealth_address());
+    assert_eq!(note.value(Some(&vk))?, 0);
+
+    Ok(())
 }
