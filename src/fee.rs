@@ -124,7 +124,7 @@ impl Fee {
     /// Generates a remainder from the fee and the given gas consumed
     pub fn gen_remainder(&self, gas_consumed: u64) -> Remainder {
         // Consuming more gas than the limit provided should never
-        // occur, and it's not responsability of the `Remainder` to do
+        // occur, and it's not responsability of the `Remainder` to
         // check that.
         // Here defensively ensure it's not panicking, capping the gas
         // consumed to the gas limit.

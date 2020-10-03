@@ -176,8 +176,8 @@ impl Note {
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
             + (GENERATOR_NUMS_EXTENDED * blinding_factor);
 
-        // Output notes have undefined position
-        let pos = 0;
+        // Output notes have undefined position, equals to u64's MAX value
+        let pos = u64::MAX;
 
         let encrypted_data = match note_type {
             NoteType::Transparent => {

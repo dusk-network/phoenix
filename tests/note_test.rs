@@ -59,8 +59,6 @@ fn obfuscated_note() -> Result<(), Error> {
     let mut buff = vec![0u8; 2048];
     note.read(buff.as_mut_slice())?;
 
-    // TODO: `Note::default()` is just for `Transparent`, maybe we need a
-    // method for obfuscated?
     let mut deser_note =
         Note::new(NoteType::Obfuscated, &PublicSpendKey::default(), 0);
     assert_ne!(note, deser_note);
@@ -217,10 +215,11 @@ fn note_tree_storage() -> Result<()> {
 
     // Store the note in the tree
     let mut tree = PoseidonTree::<Note, PoseidonAnnotation, Blake2b>::new(4);
-    let idx = tree.push(note.into()).unwrap();
-
+    // TODO: Fix this once we have Note's Tree, since the Note's position is not
+    // updated here when inserted.
+    let idx = tree.push(note)?;
     // Fetch the note from the tree
-    let branch = tree.poseidon_branch(idx).unwrap().unwrap();
+    let branch = tree.poseidon_branch(idx)?.expect("A valid Poseidon Branch");
 
     // Now, let's see if we can make a valid merkle opening proof.
     let pub_params = PublicParameters::setup(1 << 14, &mut rand::thread_rng())?;
@@ -232,7 +231,7 @@ fn note_tree_storage() -> Result<()> {
         prover.mut_cs(),
         branch.clone(),
         hash,
-        branch.root.clone(),
+        branch.root,
     );
     prover.mut_cs().constrain_to_constant(
         root,
@@ -240,8 +239,8 @@ fn note_tree_storage() -> Result<()> {
         -branch.root,
     );
 
-    prover.preprocess(&ck).unwrap();
-    let proof = prover.prove(&ck).unwrap();
+    prover.preprocess(&ck)?;
+    let proof = prover.prove(&ck)?;
 
     let mut verifier = Verifier::new(b"NoteTest");
     let hash = verifier.mut_cs().add_input(note.hash());
@@ -249,7 +248,7 @@ fn note_tree_storage() -> Result<()> {
         verifier.mut_cs(),
         branch.clone(),
         hash,
-        branch.root.clone(),
+        branch.root,
     );
     verifier.mut_cs().constrain_to_constant(
         root,
@@ -257,9 +256,9 @@ fn note_tree_storage() -> Result<()> {
         -branch.root,
     );
 
-    verifier.preprocess(&ck).unwrap();
+    verifier.preprocess(&ck)?;
     let pi = verifier.mut_cs().public_inputs.clone();
-    verifier.verify(&proof, &vk, &pi).unwrap();
+    verifier.verify(&proof, &vk, &pi)?;
 
     Ok(())
 }

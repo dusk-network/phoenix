@@ -23,7 +23,7 @@ impl From<(Fee, Crossover)> for Note {
         } = crossover;
 
         let note_type = NoteType::Obfuscated;
-        let pos = 0;
+        let pos = u64::MAX;
 
         Note {
             note_type,
