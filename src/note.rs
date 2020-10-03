@@ -16,6 +16,7 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
 use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::sponge::sponge_hash;
+use poseidon252::StorageScalar;
 
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
@@ -368,5 +369,17 @@ impl<H: ByteHash> Content<H> for Note {
             pos,
             encrypted_data,
         })
+    }
+}
+
+impl From<&Note> for StorageScalar {
+    fn from(value: &Note) -> Self {
+        StorageScalar(value.hash())
+    }
+}
+
+impl From<Note> for StorageScalar {
+    fn from(value: Note) -> Self {
+        (&value).into()
     }
 }

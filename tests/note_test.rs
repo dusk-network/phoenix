@@ -13,8 +13,15 @@ use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 use std::io::{Read, Write};
 
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
+use dusk_plonk::bls12_381::Scalar as BlsScalar;
 use dusk_plonk::jubjub::Fr as JubJubScalar;
+use dusk_plonk::prelude::*;
 
+use kelvin::Blake2b;
+use poseidon252::merkle_proof::merkle_opening_gadget;
+use poseidon252::{PoseidonAnnotation, PoseidonTree};
+
+use anyhow::Result;
 use assert_matches::*;
 
 #[test]
@@ -196,6 +203,63 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(note.value(Some(&vk))?, 0);
+
+    Ok(())
+}
+
+#[test]
+fn note_tree_storage() -> Result<()> {
+    let ssk = SecretSpendKey::default();
+    let psk = ssk.public_key();
+    let value = 25;
+
+    let note = Note::transparent(&psk, value);
+
+    // Store the note in the tree
+    let mut tree = PoseidonTree::<Note, PoseidonAnnotation, Blake2b>::new(4);
+    let idx = tree.push(note.into()).unwrap();
+
+    // Fetch the note from the tree
+    let branch = tree.poseidon_branch(idx).unwrap().unwrap();
+
+    // Now, let's see if we can make a valid merkle opening proof.
+    let pub_params = PublicParameters::setup(1 << 14, &mut rand::thread_rng())?;
+    let (ck, vk) = pub_params.trim(1 << 13)?;
+
+    let mut prover = Prover::new(b"NoteTest");
+    let hash = prover.mut_cs().add_input(note.hash());
+    let root = merkle_opening_gadget(
+        prover.mut_cs(),
+        branch.clone(),
+        hash,
+        branch.root.clone(),
+    );
+    prover.mut_cs().constrain_to_constant(
+        root,
+        BlsScalar::zero(),
+        -branch.root,
+    );
+
+    prover.preprocess(&ck).unwrap();
+    let proof = prover.prove(&ck).unwrap();
+
+    let mut verifier = Verifier::new(b"NoteTest");
+    let hash = verifier.mut_cs().add_input(note.hash());
+    let root = merkle_opening_gadget(
+        verifier.mut_cs(),
+        branch.clone(),
+        hash,
+        branch.root.clone(),
+    );
+    verifier.mut_cs().constrain_to_constant(
+        root,
+        BlsScalar::zero(),
+        -branch.root,
+    );
+
+    verifier.preprocess(&ck).unwrap();
+    let pi = verifier.mut_cs().public_inputs.clone();
+    verifier.verify(&proof, &vk, &pi).unwrap();
 
     Ok(())
 }
