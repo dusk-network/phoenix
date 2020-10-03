@@ -1,17 +1,28 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
 // Copyright (c) DUSK NETWORK. All rights reserved.
-// Licensed under the MPL 2.0 license. See LICENSE file in the project root for details.
+
+//! Phoenix's Core library types and behaviors
 
 #![allow(non_snake_case)]
-#![warn(unused_crate_dependencies)]
+#![deny(missing_docs)]
 
+/// Type's Conversion module
+mod convert;
+/// Crossover
+pub mod crossover;
 /// Phoenix's Core Errors
 pub mod error;
-/// Macros
-pub mod macros;
+/// Fee
+pub mod fee;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
+pub use crossover::Crossover;
 pub use error::Error;
+pub use fee::Fee;
 pub use note::{Note, NoteType};
 
 use dusk_plonk::bls12_381::Scalar as BlsScalar;
