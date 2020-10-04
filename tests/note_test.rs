@@ -44,6 +44,14 @@ fn transparent_note() -> Result<(), Error> {
     assert_eq!(deser_note.note(), NoteType::Transparent);
     assert_eq!(value, deser_note.value(None)?);
 
+    let buff = note.to_bytes();
+    let deser_note = Note::from_bytes(&buff[..])?;
+
+    assert_eq!(note, deser_note);
+
+    assert_eq!(deser_note.note(), NoteType::Transparent);
+    assert_eq!(value, deser_note.value(None)?);
+
     Ok(())
 }
 
@@ -64,6 +72,14 @@ fn obfuscated_note() -> Result<(), Error> {
     assert_ne!(note, deser_note);
 
     deser_note.write(buff.as_slice())?;
+    assert_eq!(note, deser_note);
+
+    assert_eq!(deser_note.note(), NoteType::Obfuscated);
+    assert_eq!(value, deser_note.value(Some(&vk))?);
+
+    let buff = note.to_bytes();
+    let deser_note = Note::from_bytes(&buff[..])?;
+
     assert_eq!(note, deser_note);
 
     assert_eq!(deser_note.note(), NoteType::Obfuscated);
