@@ -78,62 +78,30 @@ impl Default for Note {
 
 impl Read for Note {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let mut buf = io::BufWriter::new(&mut buf[..]);
-        let mut n = 0;
+        if buf.len() < Note::serialized_size() {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "Buffer too short for a serialized Note",
+            ));
+        }
 
-        n += buf.write(&[self.note_type as u8])?;
-        n += buf.write(
-            &JubJubAffine::from(&self.value_commitment).to_bytes()[..],
-        )?;
-        n += buf.write(&self.nonce.to_bytes())?;
-        n += buf.write(&self.stealth_address.to_bytes())?;
-        n += buf.write(&self.pos.to_le_bytes())?;
-        n += buf.write(&self.encrypted_data.to_bytes())?;
-
-        buf.flush()?;
-        Ok(n)
+        buf[..Note::serialized_size()].copy_from_slice(&self.to_bytes()[..]);
+        Ok(buf.len())
     }
 }
 
 impl Write for Note {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let mut buf = io::BufReader::new(&buf[..]);
+        let note = Note::from_bytes(buf)?;
 
-        let mut one_byte = [0u8; 1];
-        let mut one_scalar = [0u8; 32];
-        let mut one_u64 = [0u8; 8];
-        let mut one_stealth_address = [0u8; 64];
-        let mut one_cipher = [0u8; ENCRYPTED_DATA_SIZE];
-        let mut n = 0;
+        self.note_type = note.note_type;
+        self.value_commitment = note.value_commitment;
+        self.nonce = note.nonce;
+        self.stealth_address = note.stealth_address;
+        self.pos = note.pos;
+        self.encrypted_data = note.encrypted_data;
 
-        buf.read_exact(&mut one_byte)?;
-        n += one_byte.len();
-        self.note_type = one_byte[0].try_into()?;
-
-        buf.read_exact(&mut one_scalar)?;
-        n += one_scalar.len();
-        self.value_commitment =
-            JubJubExtended::from(jubjub_decode::<JubJubAffine>(&one_scalar)?);
-
-        buf.read_exact(&mut one_scalar)?;
-        n += one_scalar.len();
-        self.nonce = jubjub_decode::<JubJubScalar>(&one_scalar)?;
-
-        buf.read_exact(&mut one_stealth_address)?;
-        n += one_stealth_address.len();
-        self.stealth_address =
-            StealthAddress::from_bytes(&one_stealth_address)?;
-
-        buf.read_exact(&mut one_u64)?;
-        n += one_u64.len();
-        self.pos = u64::from_le_bytes(one_u64);
-
-        buf.read_exact(&mut one_cipher)?;
-        n += one_cipher.len();
-        self.encrypted_data = PoseidonCipher::from_bytes(&one_cipher)
-            .ok_or(Error::InvalidCipher)?;
-
-        Ok(n)
+        Ok(Note::serialized_size())
     }
 
     fn flush(&mut self) -> io::Result<()> {
@@ -315,6 +283,101 @@ impl Note {
             }
             _ => Err(Error::MissingViewKey),
         }
+    }
+
+    /// Converts a Note into a byte representation
+    pub fn to_bytes(&self) -> [u8; Note::serialized_size()] {
+        let mut buf = [0u8; Note::serialized_size()];
+        let mut n = 0;
+
+        buf[n] = self.note_type as u8;
+        n += 1;
+
+        buf[n..n + 32].copy_from_slice(
+            &JubJubAffine::from(&self.value_commitment).to_bytes()[..],
+        );
+        n += 32;
+
+        buf[n..n + 32].copy_from_slice(&self.nonce.to_bytes()[..]);
+        n += 32;
+
+        buf[n..n + 64].copy_from_slice(&self.stealth_address.to_bytes()[..]);
+        n += 64;
+
+        buf[n..n + 8].copy_from_slice(&self.pos.to_le_bytes()[..]);
+        n += 8;
+
+        buf[n..n + ENCRYPTED_DATA_SIZE]
+            .copy_from_slice(&self.encrypted_data.to_bytes()[..]);
+        n += ENCRYPTED_DATA_SIZE;
+
+        assert_eq!(n, Note::serialized_size());
+
+        buf
+    }
+
+    /// Attempts to convert a byte representation of a note into a `Note`,
+    /// failing if the input is invalid
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        if bytes.len() < Note::serialized_size() {
+            return Err(io::Error::new(
+                io::ErrorKind::UnexpectedEof,
+                "Buffer too short for a serialized Note",
+            )
+            .into());
+        }
+
+        let mut buf = io::BufReader::new(&bytes[..]);
+        let mut one_byte = [0u8; 1];
+        let mut one_scalar = [0u8; 32];
+        let mut one_u64 = [0u8; 8];
+        let mut one_stealth_address = [0u8; 64];
+        let mut one_cipher = [0u8; ENCRYPTED_DATA_SIZE];
+
+        buf.read_exact(&mut one_byte)?;
+        let note_type = one_byte[0].try_into()?;
+
+        buf.read_exact(&mut one_scalar)?;
+        let value_commitment =
+            JubJubExtended::from(jubjub_decode::<JubJubAffine>(&one_scalar)?);
+
+        buf.read_exact(&mut one_scalar)?;
+        let nonce = jubjub_decode::<JubJubScalar>(&one_scalar)?;
+
+        buf.read_exact(&mut one_stealth_address)?;
+        let stealth_address = StealthAddress::from_bytes(&one_stealth_address)?;
+
+        buf.read_exact(&mut one_u64)?;
+        let pos = u64::from_le_bytes(one_u64);
+
+        buf.read_exact(&mut one_cipher)?;
+        let encrypted_data = PoseidonCipher::from_bytes(&one_cipher)
+            .ok_or(Error::InvalidCipher)?;
+
+        Ok(Note {
+            note_type,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
+        })
+    }
+
+    /// Returns the size in bytes required to serialize the Note
+    pub const fn serialized_size() -> usize {
+        let note_type = 1;
+        let value_commitment = 32;
+        let nonce = 32;
+        let stealth_address = 64;
+        let pos = 8;
+
+        note_type
+            + value_commitment
+            + nonce
+            + stealth_address
+            + pos
+            + ENCRYPTED_DATA_SIZE
     }
 }
 
