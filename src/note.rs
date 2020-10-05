@@ -86,7 +86,7 @@ impl Read for Note {
         }
 
         buf[..Note::serialized_size()].copy_from_slice(&self.to_bytes()[..]);
-        Ok(buf.len())
+        Ok(Note::serialized_size())
     }
 }
 
