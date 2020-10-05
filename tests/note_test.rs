@@ -243,16 +243,11 @@ fn note_tree_storage() -> Result<()> {
 
     let mut prover = Prover::new(b"NoteTest");
     let hash = prover.mut_cs().add_input(note.hash());
-    let root = merkle_opening_gadget(
-        prover.mut_cs(),
-        branch.clone(),
-        hash,
-        branch.root,
-    );
+    let root = merkle_opening_gadget(prover.mut_cs(), branch.clone(), hash);
     prover.mut_cs().constrain_to_constant(
         root,
         BlsScalar::zero(),
-        -branch.root,
+        -branch.root(),
     );
 
     prover.preprocess(&ck)?;
@@ -260,16 +255,11 @@ fn note_tree_storage() -> Result<()> {
 
     let mut verifier = Verifier::new(b"NoteTest");
     let hash = verifier.mut_cs().add_input(note.hash());
-    let root = merkle_opening_gadget(
-        verifier.mut_cs(),
-        branch.clone(),
-        hash,
-        branch.root,
-    );
+    let root = merkle_opening_gadget(verifier.mut_cs(), branch.clone(), hash);
     verifier.mut_cs().constrain_to_constant(
         root,
         BlsScalar::zero(),
-        -branch.root,
+        -branch.root(),
     );
 
     verifier.preprocess(&ck)?;
