@@ -237,18 +237,25 @@ impl Note {
         sponge_hash(&[sk_r, pos])
     }
 
-    /// Return a hash represented by `H(value_commitment, pos, H([R]),
-    /// H([pskr]))`
+    /// Return a hash represented by `H(note_type, value_commitment, H(StealthAddress), pos, encrypted_data)
     pub fn hash(&self) -> BlsScalar {
         let value_commitment = self.value_commitment().to_hash_inputs();
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
+        let R = self.stealth_address().R().to_hash_inputs();
 
         sponge_hash(&[
+            BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
-            BlsScalar::from(self.pos()),
+            BlsScalar::from(self.nonce),
             pk_r[0],
             pk_r[1],
+            R[0],
+            R[1],
+            BlsScalar::from(self.pos()),
+            self.encrypted_data.cipher()[0],
+            self.encrypted_data.cipher()[1],
+            self.encrypted_data.cipher()[2],
         ])
     }
 
