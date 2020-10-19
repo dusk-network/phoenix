@@ -7,6 +7,8 @@
 use std::io;
 use thiserror::Error;
 
+/// All possible errors for Phoenix's Core
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Invalid u8 as Note Type (expected `0` or `1`, found {0}")]
@@ -17,6 +19,8 @@ pub enum Error {
     InvalidCipher,
     #[error("ViewKey required for decrypt data from Obfuscated Note")]
     MissingViewKey,
+    #[error("Invalid Note Type for conversion")]
+    InvalidNoteConversion,
     #[error("Invalid I/O")]
     Io(#[from] io::Error),
     #[error(transparent)]
