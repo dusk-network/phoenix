@@ -215,6 +215,11 @@ impl Note {
         let value_commitment = self.value_commitment().to_hash_inputs();
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
         let R = self.stealth_address().R().to_hash_inputs();
+        // The cipher is made being used differently to the
+        // other variables as we here enforce the PoseidonCipher
+        // wihtin each note to contain three scalars. This is a
+        // subsitution for an assert! method.
+        let cipher = self.encrypted_data.cipher();
 
         sponge_hash(&[
             BlsScalar::from(self.note_type as u64),
@@ -226,9 +231,9 @@ impl Note {
             R[0],
             R[1],
             BlsScalar::from(self.pos()),
-            self.encrypted_data.cipher()[0],
-            self.encrypted_data.cipher()[1],
-            self.encrypted_data.cipher()[2],
+            cipher[0],
+            cipher[1],
+            cipher[2],
         ])
     }
 
