@@ -217,7 +217,7 @@ impl Note {
         let R = self.stealth_address().R().to_hash_inputs();
         let cipher = self.encrypted_data.cipher();
 
-        // We assume cipher contains three scalars, 
+        // We assume cipher contains three scalars,
         // this could change in the future.
         sponge_hash(&[
             BlsScalar::from(self.note_type as u64),
