@@ -261,6 +261,12 @@ impl Note {
         &self.value_commitment
     }
 
+    /// Returns the encryped data from the note as an array of
+    /// BlsScalar's
+    pub fn cipher(&self) -> [BlsScalar; CIPHER_SIZE] {
+        *self.encrypted_data.cipher()
+    }
+
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
     /// succeeds for transparent notes, might fails or return random values for
     /// obfuscated notes if the provided view key is wrong.
