@@ -7,10 +7,10 @@ edition = "2018"
 [dependencies]
 rand = "^0.7"
 kelvin = "0.19"
-poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", tag = "v0.10.0" }
-dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.2.0" }
+poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", tag = "v0.13.1" }
+dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.3.0" }
 thiserror = "1.0"
-dusk-plonk = { version = "0.3.1", features = ["trace-print"] }
+dusk-plonk = { version = "0.3.3", features = ["trace-print"] }
 
 [dev-dependencies]
 assert_matches = "1.3"
