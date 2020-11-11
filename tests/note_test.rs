@@ -13,13 +13,13 @@ use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 use std::io::{Read, Write};
 
 use dusk_pki::{PublicSpendKey, SecretSpendKey};
-use dusk_plonk::bls12_381::Scalar as BlsScalar;
-use dusk_plonk::jubjub::Fr as JubJubScalar;
+use dusk_plonk::bls12_381::BlsScalar;
+use dusk_plonk::jubjub::JubJubScalar;
 use dusk_plonk::prelude::*;
 
 use kelvin::Blake2b;
-use poseidon252::merkle_proof::merkle_opening_gadget;
-use poseidon252::{PoseidonAnnotation, PoseidonTree};
+use poseidon252::tree::zk::merkle_opening;
+use poseidon252::tree::{PoseidonAnnotation, PoseidonTree};
 
 use anyhow::Result;
 use assert_matches::*;
@@ -243,7 +243,7 @@ fn note_tree_storage() -> Result<()> {
 
     let mut prover = Prover::new(b"NoteTest");
     let hash = prover.mut_cs().add_input(note.hash());
-    let root = merkle_opening_gadget(prover.mut_cs(), branch.clone(), hash);
+    let root = merkle_opening(prover.mut_cs(), branch.clone(), hash);
     prover.mut_cs().constrain_to_constant(
         root,
         BlsScalar::zero(),
@@ -255,7 +255,7 @@ fn note_tree_storage() -> Result<()> {
 
     let mut verifier = Verifier::new(b"NoteTest");
     let hash = verifier.mut_cs().add_input(note.hash());
-    let root = merkle_opening_gadget(verifier.mut_cs(), branch.clone(), hash);
+    let root = merkle_opening(verifier.mut_cs(), branch.clone(), hash);
     verifier.mut_cs().constrain_to_constant(
         root,
         BlsScalar::zero(),

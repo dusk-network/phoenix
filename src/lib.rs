@@ -25,8 +25,8 @@ pub use error::Error;
 pub use fee::Fee;
 pub use note::{Note, NoteType};
 
-use dusk_plonk::bls12_381::Scalar as BlsScalar;
+use dusk_plonk::bls12_381::BlsScalar;
 use dusk_plonk::jubjub::{
-    AffinePoint as JubJubAffine, ExtendedPoint as JubJubExtended,
-    Fr as JubJubScalar,
+    JubJubAffine, JubJubExtended,
+    JubJubScalar,
 };
