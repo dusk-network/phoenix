@@ -7,8 +7,8 @@ edition = "2018"
 [dependencies]
 rand = "^0.7"
 kelvin = "0.19"
-poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", branch = "version_update" }
-dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.3.0" }
+poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", tag = "v0.13.2", features = ["canon"] }
+dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.3.1" }
 thiserror = "1.0"
 dusk-plonk = { version = "0.3.3", features = ["trace-print"] }
 
