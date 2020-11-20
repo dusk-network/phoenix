@@ -4,10 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use kelvin::{ByteHash, Content, Sink, Source};
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use std::io::{self, Read, Write};
+use std::io::{self, Read};
 
 use dusk_pki::jubjub_decode;
 use dusk_pki::Ownable;
@@ -16,11 +15,8 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
 use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::sponge::sponge_hash;
-use poseidon252::StorageScalar;
 
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
-
-use poseidon252::cipher::{CIPHER_SIZE, ENCRYPTED_DATA_SIZE};
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -72,40 +68,9 @@ impl Eq for Note {}
 
 impl Default for Note {
     fn default() -> Self {
-        Note::new(NoteType::Transparent, &PublicSpendKey::default(), 0)
-    }
-}
+        let ssk = SecretSpendKey::random(&mut rand::thread_rng());
 
-impl Read for Note {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        if buf.len() < Note::serialized_size() {
-            return Err(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "Buffer too short for a serialized Note",
-            ));
-        }
-
-        buf[..Note::serialized_size()].copy_from_slice(&self.to_bytes()[..]);
-        Ok(Note::serialized_size())
-    }
-}
-
-impl Write for Note {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let note = Note::from_bytes(buf)?;
-
-        self.note_type = note.note_type;
-        self.value_commitment = note.value_commitment;
-        self.nonce = note.nonce;
-        self.stealth_address = note.stealth_address;
-        self.pos = note.pos;
-        self.encrypted_data = note.encrypted_data;
-
-        Ok(Note::serialized_size())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
+        Note::new(NoteType::Transparent, &ssk.into(), 0)
     }
 }
 
@@ -149,7 +114,8 @@ impl Note {
 
         let encrypted_data = match note_type {
             NoteType::Transparent => {
-                let mut encrypted_data = [BlsScalar::zero(); CIPHER_SIZE];
+                let mut encrypted_data =
+                    [BlsScalar::zero(); PoseidonCipher::cipher_size()];
                 encrypted_data[0] = BlsScalar::from(value);
                 PoseidonCipher::new(encrypted_data)
             }
@@ -262,7 +228,7 @@ impl Note {
     }
 
     /// Returns the cipher of the encrypted data
-    pub fn cipher(&self) -> &[BlsScalar; CIPHER_SIZE] {
+    pub fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
 
@@ -323,9 +289,9 @@ impl Note {
         buf[n..n + 8].copy_from_slice(&self.pos.to_le_bytes()[..]);
         n += 8;
 
-        buf[n..n + ENCRYPTED_DATA_SIZE]
+        buf[n..n + PoseidonCipher::cipher_size_bytes()]
             .copy_from_slice(&self.encrypted_data.to_bytes()[..]);
-        n += ENCRYPTED_DATA_SIZE;
+        n += PoseidonCipher::cipher_size_bytes();
 
         assert_eq!(n, Note::serialized_size());
 
@@ -336,11 +302,7 @@ impl Note {
     /// failing if the input is invalid
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < Note::serialized_size() {
-            return Err(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "Buffer too short for a serialized Note",
-            )
-            .into());
+            return Err(Error::InvalidNoteConversion);
         }
 
         let mut buf = io::BufReader::new(&bytes[..]);
@@ -348,7 +310,7 @@ impl Note {
         let mut one_scalar = [0u8; 32];
         let mut one_u64 = [0u8; 8];
         let mut one_stealth_address = [0u8; 64];
-        let mut one_cipher = [0u8; ENCRYPTED_DATA_SIZE];
+        let mut one_cipher = [0u8; PoseidonCipher::cipher_size_bytes()];
 
         buf.read_exact(&mut one_byte)?;
         let note_type = one_byte[0].try_into()?;
@@ -393,72 +355,12 @@ impl Note {
             + nonce
             + stealth_address
             + pos
-            + ENCRYPTED_DATA_SIZE
+            + PoseidonCipher::cipher_size_bytes()
     }
 }
 
 impl Ownable for Note {
     fn stealth_address(&self) -> &StealthAddress {
         &self.stealth_address
-    }
-}
-
-impl<H: ByteHash> Content<H> for Note {
-    fn persist(&mut self, sink: &mut Sink<H>) -> io::Result<()> {
-        (self.note_type as u8).persist(sink)?;
-
-        sink.write_all(&JubJubAffine::from(&self.value_commitment).to_bytes())?;
-        sink.write_all(&self.stealth_address.to_bytes())?;
-
-        sink.write_all(&self.nonce.to_bytes())?;
-        self.pos.persist(sink)?;
-
-        sink.write_all(&self.encrypted_data.to_bytes())?;
-        Ok(())
-    }
-
-    fn restore(source: &mut Source<H>) -> io::Result<Self> {
-        let mut one_scalar = [0u8; 32];
-        let mut one_stealth_address = [0u8; 64];
-        let mut one_cipher = [0u8; ENCRYPTED_DATA_SIZE];
-
-        let note_type = u8::restore(source)?.try_into()?;
-
-        source.read_exact(&mut one_scalar)?;
-        let value_commitment =
-            JubJubExtended::from(jubjub_decode::<JubJubAffine>(&one_scalar)?);
-
-        source.read_exact(&mut one_stealth_address)?;
-        let stealth_address = StealthAddress::try_from(&one_stealth_address)?;
-
-        source.read_exact(&mut one_scalar)?;
-        let nonce = jubjub_decode::<JubJubScalar>(&one_scalar)?;
-
-        let pos = u64::restore(source)?;
-
-        source.read_exact(&mut one_cipher)?;
-        let encrypted_data = PoseidonCipher::from_bytes(&one_cipher)
-            .ok_or(Error::InvalidCipher)?;
-
-        Ok(Note {
-            note_type,
-            value_commitment,
-            nonce,
-            stealth_address,
-            pos,
-            encrypted_data,
-        })
-    }
-}
-
-impl From<&Note> for StorageScalar {
-    fn from(value: &Note) -> Self {
-        StorageScalar(value.hash())
-    }
-}
-
-impl From<Note> for StorageScalar {
-    fn from(value: Note) -> Self {
-        (&value).into()
     }
 }

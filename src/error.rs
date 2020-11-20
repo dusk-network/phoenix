@@ -4,33 +4,47 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::io;
-use thiserror::Error;
+use dusk_pki::Error as PkiError;
+use poseidon252::Error as PoseidonError;
+use std::{fmt, io};
 
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("Invalid u8 as Note Type (expected `0` or `1`, found {0}")]
+    /// Invalid u8 as Note Type (expected `0` or `1`, found {0})
     InvalidNoteType(u8),
-    #[error("Invalid Blinding Factor's value")]
+    /// Invalid Blinding Factor's value
     InvalidBlindingFactor,
-    #[error("Invalid Cipher's value")]
+    /// Invalid Cipher's value
     InvalidCipher,
-    #[error("ViewKey required for decrypt data from Obfuscated Note")]
+    /// ViewKey required for decrypt data from Obfuscated Note
     MissingViewKey,
-    #[error("Invalid Note Type for conversion")]
+    /// Invalid Note Type for conversion
     InvalidNoteConversion,
-    #[error("Invalid I/O")]
-    Io(#[from] io::Error),
-    #[error(transparent)]
-    CipherError(#[from] poseidon252::cipher::CipherError),
-    #[error(transparent)]
-    PKIError(#[from] dusk_pki::Error),
+    /// I/O Error
+    Io(io::Error),
+    /// Dusk-Pki Error
+    PKIError(PkiError),
+    /// Poseidon Error
+    PoseidonError,
 }
 
-impl From<Error> for io::Error {
-    fn from(err: Error) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, format!("{}", err))
+impl From<PkiError> for Error {
+    fn from(e: PkiError) -> Error {
+        Error::PKIError(e)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Error {
+        Error::Io(e)
+    }
+}
+
+impl<E: fmt::Debug> From<PoseidonError<E>> for Error {
+    fn from(_p: PoseidonError<E>) -> Error {
+        // TODO - wrap the concrete error type
+        Error::PoseidonError
     }
 }

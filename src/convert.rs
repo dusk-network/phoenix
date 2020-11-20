@@ -72,7 +72,7 @@ impl TryFrom<Note> for (Fee, Crossover) {
 
 impl From<Remainder> for Note {
     fn from(remainder: Remainder) -> Note {
-        let ssk = SecretSpendKey::default();
+        let ssk = SecretSpendKey::random(&mut rand::thread_rng());
         let psk = ssk.public_key();
 
         let mut note = Note::transparent(&psk, remainder.gas_changes);
