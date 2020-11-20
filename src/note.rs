@@ -15,7 +15,9 @@ use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
 use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::sponge::sponge_hash;
+use rand_core::{CryptoRng, RngCore};
 
+use crate::fee::Remainder;
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 /// The types of a Note
@@ -66,32 +68,37 @@ impl PartialEq for Note {
 
 impl Eq for Note {}
 
-impl Default for Note {
-    fn default() -> Self {
-        let ssk = SecretSpendKey::random(&mut rand::thread_rng());
-
-        Note::new(NoteType::Transparent, &ssk.into(), 0)
-    }
-}
-
 impl Note {
     /// Creates a new phoenix output note
-    pub fn new(note_type: NoteType, psk: &PublicSpendKey, value: u64) -> Self {
-        let r = JubJubScalar::random(&mut rand::thread_rng());
-        let nonce = JubJubScalar::random(&mut rand::thread_rng());
-        let blinding_factor = JubJubScalar::random(&mut rand::thread_rng());
+    pub fn new<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        note_type: NoteType,
+        psk: &PublicSpendKey,
+        value: u64,
+    ) -> Self {
+        let r = JubJubScalar::random(rng);
+        let nonce = JubJubScalar::random(rng);
+        let blinding_factor = JubJubScalar::random(rng);
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
 
     /// Creates a new transparent note
-    pub fn transparent(psk: &PublicSpendKey, value: u64) -> Self {
-        Self::new(NoteType::Transparent, psk, value)
+    pub fn transparent<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        psk: &PublicSpendKey,
+        value: u64,
+    ) -> Self {
+        Self::new(rng, NoteType::Transparent, psk, value)
     }
 
     /// Creates a new obfuscated note
-    pub fn obfuscated(psk: &PublicSpendKey, value: u64) -> Self {
-        Self::new(NoteType::Obfuscated, psk, value)
+    pub fn obfuscated<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        psk: &PublicSpendKey,
+        value: u64,
+    ) -> Self {
+        Self::new(rng, NoteType::Obfuscated, psk, value)
     }
 
     /// Create a new phoenix output note without inner randomness
@@ -356,6 +363,20 @@ impl Note {
             + stealth_address
             + pos
             + PoseidonCipher::cipher_size_bytes()
+    }
+
+    /// Create a new transparent note from a provided random number generator
+    /// and the remainder of a transaction for the provided public spend key
+    pub fn from_remainder<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        remainder: Remainder,
+        psk: &PublicSpendKey,
+    ) -> Self {
+        let mut note = Note::transparent(rng, psk, remainder.gas_changes);
+
+        note.stealth_address = remainder.stealth_address;
+
+        note
     }
 }
 

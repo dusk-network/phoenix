@@ -19,11 +19,13 @@ use assert_matches::*;
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::transparent(&psk, value);
+    let note = Note::transparent(rng, &psk, value);
 
     assert_eq!(note.note(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
@@ -33,12 +35,14 @@ fn transparent_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_note() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(&psk, value);
+    let note = Note::obfuscated(rng, &psk, value);
 
     assert_eq!(note.note(), NoteType::Obfuscated);
     assert_eq!(value, note.value(Some(&vk))?);
@@ -48,14 +52,16 @@ fn obfuscated_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_deterministic_note() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
     let value = 25;
 
-    let r = JubJubScalar::random(&mut rand::thread_rng());
-    let nonce = JubJubScalar::random(&mut rand::thread_rng());
-    let blinding_factor = JubJubScalar::random(&mut rand::thread_rng());
+    let r = JubJubScalar::random(rng);
+    let nonce = JubJubScalar::random(rng);
+    let blinding_factor = JubJubScalar::random(rng);
 
     let note = Note::deterministic(
         NoteType::Obfuscated,
@@ -74,18 +80,20 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
 
 #[test]
 fn note_keys_consistency() {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
     let value = 25;
 
-    let wrong_ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let wrong_ssk = SecretSpendKey::random(rng);
     let wrong_vk = wrong_ssk.view_key();
 
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);
 
-    let note = Note::obfuscated(&psk, value);
+    let note = Note::obfuscated(rng, &psk, value);
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
@@ -93,15 +101,18 @@ fn note_keys_consistency() {
 
 #[test]
 fn fee_and_crossover_generation() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(&psk, value);
+    let note = Note::obfuscated(rng, &psk, value);
     let (fee, crossover): (Fee, Crossover) = note.try_into()?;
 
-    let wrong_fee = Fee::default();
+    let ssk_fee = SecretSpendKey::random(rng);
+    let wrong_fee = Fee::new(rng, 0, 0, &ssk_fee.into());
     let wrong_note: Note = (wrong_fee, crossover).into();
 
     assert_ne!(note, wrong_note);
@@ -120,11 +131,13 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 
 #[test]
 fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::transparent(&psk, value);
+    let note = Note::transparent(rng, &psk, value);
     let result: Result<(Fee, Crossover), Error> = note.try_into();
 
     assert_matches!(
@@ -138,7 +151,9 @@ fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
 
 #[test]
 fn transparent_from_fee_remainder() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
 
@@ -146,9 +161,9 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let gas_limit = 10;
     let gas_price = 2;
 
-    let fee = Fee::new(gas_limit, gas_price, &psk);
-
-    let note: Note = fee.gen_remainder(gas_consumed).into();
+    let fee = Fee::new(rng, gas_limit, gas_price, &psk);
+    let remainder = fee.gen_remainder(gas_consumed);
+    let note = Note::from_remainder(rng, remainder, &psk);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(
@@ -161,7 +176,9 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 
 #[test]
 fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
-    let ssk = SecretSpendKey::random(&mut rand::thread_rng());
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_key();
     let vk = ssk.view_key();
 
@@ -169,9 +186,9 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let gas_limit = 10;
     let gas_price = 2;
 
-    let fee = Fee::new(gas_limit, gas_price, &psk);
-
-    let note: Note = fee.gen_remainder(gas_consumed).into();
+    let fee = Fee::new(rng, gas_limit, gas_price, &psk);
+    let remainder = fee.gen_remainder(gas_consumed);
+    let note = Note::from_remainder(rng, remainder, &psk);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(note.value(Some(&vk))?, 0);

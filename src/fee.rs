@@ -6,10 +6,9 @@
 
 //! Fee module contains the logic related to `Fee` and `Remainder` structure
 
-use dusk_pki::Ownable;
-use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress};
-
+use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
 use poseidon252::sponge::sponge::sponge_hash;
+use rand_core::{CryptoRng, RngCore};
 
 use crate::{BlsScalar, JubJubScalar};
 
@@ -34,17 +33,15 @@ impl PartialEq for Fee {
 
 impl Eq for Fee {}
 
-impl Default for Fee {
-    fn default() -> Self {
-        let ssk = SecretSpendKey::random(&mut rand::thread_rng());
-        Fee::new(0, 0, &ssk.into())
-    }
-}
-
 impl Fee {
     /// Create a new Fee with inner randomness
-    pub fn new(gas_limit: u64, gas_price: u64, psk: &PublicSpendKey) -> Self {
-        let r = JubJubScalar::random(&mut rand::thread_rng());
+    pub fn new<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        gas_limit: u64,
+        gas_price: u64,
+        psk: &PublicSpendKey,
+    ) -> Self {
+        let r = JubJubScalar::random(rng);
 
         Self::deterministic(gas_limit, gas_price, &r, psk)
     }

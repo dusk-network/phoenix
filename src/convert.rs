@@ -4,9 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::fee::Remainder;
 use crate::{Crossover, Error, Fee, Note, NoteType};
-use dusk_pki::SecretSpendKey;
 
 use std::convert::TryFrom;
 
@@ -67,18 +65,5 @@ impl TryFrom<Note> for (Fee, Crossover) {
             }
             _ => Err(Error::InvalidNoteConversion),
         }
-    }
-}
-
-impl From<Remainder> for Note {
-    fn from(remainder: Remainder) -> Note {
-        let ssk = SecretSpendKey::random(&mut rand::thread_rng());
-        let psk = ssk.public_key();
-
-        let mut note = Note::transparent(&psk, remainder.gas_changes);
-
-        note.stealth_address = remainder.stealth_address;
-
-        note
     }
 }
