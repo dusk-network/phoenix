@@ -8,11 +8,17 @@
 
 use crate::{BlsScalar, JubJubExtended, JubJubScalar};
 
+#[cfg(feature = "canon")]
+use canonical::Canon;
+#[cfg(feature = "canon")]
+use canonical_derive::Canon;
+
 use poseidon252::cipher::PoseidonCipher;
-use poseidon252::sponge::sponge::sponge_hash;
+use poseidon252::sponge::hash;
 
 /// Crossover structure containing obfuscated encrypted data
 #[derive(Clone, Copy, Debug, Default)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Crossover {
     pub(crate) value_commitment: JubJubExtended,
     pub(crate) nonce: JubJubScalar,
@@ -32,7 +38,7 @@ impl Crossover {
     pub fn hash(&self) -> BlsScalar {
         let value_commitment = self.value_commitment().to_hash_inputs();
 
-        sponge_hash(&value_commitment)
+        hash::<2>(&value_commitment)
     }
 
     /// Returns the Nonce used for the encrypt / decrypt of data for this note

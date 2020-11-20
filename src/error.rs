@@ -6,7 +6,8 @@
 
 use dusk_pki::Error as PkiError;
 use poseidon252::Error as PoseidonError;
-use std::{fmt, io};
+
+use core::fmt;
 
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
@@ -22,8 +23,6 @@ pub enum Error {
     MissingViewKey,
     /// Invalid Note Type for conversion
     InvalidNoteConversion,
-    /// I/O Error
-    Io(io::Error),
     /// Dusk-Pki Error
     PKIError(PkiError),
     /// Poseidon Error
@@ -33,12 +32,6 @@ pub enum Error {
 impl From<PkiError> for Error {
     fn from(e: PkiError) -> Error {
         Error::PKIError(e)
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Error {
-        Error::Io(e)
     }
 }
 

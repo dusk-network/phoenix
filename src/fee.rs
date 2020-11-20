@@ -7,8 +7,15 @@
 //! Fee module contains the logic related to `Fee` and `Remainder` structure
 
 use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
-use poseidon252::sponge::sponge::sponge_hash;
+use poseidon252::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
+
+#[cfg(feature = "canon")]
+use canonical::Canon;
+#[cfg(feature = "canon")]
+use canonical_derive::Canon;
+
+use core::cmp;
 
 use crate::{BlsScalar, JubJubScalar};
 
@@ -17,6 +24,7 @@ pub use remainder::Remainder;
 
 /// The Fee structure
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Fee {
     /// The gas limit set for the fee
     pub gas_limit: u64,
@@ -66,7 +74,7 @@ impl Fee {
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
-        sponge_hash(&[
+        hash::<4>(&[
             BlsScalar::from(self.gas_limit),
             BlsScalar::from(self.gas_price),
             pk_r[0],
@@ -81,7 +89,7 @@ impl Fee {
         // check that.
         // Here defensively ensure it's not panicking, capping the gas
         // consumed to the gas limit.
-        let gas_consumed = std::cmp::min(gas_consumed, self.gas_limit);
+        let gas_consumed = cmp::min(gas_consumed, self.gas_limit);
         let gas_changes = (self.gas_limit - gas_consumed) * self.gas_price;
 
         Remainder {

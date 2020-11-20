@@ -8,6 +8,7 @@
 
 #![allow(non_snake_case)]
 #![deny(missing_docs)]
+#![no_std]
 
 /// Type's Conversion module
 mod convert;

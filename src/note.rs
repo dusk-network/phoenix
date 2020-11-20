@@ -4,24 +4,28 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use std::convert::TryFrom;
-use std::convert::TryInto;
-use std::io::{self, Read};
+use core::convert::{TryFrom, TryInto};
 
-use dusk_pki::jubjub_decode;
-use dusk_pki::Ownable;
-use dusk_pki::{PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey};
-
-use dusk_plonk::jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use dusk_jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use dusk_pki::{
+    jubjub_decode, Ownable, PublicSpendKey, SecretSpendKey, StealthAddress,
+    ViewKey,
+};
 use poseidon252::cipher::PoseidonCipher;
-use poseidon252::sponge::sponge::sponge_hash;
+use poseidon252::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
+
+#[cfg(feature = "canon")]
+use canonical::Canon;
+#[cfg(feature = "canon")]
+use canonical_derive::Canon;
 
 use crate::fee::Remainder;
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub enum NoteType {
     /// Defines a Transparent type of Note
     Transparent = 0,
@@ -51,6 +55,7 @@ impl TryFrom<i32> for NoteType {
 
 /// A note that does not encrypt its value
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,
@@ -179,7 +184,7 @@ impl Note {
         let sk_r = BlsScalar::from(sk_r);
         let pos = BlsScalar::from(self.pos());
 
-        sponge_hash(&[sk_r, pos])
+        hash::<2>(&[sk_r, pos])
     }
 
     /// Return a hash represented by `H(note_type, value_commitment,
@@ -192,7 +197,7 @@ impl Note {
 
         // We assume cipher contains three scalars,
         // this could change in the future.
-        sponge_hash(&[
+        hash::<12>(&[
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
@@ -312,30 +317,36 @@ impl Note {
             return Err(Error::InvalidNoteConversion);
         }
 
-        let mut buf = io::BufReader::new(&bytes[..]);
-        let mut one_byte = [0u8; 1];
         let mut one_scalar = [0u8; 32];
         let mut one_u64 = [0u8; 8];
         let mut one_stealth_address = [0u8; 64];
         let mut one_cipher = [0u8; PoseidonCipher::cipher_size_bytes()];
 
-        buf.read_exact(&mut one_byte)?;
-        let note_type = one_byte[0].try_into()?;
+        let mut n = 0;
 
-        buf.read_exact(&mut one_scalar)?;
+        let note_type = bytes[0].try_into()?;
+        n += 1;
+
+        one_scalar.copy_from_slice(&bytes[n..n + 32]);
         let value_commitment =
             JubJubExtended::from(jubjub_decode::<JubJubAffine>(&one_scalar)?);
+        n += 32;
 
-        buf.read_exact(&mut one_scalar)?;
+        one_scalar.copy_from_slice(&bytes[n..n + 32]);
         let nonce = jubjub_decode::<JubJubScalar>(&one_scalar)?;
+        n += 32;
 
-        buf.read_exact(&mut one_stealth_address)?;
+        one_stealth_address.copy_from_slice(&bytes[n..n + 64]);
         let stealth_address = StealthAddress::from_bytes(&one_stealth_address)?;
+        n += 64;
 
-        buf.read_exact(&mut one_u64)?;
+        one_u64.copy_from_slice(&bytes[n..n + 8]);
         let pos = u64::from_le_bytes(one_u64);
+        n += 8;
 
-        buf.read_exact(&mut one_cipher)?;
+        one_cipher.copy_from_slice(
+            &bytes[n..n + PoseidonCipher::cipher_size_bytes()],
+        );
         let encrypted_data = PoseidonCipher::from_bytes(&one_cipher)
             .ok_or(Error::InvalidCipher)?;
 

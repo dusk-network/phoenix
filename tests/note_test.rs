@@ -4,18 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-#![allow(clippy::unused_io_amount)]
+use core::convert::TryInto;
 
-use dusk_pki::Ownable;
-use std::convert::TryInto;
-
-use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
-
-use dusk_jubjub::JubJubScalar;
-use dusk_pki::SecretSpendKey;
-
-use anyhow::Result;
 use assert_matches::*;
+use dusk_jubjub::JubJubScalar;
+use dusk_pki::{Ownable, SecretSpendKey};
+use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 
 #[test]
 fn transparent_note() -> Result<(), Error> {

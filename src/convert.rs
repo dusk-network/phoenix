@@ -6,7 +6,7 @@
 
 use crate::{Crossover, Error, Fee, Note, NoteType};
 
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 impl From<(Fee, Crossover)> for Note {
     fn from((fee, crossover): (Fee, Crossover)) -> Note {
