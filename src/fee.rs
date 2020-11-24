@@ -74,7 +74,7 @@ impl Fee {
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
-        hash::<4>(&[
+        hash(&[
             BlsScalar::from(self.gas_limit),
             BlsScalar::from(self.gas_price),
             pk_r[0],

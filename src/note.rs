@@ -184,7 +184,7 @@ impl Note {
         let sk_r = BlsScalar::from(sk_r);
         let pos = BlsScalar::from(self.pos());
 
-        hash::<2>(&[sk_r, pos])
+        hash(&[sk_r, pos])
     }
 
     /// Return a hash represented by `H(note_type, value_commitment,
@@ -197,7 +197,7 @@ impl Note {
 
         // We assume cipher contains three scalars,
         // this could change in the future.
-        hash::<12>(&[
+        hash(&[
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],

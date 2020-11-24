@@ -41,7 +41,7 @@ impl Remainder {
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
-        hash::<3>(&[BlsScalar::from(self.gas_changes), pk_r[0], pk_r[1]])
+        hash(&[BlsScalar::from(self.gas_changes), pk_r[0], pk_r[1]])
     }
 }
 

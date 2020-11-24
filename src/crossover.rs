@@ -38,7 +38,7 @@ impl Crossover {
     pub fn hash(&self) -> BlsScalar {
         let value_commitment = self.value_commitment().to_hash_inputs();
 
-        hash::<2>(&value_commitment)
+        hash(&value_commitment)
     }
 
     /// Returns the Nonce used for the encrypt / decrypt of data for this note
