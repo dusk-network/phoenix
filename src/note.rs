@@ -187,17 +187,14 @@ impl Note {
         hash(&[sk_r, pos])
     }
 
-    /// Return a hash represented by `H(note_type, value_commitment,
-    /// H(StealthAddress), pos, encrypted_data)
-    pub fn hash(&self) -> BlsScalar {
+    /// Return the internal representation of scalars to be hashed
+    pub fn hash_inputs(&self) -> [BlsScalar; 12] {
         let value_commitment = self.value_commitment().to_hash_inputs();
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
         let R = self.stealth_address().R().to_hash_inputs();
         let cipher = self.encrypted_data.cipher();
 
-        // We assume cipher contains three scalars,
-        // this could change in the future.
-        hash(&[
+        [
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
@@ -210,7 +207,13 @@ impl Note {
             cipher[0],
             cipher[1],
             cipher[2],
-        ])
+        ]
+    }
+
+    /// Return a hash represented by `H(note_type, value_commitment,
+    /// H(StealthAddress), pos, encrypted_data)
+    pub fn hash(&self) -> BlsScalar {
+        hash(&self.hash_inputs())
     }
 
     /// Return the type of the note
