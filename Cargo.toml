@@ -1,20 +1,29 @@
 [package]
 name = "phoenix-core"
-version = "0.4.0-alpha"
+version = "0.5.0-alpha"
 authors = ["zer0 <matteo@dusk.network>", "Victor Lopez <victor@dusk.network"]
 edition = "2018"
 
 [dependencies]
-rand = "^0.7"
-kelvin = "0.19"
-poseidon252 = { git = "https://github.com/dusk-network/Poseidon252", tag = "v0.10.0" }
-dusk-pki = { git = "https://github.com/dusk-network/dusk-pki", tag = "v0.3.0" }
-thiserror = "1.0"
-dusk-plonk = { version = "0.3.3", features = ["trace-print"] }
+rand_core = "0.5.1"
+dusk-bls12_381 = {version = "0.3", default-features = false}
+dusk-jubjub = {version = "0.5", default-features = false}
+poseidon252 = {git = "https://github.com/dusk-network/Poseidon252", tag = "v0.14.1", default-features = false}
+dusk-pki = {git = "https://github.com/dusk-network/dusk-pki", tag = "v0.4.1", default-features = false}
+canonical = {version = "0.4", optional = true}
+canonical_derive = {version = "0.4", optional = true}
 
 [dev-dependencies]
 assert_matches = "1.3"
-anyhow = "1.0.32"
+rand = "0.7"
+
+[features]
+canon = [
+    "canonical",
+    "canonical_derive",
+    "poseidon252/canon",
+    "dusk-pki/canon"
+]
 
 [profile.release]
 opt-level = 3

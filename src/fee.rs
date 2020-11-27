@@ -6,12 +6,16 @@
 
 //! Fee module contains the logic related to `Fee` and `Remainder` structure
 
-use std::io::{self, Read, Write};
+use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
+use poseidon252::sponge::hash;
+use rand_core::{CryptoRng, RngCore};
 
-use dusk_pki::Ownable;
-use dusk_pki::{PublicSpendKey, StealthAddress};
+#[cfg(feature = "canon")]
+use canonical::Canon;
+#[cfg(feature = "canon")]
+use canonical_derive::Canon;
 
-use poseidon252::sponge::sponge::sponge_hash;
+use core::cmp;
 
 use crate::{BlsScalar, JubJubScalar};
 
@@ -20,6 +24,7 @@ pub use remainder::Remainder;
 
 /// The Fee structure
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Fee {
     /// The gas limit set for the fee
     pub gas_limit: u64,
@@ -36,59 +41,15 @@ impl PartialEq for Fee {
 
 impl Eq for Fee {}
 
-impl Default for Fee {
-    fn default() -> Self {
-        Fee::new(0, 0, &PublicSpendKey::default())
-    }
-}
-
-impl Read for Fee {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let mut buf = io::BufWriter::new(&mut buf[..]);
-        let mut n = 0;
-
-        n += buf.write(&self.gas_limit.to_le_bytes())?;
-        n += buf.write(&self.gas_price.to_le_bytes())?;
-        n += buf.write(&self.stealth_address.to_bytes())?;
-
-        buf.flush()?;
-        Ok(n)
-    }
-}
-
-impl Write for Fee {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let mut buf = io::BufReader::new(&buf[..]);
-
-        let mut one_u64 = [0u8; 8];
-        let mut one_stealth_address = [0u8; 64];
-        let mut n = 0;
-
-        buf.read_exact(&mut one_u64)?;
-        n += one_u64.len();
-        self.gas_limit = u64::from_le_bytes(one_u64);
-
-        buf.read_exact(&mut one_u64)?;
-        n += one_u64.len();
-        self.gas_price = u64::from_le_bytes(one_u64);
-
-        buf.read_exact(&mut one_stealth_address)?;
-        n += one_stealth_address.len();
-        self.stealth_address =
-            StealthAddress::from_bytes(&one_stealth_address)?;
-
-        Ok(n)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
 impl Fee {
     /// Create a new Fee with inner randomness
-    pub fn new(gas_limit: u64, gas_price: u64, psk: &PublicSpendKey) -> Self {
-        let r = JubJubScalar::random(&mut rand::thread_rng());
+    pub fn new<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        gas_limit: u64,
+        gas_price: u64,
+        psk: &PublicSpendKey,
+    ) -> Self {
+        let r = JubJubScalar::random(rng);
 
         Self::deterministic(gas_limit, gas_price, &r, psk)
     }
@@ -113,7 +74,7 @@ impl Fee {
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
-        sponge_hash(&[
+        hash(&[
             BlsScalar::from(self.gas_limit),
             BlsScalar::from(self.gas_price),
             pk_r[0],
@@ -128,7 +89,7 @@ impl Fee {
         // check that.
         // Here defensively ensure it's not panicking, capping the gas
         // consumed to the gas limit.
-        let gas_consumed = std::cmp::min(gas_consumed, self.gas_limit);
+        let gas_consumed = cmp::min(gas_consumed, self.gas_limit);
         let gas_changes = (self.gas_limit - gas_consumed) * self.gas_price;
 
         Remainder {

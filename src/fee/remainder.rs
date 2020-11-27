@@ -9,12 +9,18 @@
 use dusk_pki::Ownable;
 use dusk_pki::StealthAddress;
 
-use poseidon252::sponge::sponge::sponge_hash;
+#[cfg(feature = "canon")]
+use canonical::Canon;
+#[cfg(feature = "canon")]
+use canonical_derive::Canon;
+
+use poseidon252::sponge::hash;
 
 use crate::BlsScalar;
 
 /// The Remainder structure.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Remainder {
     /// The gas_changes set for the remainder
     pub(crate) gas_changes: u64,
@@ -35,7 +41,7 @@ impl Remainder {
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().to_hash_inputs();
 
-        sponge_hash(&[BlsScalar::from(self.gas_changes), pk_r[0], pk_r[1]])
+        hash(&[BlsScalar::from(self.gas_changes), pk_r[0], pk_r[1]])
     }
 }
 
