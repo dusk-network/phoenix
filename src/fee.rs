@@ -17,7 +17,7 @@ use canonical_derive::Canon;
 
 use core::cmp;
 
-use crate::{BlsScalar, JubJubScalar};
+use crate::{BlsScalar, Error, JubJubScalar};
 
 mod remainder;
 pub use remainder::Remainder;
@@ -42,6 +42,11 @@ impl PartialEq for Fee {
 impl Eq for Fee {}
 
 impl Fee {
+    /// Returns the serialized size of the Fee.
+    pub const fn serialized_size() -> usize {
+        8 * 2 + 64
+    }
+
     /// Create a new Fee with inner randomness
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
@@ -96,6 +101,58 @@ impl Fee {
             gas_changes,
             stealth_address: self.stealth_address,
         }
+    }
+
+    /// Converts a Fee into it's byte representation
+    pub fn to_bytes(&self) -> [u8; Fee::serialized_size()] {
+        let mut buf = [0u8; Fee::serialized_size()];
+        let mut n = 0;
+
+        buf[n..n + 8].copy_from_slice(&self.gas_limit.to_le_bytes()[..]);
+        n += 8;
+
+        buf[n..n + 8].copy_from_slice(&self.gas_price.to_le_bytes()[..]);
+        n += 8;
+
+        buf[n..n + 64].copy_from_slice(&self.stealth_address.to_bytes()[..]);
+        n += 64;
+
+        assert_eq!(n, Fee::serialized_size());
+
+        buf
+    }
+
+    /// Attempts to convert a byte representation of a note into a `Note`,
+    /// failing if the input is invalid
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+        if bytes.len() < Fee::serialized_size() {
+            return Err(Error::InvalidFeeConversion);
+        }
+
+        let mut one_u64 = [0u8; 8];
+        let mut one_stealth_addr = [0u8; 64];
+
+        let mut n = 0;
+
+        one_u64.copy_from_slice(&bytes[n..n + 8]);
+        let gas_limit = u64::from_le_bytes(one_u64);
+        n += 8;
+
+        one_u64.copy_from_slice(&bytes[n..n + 8]);
+        let gas_price = u64::from_le_bytes(one_u64);
+        n += 8;
+
+        one_stealth_addr.copy_from_slice(&bytes[n..n + 64]);
+        let stealth_address = StealthAddress::from_bytes(&one_stealth_addr)?;
+        n += 64;
+
+        assert_eq!(n, Fee::serialized_size());
+
+        Ok(Fee {
+            gas_limit,
+            gas_price,
+            stealth_address,
+        })
     }
 }
 
