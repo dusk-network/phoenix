@@ -146,7 +146,7 @@ impl Fee {
         let stealth_address = StealthAddress::from_bytes(&one_stealth_addr)?;
         n += 64;
 
-        assert_eq!(n, Fee::serialized_size());
+        debug_assert_eq!(n, Fee::serialized_size());
 
         Ok(Fee {
             gas_limit,
