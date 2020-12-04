@@ -80,7 +80,7 @@ impl Crossover {
             .copy_from_slice(&self.encrypted_data.to_bytes()[..]);
         n += PoseidonCipher::cipher_size_bytes();
 
-        assert_eq!(n, Crossover::serialized_size());
+        debug_assert_eq!(n, Crossover::serialized_size());
 
         buf
     }

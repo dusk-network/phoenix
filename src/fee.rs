@@ -117,7 +117,7 @@ impl Fee {
         buf[n..n + 64].copy_from_slice(&self.stealth_address.to_bytes()[..]);
         n += 64;
 
-        assert_eq!(n, Fee::serialized_size());
+        debug_assert_eq!(n, Fee::serialized_size());
 
         buf
     }
