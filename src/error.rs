@@ -23,6 +23,8 @@ pub enum Error {
     MissingViewKey,
     /// Invalid Note Type for conversion
     InvalidNoteConversion,
+    /// Invalid Crossover for conversion
+    InvalidCrossoverConversion,
     /// Dusk-Pki Error
     PKIError(PkiError),
     /// Poseidon Error
