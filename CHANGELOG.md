@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 27-11-20
+### Added
+- To/From bytes impl for `Fee` & `Crossover`.
+
 ## [0.5.0-alpha] - 27-11-20
 ### Changed
 - No-Std compatibility.
