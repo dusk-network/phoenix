@@ -308,7 +308,7 @@ impl Note {
             .copy_from_slice(&self.encrypted_data.to_bytes()[..]);
         n += PoseidonCipher::cipher_size_bytes();
 
-        assert_eq!(n, Note::serialized_size());
+        debug_assert_eq!(n, Note::serialized_size());
 
         buf
     }
