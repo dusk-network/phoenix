@@ -83,7 +83,15 @@ impl Note {
     ) -> Self {
         let r = JubJubScalar::random(rng);
         let nonce = JubJubScalar::random(rng);
-        let blinding_factor = JubJubScalar::random(rng);
+
+        // Blinding factor and value commitment are open for transparent note
+        // In order to save storage, these may not be stored and should be
+        // hardcoded for an eventual proof of knowledge of the
+        // commitment
+        let blinding_factor = match note_type {
+            NoteType::Transparent => JubJubScalar::zero(),
+            NoteType::Obfuscated => JubJubScalar::random(rng),
+        };
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
