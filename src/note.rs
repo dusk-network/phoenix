@@ -82,9 +82,6 @@ impl Note {
         value: u64,
     ) -> Self {
         let r = JubJubScalar::random(rng);
-
-        // TODO check if its safe to hardcode the nonce for transparent notes to
-        // save storage
         let nonce = JubJubScalar::random(rng);
 
         // Blinding factor and value commitment are open for transparent note
