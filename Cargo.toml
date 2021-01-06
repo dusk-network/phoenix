@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-core"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["zer0 <matteo@dusk.network>", "Victor Lopez <victor@dusk.network"]
 edition = "2018"
 

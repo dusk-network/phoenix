@@ -163,27 +163,35 @@ impl Note {
         }
     }
 
-    fn decrypt_data(&self, vk: &ViewKey) -> Result<(u64, JubJubScalar), Error> {
-        let R = self.stealth_address.R();
-        let shared_secret = dhke(vk.a(), R);
-        let nonce = BlsScalar::from(self.nonce);
+    /// Function used by note and crossover
+    pub(crate) fn raw_decrypt_note_data(
+        key: &JubJubScalar,
+        R: &JubJubExtended,
+        nonce: &BlsScalar,
+        cipher: &PoseidonCipher,
+    ) -> Result<(u64, JubJubScalar), Error> {
+        let shared_secret = dhke(key, R);
 
-        let data = self.encrypted_data.decrypt(&shared_secret, &nonce)?;
+        let data = cipher.decrypt(&shared_secret, nonce)?;
 
         let value = data[0].reduce();
         let value = value.0[0];
 
-        // Converts the BLS Scalar into a JubJub Scalar.
-        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes());
+        let blinding_factor: Option<JubJubScalar> =
+            JubJubScalar::from_bytes(&data[1].to_bytes()).into();
 
-        // If the `vk` is wrong it might fails since the resulting BLS Scalar
-        // might not fit into a JubJub Scalar.
-        if blinding_factor.is_none().into() {
-            return Err(Error::InvalidBlindingFactor);
-        }
+        blinding_factor
+            .ok_or(Error::InvalidBlindingFactor)
+            .map(|blinder| (value, blinder))
+    }
 
-        // Safe to unwrap
-        Ok((value, blinding_factor.unwrap()))
+    fn decrypt_data(&self, vk: &ViewKey) -> Result<(u64, JubJubScalar), Error> {
+        Self::raw_decrypt_note_data(
+            vk.a(),
+            self.stealth_address.R(),
+            &self.nonce.into(),
+            &self.encrypted_data,
+        )
     }
 
     /// Create a unique nullifier for the note

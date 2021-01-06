@@ -6,7 +6,7 @@
 
 //! Fee module contains the logic related to `Crossover` structure
 
-use crate::{BlsScalar, Error, JubJubExtended, JubJubScalar};
+use crate::{BlsScalar, Error, Fee, JubJubExtended, JubJubScalar, Note};
 
 #[cfg(feature = "canon")]
 use canonical::Canon;
@@ -14,7 +14,7 @@ use canonical::Canon;
 use canonical_derive::Canon;
 
 use dusk_jubjub::JubJubAffine;
-use dusk_pki::jubjub_decode;
+use dusk_pki::{jubjub_decode, ViewKey};
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::hash;
 
@@ -56,6 +56,41 @@ impl Crossover {
     /// Returns the value commitment `H(value, blinding_factor)`
     pub fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
+    }
+
+    /// Crossover decrypted value
+    ///
+    /// A crossover is always paired with a `Fee`. The fee holds the stealth
+    /// addresss of a crossover. Provided this fee and the view key of the
+    /// owner, decrypts the value and the blinding_factor
+    pub fn value(&self, fee: &Fee, vk: &ViewKey) -> Result<u64, Error> {
+        self.decrypt_data(fee, vk).map(|(value, _)| value)
+    }
+
+    /// Crossover decrypted value
+    ///
+    /// A crossover is always paired with a `Fee`. The fee holds the stealth
+    /// addresss of a crossover. Provided this fee and the view key of the
+    /// owner, decrypts the value and the blinding_factor
+    pub fn blinding_factor(
+        &self,
+        fee: &Fee,
+        vk: &ViewKey,
+    ) -> Result<JubJubScalar, Error> {
+        self.decrypt_data(fee, vk).map(|(_, blinder)| blinder)
+    }
+
+    fn decrypt_data(
+        &self,
+        fee: &Fee,
+        vk: &ViewKey,
+    ) -> Result<(u64, JubJubScalar), Error> {
+        Note::raw_decrypt_note_data(
+            vk.a(),
+            fee.stealth_address.R(),
+            &self.nonce.into(),
+            &self.encrypted_data,
+        )
     }
 
     /// Returns the encrypted data

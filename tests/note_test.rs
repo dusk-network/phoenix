@@ -127,6 +127,38 @@ fn value_commitment_obfuscated() {
 }
 
 #[test]
+fn crossover_fee_decrypt() {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let vsk = ssk.view_key();
+    let psk = ssk.public_key();
+
+    let value = 25;
+    let note = Note::obfuscated(rng, &psk, value);
+
+    let (fee, crossover) = note
+        .try_into()
+        .expect("Failed to generate fee/crossover from an obfuscated noted!");
+
+    let value_p = crossover
+        .value(&fee, &vsk)
+        .expect("Failed to decrypt value from crossover");
+    assert_eq!(value, value_p);
+
+    let blinding_factor = crossover
+        .blinding_factor(&fee, &vsk)
+        .expect("Failed to decrypt blinding factor from crossover");
+
+    let value = JubJubScalar::from(value_p);
+    let commitment = crossover.value_commitment();
+    let commitment_p = (GENERATOR_EXTENDED * value)
+        + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+
+    assert_eq!(commitment, &commitment_p);
+}
+
+#[test]
 fn note_keys_consistency() {
     let rng = &mut rand::thread_rng();
 

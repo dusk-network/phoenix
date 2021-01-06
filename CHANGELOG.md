@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 06-01-21
+### Added
+- API to decrypt value and blinding factor from a crossover
+
 ## [0.5.1] - 06-01-21
 ### Fix
 - #41 - Wrong value commitment for transparent notes
