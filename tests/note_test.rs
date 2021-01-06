@@ -7,7 +7,7 @@
 use core::convert::TryInto;
 
 use assert_matches::*;
-use dusk_jubjub::JubJubScalar;
+use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
 use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 
@@ -70,6 +70,60 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     assert_eq!(blinding_factor, note.blinding_factor(Some(&vk))?);
 
     Ok(())
+}
+
+#[test]
+fn value_commitment_transparent() {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let vsk = ssk.view_key();
+    let psk = ssk.public_key();
+    let value = 25;
+
+    let note = Note::transparent(rng, &psk, value);
+
+    let value = note
+        .value(Some(&vsk))
+        .expect("Value not returned with the correct view key");
+    let value = JubJubScalar::from(value);
+
+    let blinding_factor = note
+        .blinding_factor(Some(&vsk))
+        .expect("Blinding factor not returned with the correct view key");
+
+    let commitment = note.value_commitment();
+    let commitment_p = (GENERATOR_EXTENDED * value)
+        + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+
+    assert_eq!(commitment, &commitment_p);
+}
+
+#[test]
+fn value_commitment_obfuscated() {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let vsk = ssk.view_key();
+    let psk = ssk.public_key();
+    let value = 25;
+
+    let note = Note::obfuscated(rng, &psk, value);
+
+    let value = note
+        .value(Some(&vsk))
+        .expect("Value not returned with the correct view key");
+    let value = JubJubScalar::from(value);
+
+    let blinding_factor = note
+        .blinding_factor(Some(&vsk))
+        .expect("Blinding factor not returned with the correct view key");
+
+    let commitment = note.value_commitment();
+    let commitment_p = (GENERATOR_EXTENDED * value)
+        + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+
+    assert_eq!(commitment, &commitment_p);
 }
 
 #[test]

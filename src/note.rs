@@ -113,9 +113,13 @@ impl Note {
         nonce: JubJubScalar,
         psk: &PublicSpendKey,
         value: u64,
-        blinding_factor: JubJubScalar,
+        mut blinding_factor: JubJubScalar,
     ) -> Self {
         let stealth_address = psk.gen_stealth_address(r);
+
+        if let NoteType::Transparent = note_type {
+            blinding_factor = JubJubScalar::zero();
+        }
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
