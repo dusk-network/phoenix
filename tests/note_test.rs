@@ -19,7 +19,7 @@ fn transparent_note() -> Result<(), Error> {
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let (note, _) = Note::transparent(rng, &psk, value);
 
     assert_eq!(note.note(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
@@ -81,16 +81,18 @@ fn value_commitment_transparent() {
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let (note, blinding_factor) = Note::transparent(rng, &psk, value);
 
     let value = note
         .value(Some(&vsk))
         .expect("Value not returned with the correct view key");
     let value = JubJubScalar::from(value);
 
-    let blinding_factor = note
+    let blinding_factor_p = note
         .blinding_factor(Some(&vsk))
         .expect("Blinding factor not returned with the correct view key");
+
+    assert_eq!(blinding_factor, blinding_factor_p);
 
     let commitment = note.value_commitment();
     let commitment_p = (GENERATOR_EXTENDED * value)
@@ -221,7 +223,7 @@ fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let (note, _) = Note::transparent(rng, &psk, value);
     let result: Result<(Fee, Crossover), Error> = note.try_into();
 
     assert_matches!(
@@ -247,7 +249,7 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
-    let note = Note::from_remainder(rng, remainder, &psk);
+    let (note, _) = Note::from_remainder(rng, remainder, &psk);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(
@@ -272,7 +274,7 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
-    let note = Note::from_remainder(rng, remainder, &psk);
+    let (note, _) = Note::from_remainder(rng, remainder, &psk);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(note.value(Some(&vk))?, 0);

@@ -93,14 +93,16 @@ impl Note {
         rng: &mut R,
         psk: &PublicSpendKey,
         value: u64,
-    ) -> Self {
+    ) -> (Self, JubJubScalar) {
         // Blinding factor and value commitment are open for transparent note.
         // In order to save storage, these may not be stored and should be
         // hardcoded for an eventual proof of knowledge of the
         // commitment
         let blinding_factor = JubJubScalar::zero();
+        let note =
+            Self::new(rng, NoteType::Transparent, psk, value, blinding_factor);
 
-        Self::new(rng, NoteType::Transparent, psk, value, blinding_factor)
+        (note, blinding_factor)
     }
 
     /// Creates a new obfuscated note
@@ -403,12 +405,13 @@ impl Note {
         rng: &mut R,
         remainder: Remainder,
         psk: &PublicSpendKey,
-    ) -> Self {
-        let mut note = Note::transparent(rng, psk, remainder.gas_changes);
+    ) -> (Self, JubJubScalar) {
+        let (mut note, blinding_factor) =
+            Note::transparent(rng, psk, remainder.gas_changes);
 
         note.stealth_address = remainder.stealth_address;
 
-        note
+        (note, blinding_factor)
     }
 }
 

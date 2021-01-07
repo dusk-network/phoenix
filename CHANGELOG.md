@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API to decrypt value and blinding factor from a crossover
 - Note::new is not part of the public API
-- Blinding factor should be returned when creating obfuscated note
+- Blinding factor should be returned when creating a note
 
 ## [0.5.1] - 06-01-21
 ### Fix
