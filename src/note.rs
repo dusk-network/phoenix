@@ -75,23 +75,15 @@ impl Eq for Note {}
 
 impl Note {
     /// Creates a new phoenix output note
-    pub fn new<R: RngCore + CryptoRng>(
+    fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
         psk: &PublicSpendKey,
         value: u64,
+        blinding_factor: JubJubScalar,
     ) -> Self {
         let r = JubJubScalar::random(rng);
         let nonce = JubJubScalar::random(rng);
-
-        // Blinding factor and value commitment are open for transparent note
-        // In order to save storage, these may not be stored and should be
-        // hardcoded for an eventual proof of knowledge of the
-        // commitment
-        let blinding_factor = match note_type {
-            NoteType::Transparent => JubJubScalar::zero(),
-            NoteType::Obfuscated => JubJubScalar::random(rng),
-        };
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
@@ -102,7 +94,13 @@ impl Note {
         psk: &PublicSpendKey,
         value: u64,
     ) -> Self {
-        Self::new(rng, NoteType::Transparent, psk, value)
+        // Blinding factor and value commitment are open for transparent note.
+        // In order to save storage, these may not be stored and should be
+        // hardcoded for an eventual proof of knowledge of the
+        // commitment
+        let blinding_factor = JubJubScalar::zero();
+
+        Self::new(rng, NoteType::Transparent, psk, value, blinding_factor)
     }
 
     /// Creates a new obfuscated note
@@ -110,8 +108,12 @@ impl Note {
         rng: &mut R,
         psk: &PublicSpendKey,
         value: u64,
-    ) -> Self {
-        Self::new(rng, NoteType::Obfuscated, psk, value)
+    ) -> (Self, JubJubScalar) {
+        let blinding_factor = JubJubScalar::random(rng);
+        let note =
+            Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor);
+
+        (note, blinding_factor)
     }
 
     /// Create a new phoenix output note without inner randomness

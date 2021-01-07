@@ -36,7 +36,7 @@ fn obfuscated_note() -> Result<(), Error> {
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let (note, _) = Note::obfuscated(rng, &psk, value);
 
     assert_eq!(note.note(), NoteType::Obfuscated);
     assert_eq!(value, note.value(Some(&vk))?);
@@ -108,16 +108,18 @@ fn value_commitment_obfuscated() {
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let (note, blinding_factor) = Note::obfuscated(rng, &psk, value);
 
     let value = note
         .value(Some(&vsk))
         .expect("Value not returned with the correct view key");
     let value = JubJubScalar::from(value);
 
-    let blinding_factor = note
+    let blinding_factor_p = note
         .blinding_factor(Some(&vsk))
         .expect("Blinding factor not returned with the correct view key");
+
+    assert_eq!(blinding_factor, blinding_factor_p);
 
     let commitment = note.value_commitment();
     let commitment_p = (GENERATOR_EXTENDED * value)
@@ -135,7 +137,7 @@ fn crossover_fee_decrypt() {
     let psk = ssk.public_key();
 
     let value = 25;
-    let note = Note::obfuscated(rng, &psk, value);
+    let (note, blinding_factor) = Note::obfuscated(rng, &psk, value);
 
     let (fee, crossover) = note
         .try_into()
@@ -146,9 +148,11 @@ fn crossover_fee_decrypt() {
         .expect("Failed to decrypt value from crossover");
     assert_eq!(value, value_p);
 
-    let blinding_factor = crossover
+    let blinding_factor_p = crossover
         .blinding_factor(&fee, &vsk)
         .expect("Failed to decrypt blinding factor from crossover");
+
+    assert_eq!(blinding_factor, blinding_factor_p);
 
     let value = JubJubScalar::from(value_p);
     let commitment = crossover.value_commitment();
@@ -173,7 +177,7 @@ fn note_keys_consistency() {
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let (note, _) = Note::obfuscated(rng, &psk, value);
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
@@ -188,7 +192,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let (note, _) = Note::obfuscated(rng, &psk, value);
     let (fee, crossover): (Fee, Crossover) = note.try_into()?;
 
     let ssk_fee = SecretSpendKey::random(rng);
