@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 07-01-21
+### Changed
+- Blinding factor provided to create obfuscated notes
+- Transparent note with constant blinding factor
+
 ## [0.5.1] - 06-01-21
-### Fix
+### Fixed
 - #41 - Wrong value commitment for transparent notes
 
 ## [0.5.0] - 27-11-20

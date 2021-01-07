@@ -23,6 +23,9 @@ use canonical_derive::Canon;
 use crate::fee::Remainder;
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
+/// Blinder used for transparent
+const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
+
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[cfg_attr(feature = "canon", derive(Canon))]
@@ -80,38 +83,40 @@ impl Note {
         note_type: NoteType,
         psk: &PublicSpendKey,
         value: u64,
+        blinding_factor: JubJubScalar,
     ) -> Self {
         let r = JubJubScalar::random(rng);
         let nonce = JubJubScalar::random(rng);
-
-        // Blinding factor and value commitment are open for transparent note
-        // In order to save storage, these may not be stored and should be
-        // hardcoded for an eventual proof of knowledge of the
-        // commitment
-        let blinding_factor = match note_type {
-            NoteType::Transparent => JubJubScalar::zero(),
-            NoteType::Obfuscated => JubJubScalar::random(rng),
-        };
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
 
     /// Creates a new transparent note
+    ///
+    /// The blinding factor will be constant zero since the value commitment
+    /// exists only to shield the value. The value is not hidden for transparent
+    /// notes, so this can be trivially treated as a constant.
     pub fn transparent<R: RngCore + CryptoRng>(
         rng: &mut R,
         psk: &PublicSpendKey,
         value: u64,
     ) -> Self {
-        Self::new(rng, NoteType::Transparent, psk, value)
+        Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
     }
 
     /// Creates a new obfuscated note
+    ///
+    /// The provided blinding factor will be used to calculate the value
+    /// commitment of the note. The tuple (value, blinding_factor), known by
+    /// the caller of this function, must be later used to prove the
+    /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
         psk: &PublicSpendKey,
         value: u64,
+        blinding_factor: JubJubScalar,
     ) -> Self {
-        Self::new(rng, NoteType::Obfuscated, psk, value)
+        Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor)
     }
 
     /// Create a new phoenix output note without inner randomness
@@ -134,9 +139,11 @@ impl Note {
 
         let encrypted_data = match note_type {
             NoteType::Transparent => {
-                let mut encrypted_data =
-                    [BlsScalar::zero(); PoseidonCipher::cipher_size()];
+                let zero = TRANSPARENT_BLINDER.into();
+                let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
+
                 encrypted_data[0] = BlsScalar::from(value);
+
                 PoseidonCipher::new(encrypted_data)
             }
             NoteType::Obfuscated => {
@@ -259,15 +266,14 @@ impl Note {
     /// succeeds for transparent notes, might fails or return random values for
     /// obfuscated notes if the provided view key is wrong.
     pub fn value(&self, vk: Option<&ViewKey>) -> Result<u64, Error> {
-        match self.note_type {
-            NoteType::Transparent => {
+        match (self.note_type, vk) {
+            (NoteType::Transparent, _) => {
                 let value = self.encrypted_data.cipher();
                 let value = value[0].reduce();
                 Ok(value.0[0])
             }
-            NoteType::Obfuscated if vk.is_some() => {
-                let (value, _) = self.decrypt_data(vk.unwrap())?;
-                Ok(value)
+            (NoteType::Obfuscated, Some(vk)) => {
+                self.decrypt_data(vk).map(|(value, _)| value)
             }
             _ => Err(Error::MissingViewKey),
         }
@@ -280,12 +286,11 @@ impl Note {
         &self,
         vk: Option<&ViewKey>,
     ) -> Result<JubJubScalar, Error> {
-        match self.note_type {
-            NoteType::Transparent => Ok(JubJubScalar::zero()),
-            NoteType::Obfuscated if vk.is_some() => {
-                let (_, blinding_factor) = self.decrypt_data(vk.unwrap())?;
-                Ok(blinding_factor)
-            }
+        match (self.note_type, vk) {
+            (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
+            (NoteType::Obfuscated, Some(vk)) => self
+                .decrypt_data(vk)
+                .map(|(_, blinding_factor)| blinding_factor),
             _ => Err(Error::MissingViewKey),
         }
     }

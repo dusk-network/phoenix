@@ -36,7 +36,8 @@ fn obfuscated_note() -> Result<(), Error> {
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
 
     assert_eq!(note.note(), NoteType::Obfuscated);
     assert_eq!(value, note.value(Some(&vk))?);
@@ -108,7 +109,8 @@ fn value_commitment_obfuscated() {
     let psk = ssk.public_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
 
     let value = note
         .value(Some(&vsk))
@@ -141,7 +143,8 @@ fn note_keys_consistency() {
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
@@ -156,7 +159,8 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let vk = ssk.view_key();
     let value = 25;
 
-    let note = Note::obfuscated(rng, &psk, value);
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
     let (fee, crossover): (Fee, Crossover) = note.try_into()?;
 
     let ssk_fee = SecretSpendKey::random(rng);
