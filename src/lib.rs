@@ -18,12 +18,15 @@ pub mod crossover;
 pub mod error;
 /// Fee
 pub mod fee;
+/// Message representation
+pub mod message;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
 pub use crossover::Crossover;
 pub use error::Error;
 pub use fee::Fee;
+pub use message::Message;
 pub use note::{Note, NoteType};
 
 use dusk_bls12_381::BlsScalar;

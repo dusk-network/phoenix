@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Implement provable-encryption friendly `Message` type
+
 ## [0.6.0] - 07-01-21
 ### Changed
 - Blinding factor provided to create obfuscated notes
