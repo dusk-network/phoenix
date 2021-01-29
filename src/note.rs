@@ -6,10 +6,10 @@
 
 use core::convert::{TryFrom, TryInto};
 
+use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{
-    jubjub_decode, Ownable, PublicSpendKey, SecretSpendKey, StealthAddress,
-    ViewKey,
+    Ownable, PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey,
 };
 use poseidon252::cipher::PoseidonCipher;
 use poseidon252::sponge::hash;
@@ -170,33 +170,34 @@ impl Note {
         }
     }
 
-    fn decrypt_data(&self, vk: &ViewKey) -> Result<(u64, JubJubScalar), Error> {
+    fn decrypt_data(
+        &self,
+        vk: &ViewKey,
+    ) -> Result<(u64, JubJubScalar), BytesError> {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
         let nonce = BlsScalar::from(self.nonce);
 
-        let data = self.encrypted_data.decrypt(&shared_secret, &nonce)?;
+        let data = self
+            .encrypted_data
+            .decrypt(&shared_secret, &nonce)
+            .map_err(|_| BytesError::InvalidData)?;
 
         let value = data[0].reduce();
         let value = value.0[0];
 
         // Converts the BLS Scalar into a JubJub Scalar.
-        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes());
-
         // If the `vk` is wrong it might fails since the resulting BLS Scalar
         // might not fit into a JubJub Scalar.
-        if blinding_factor.is_none().into() {
-            return Err(Error::InvalidBlindingFactor);
-        }
+        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes())?;
 
-        // Safe to unwrap
-        Ok((value, blinding_factor.unwrap()))
+        Ok((value, blinding_factor))
     }
 
     /// Create a unique nullifier for the note
     pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
-        let sk_r = BlsScalar::from(sk_r);
+        let sk_r = BlsScalar::from(*sk_r.as_ref());
         let pos = BlsScalar::from(self.pos());
 
         hash(&[sk_r, pos])
@@ -205,7 +206,7 @@ impl Note {
     /// Return the internal representation of scalars to be hashed
     pub fn hash_inputs(&self) -> [BlsScalar; 12] {
         let value_commitment = self.value_commitment().to_hash_inputs();
-        let pk_r = self.stealth_address().pk_r().to_hash_inputs();
+        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
         let R = self.stealth_address().R().to_hash_inputs();
         let cipher = self.encrypted_data.cipher();
 
@@ -272,9 +273,10 @@ impl Note {
                 let value = value[0].reduce();
                 Ok(value.0[0])
             }
-            (NoteType::Obfuscated, Some(vk)) => {
-                self.decrypt_data(vk).map(|(value, _)| value)
-            }
+            (NoteType::Obfuscated, Some(vk)) => self
+                .decrypt_data(vk)
+                .map(|(value, _)| value)
+                .map_err(|_| Error::InvalidCipher),
             _ => Err(Error::MissingViewKey),
         }
     }
@@ -290,106 +292,10 @@ impl Note {
             (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_data(vk)
-                .map(|(_, blinding_factor)| blinding_factor),
+                .map(|(_, blinding_factor)| blinding_factor)
+                .map_err(|_| Error::InvalidCipher),
             _ => Err(Error::MissingViewKey),
         }
-    }
-
-    /// Converts a Note into a byte representation
-    pub fn to_bytes(&self) -> [u8; Note::serialized_size()] {
-        let mut buf = [0u8; Note::serialized_size()];
-        let mut n = 0;
-
-        buf[n] = self.note_type as u8;
-        n += 1;
-
-        buf[n..n + 32].copy_from_slice(
-            &JubJubAffine::from(&self.value_commitment).to_bytes()[..],
-        );
-        n += 32;
-
-        buf[n..n + 32].copy_from_slice(&self.nonce.to_bytes()[..]);
-        n += 32;
-
-        buf[n..n + 64].copy_from_slice(&self.stealth_address.to_bytes()[..]);
-        n += 64;
-
-        buf[n..n + 8].copy_from_slice(&self.pos.to_le_bytes()[..]);
-        n += 8;
-
-        buf[n..n + PoseidonCipher::cipher_size_bytes()]
-            .copy_from_slice(&self.encrypted_data.to_bytes()[..]);
-        n += PoseidonCipher::cipher_size_bytes();
-
-        debug_assert_eq!(n, Note::serialized_size());
-
-        buf
-    }
-
-    /// Attempts to convert a byte representation of a note into a `Note`,
-    /// failing if the input is invalid
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
-        if bytes.len() < Note::serialized_size() {
-            return Err(Error::InvalidNoteConversion);
-        }
-
-        let mut one_scalar = [0u8; 32];
-        let mut one_u64 = [0u8; 8];
-        let mut one_stealth_address = [0u8; 64];
-        let mut one_cipher = [0u8; PoseidonCipher::cipher_size_bytes()];
-
-        let mut n = 0;
-
-        let note_type = bytes[0].try_into()?;
-        n += 1;
-
-        one_scalar.copy_from_slice(&bytes[n..n + 32]);
-        let value_commitment =
-            JubJubExtended::from(jubjub_decode::<JubJubAffine>(&one_scalar)?);
-        n += 32;
-
-        one_scalar.copy_from_slice(&bytes[n..n + 32]);
-        let nonce = jubjub_decode::<JubJubScalar>(&one_scalar)?;
-        n += 32;
-
-        one_stealth_address.copy_from_slice(&bytes[n..n + 64]);
-        let stealth_address = StealthAddress::from_bytes(&one_stealth_address)?;
-        n += 64;
-
-        one_u64.copy_from_slice(&bytes[n..n + 8]);
-        let pos = u64::from_le_bytes(one_u64);
-        n += 8;
-
-        one_cipher.copy_from_slice(
-            &bytes[n..n + PoseidonCipher::cipher_size_bytes()],
-        );
-        let encrypted_data = PoseidonCipher::from_bytes(&one_cipher)
-            .ok_or(Error::InvalidCipher)?;
-
-        Ok(Note {
-            note_type,
-            value_commitment,
-            nonce,
-            stealth_address,
-            pos,
-            encrypted_data,
-        })
-    }
-
-    /// Returns the size in bytes required to serialize the Note
-    pub const fn serialized_size() -> usize {
-        let note_type = 1;
-        let value_commitment = 32;
-        let nonce = 32;
-        let stealth_address = 64;
-        let pos = 8;
-
-        note_type
-            + value_commitment
-            + nonce
-            + stealth_address
-            + pos
-            + PoseidonCipher::cipher_size_bytes()
     }
 
     /// Create a new transparent note from a provided random number generator
@@ -410,5 +316,52 @@ impl Note {
 impl Ownable for Note {
     fn stealth_address(&self) -> &StealthAddress {
         &self.stealth_address
+    }
+}
+
+impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
+    type Error = BytesError;
+    /// Converts a Note into a byte representation
+
+    fn to_bytes(&self) -> [u8; Self::SIZE] {
+        let mut buf = [0u8; Self::SIZE];
+
+        buf[0] = self.note_type as u8;
+
+        buf[1..33].copy_from_slice(
+            &JubJubAffine::from(&self.value_commitment).to_bytes(),
+        );
+        buf[33..65].copy_from_slice(&self.nonce.to_bytes());
+        buf[65..129].copy_from_slice(&self.stealth_address.to_bytes());
+        buf[129..137].copy_from_slice(&self.pos.to_le_bytes());
+        buf[137..].copy_from_slice(&self.encrypted_data.to_bytes());
+        buf
+    }
+
+    /// Attempts to convert a byte representation of a note into a `Note`,
+    /// failing if the input is invalid
+    fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
+        let mut one_u64 = [0u8; 8];
+
+        let note_type =
+            bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
+        let value_commitment =
+            JubJubExtended::from(JubJubAffine::from_slice(&bytes[1..33])?);
+        let nonce = JubJubScalar::from_slice(&bytes[33..65])?;
+        let stealth_address = StealthAddress::from_slice(&bytes[65..129])?;
+
+        one_u64.copy_from_slice(&bytes[129..137]);
+        let pos = u64::from_le_bytes(one_u64);
+
+        let encrypted_data = PoseidonCipher::from_slice(&bytes[137..])?;
+
+        Ok(Note {
+            note_type,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
+        })
     }
 }

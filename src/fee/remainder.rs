@@ -39,7 +39,7 @@ impl Eq for Remainder {}
 impl Remainder {
     /// Return a hash represented by `H(gas, H([pskr]))`
     pub fn hash(&self) -> BlsScalar {
-        let pk_r = self.stealth_address().pk_r().to_hash_inputs();
+        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
 
         hash(&[BlsScalar::from(self.gas_changes), pk_r[0], pk_r[1]])
     }

@@ -11,6 +11,7 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
+use dusk_bytes::Serializable;
 use dusk_jubjub::dhke;
 use dusk_pki::PublicSpendKey;
 use poseidon252::cipher::PoseidonCipher;
@@ -91,10 +92,8 @@ impl Message {
         let value = value.0[0];
 
         // Converts the BLS Scalar into a JubJub Scalar.
-        let blinding_factor: Option<JubJubScalar> =
-            JubJubScalar::from_bytes(&data[1].to_bytes()).into();
-        let blinding_factor =
-            blinding_factor.ok_or(Error::InvalidBlindingFactor)?;
+        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes())
+            .map_err(|_| Error::InvalidBlindingFactor)?;
 
         Ok((value, blinding_factor))
     }
@@ -108,8 +107,8 @@ fn message_consistency() {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
-    let psk_wrong = SecretSpendKey::random(rng).public_key();
+    let psk = ssk.public_spend_key();
+    let psk_wrong = SecretSpendKey::random(rng).public_spend_key();
 
     let r = JubJubScalar::random(rng);
     let r_wrong = JubJubScalar::random(rng);
