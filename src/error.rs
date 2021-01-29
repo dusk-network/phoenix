@@ -28,6 +28,10 @@ pub enum Error {
     InvalidFeeConversion,
     /// Poseidon Error
     PoseidonError,
+    /// Invalid Value Commitment
+    InvalidCommitment,
+    /// Invalid Nonce
+    InvalidNonce,
 }
 
 impl<E: fmt::Debug> From<PoseidonError<E>> for Error {
