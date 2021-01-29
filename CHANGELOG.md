@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+
 - Implement provable-encryption friendly `Message` type
 
 ## [0.7.0] - 2021-01-07
