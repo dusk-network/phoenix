@@ -4,7 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_pki::Error as PkiError;
 use poseidon252::Error as PoseidonError;
 
 use core::fmt;
@@ -27,16 +26,8 @@ pub enum Error {
     InvalidCrossoverConversion,
     /// Invalid Fee for conversion
     InvalidFeeConversion,
-    /// Dusk-Pki Error
-    PKIError(PkiError),
     /// Poseidon Error
     PoseidonError,
-}
-
-impl From<PkiError> for Error {
-    fn from(e: PkiError) -> Error {
-        Error::PKIError(e)
-    }
 }
 
 impl<E: fmt::Debug> From<PoseidonError<E>> for Error {

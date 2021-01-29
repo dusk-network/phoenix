@@ -6,6 +6,7 @@
 
 //! Fee module contains the logic related to `Fee` and `Remainder` structure
 
+use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
 use poseidon252::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
@@ -17,7 +18,7 @@ use canonical_derive::Canon;
 
 use core::cmp;
 
-use crate::{BlsScalar, Error, JubJubScalar};
+use crate::{BlsScalar, JubJubScalar};
 
 mod remainder;
 pub use remainder::Remainder;
@@ -42,11 +43,6 @@ impl PartialEq for Fee {
 impl Eq for Fee {}
 
 impl Fee {
-    /// Returns the serialized size of the Fee.
-    pub const fn serialized_size() -> usize {
-        8 * 2 + 64
-    }
-
     /// Create a new Fee with inner randomness
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
@@ -77,7 +73,7 @@ impl Fee {
 
     /// Return a hash represented by `H(gas_limit, gas_price, H([pskr]))`
     pub fn hash(&self) -> BlsScalar {
-        let pk_r = self.stealth_address().pk_r().to_hash_inputs();
+        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
 
         hash(&[
             BlsScalar::from(self.gas_limit),
@@ -102,51 +98,33 @@ impl Fee {
             stealth_address: self.stealth_address,
         }
     }
+}
+
+impl Serializable<{ 8 * 2 + StealthAddress::SIZE }> for Fee {
+    type Error = BytesError;
 
     /// Converts a Fee into it's byte representation
-    pub fn to_bytes(&self) -> [u8; Fee::serialized_size()] {
-        let mut buf = [0u8; Fee::serialized_size()];
-        let mut n = 0;
+    fn to_bytes(&self) -> [u8; Self::SIZE] {
+        let mut buf = [0u8; Self::SIZE];
 
-        buf[n..n + 8].copy_from_slice(&self.gas_limit.to_le_bytes()[..]);
-        n += 8;
-
-        buf[n..n + 8].copy_from_slice(&self.gas_price.to_le_bytes()[..]);
-        n += 8;
-
-        buf[n..n + 64].copy_from_slice(&self.stealth_address.to_bytes()[..]);
-        n += 64;
-
-        debug_assert_eq!(n, Fee::serialized_size());
-
+        buf[..8].copy_from_slice(&self.gas_limit.to_le_bytes());
+        buf[8..16].copy_from_slice(&self.gas_price.to_le_bytes());
+        buf[16..].copy_from_slice(&self.stealth_address.to_bytes());
         buf
     }
 
     /// Attempts to convert a byte representation of a note into a `Note`,
     /// failing if the input is invalid
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
-        if bytes.len() < Fee::serialized_size() {
-            return Err(Error::InvalidFeeConversion);
-        }
-
+    fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
         let mut one_u64 = [0u8; 8];
-        let mut one_stealth_addr = [0u8; 64];
 
-        let mut n = 0;
-
-        one_u64.copy_from_slice(&bytes[n..n + 8]);
+        one_u64.copy_from_slice(&bytes[..8]);
         let gas_limit = u64::from_le_bytes(one_u64);
-        n += 8;
 
-        one_u64.copy_from_slice(&bytes[n..n + 8]);
+        one_u64.copy_from_slice(&bytes[8..16]);
         let gas_price = u64::from_le_bytes(one_u64);
-        n += 8;
 
-        one_stealth_addr.copy_from_slice(&bytes[n..n + 64]);
-        let stealth_address = StealthAddress::from_bytes(&one_stealth_addr)?;
-        n += 64;
-
-        debug_assert_eq!(n, Fee::serialized_size());
+        let stealth_address = StealthAddress::from_slice(&bytes[16..])?;
 
         Ok(Fee {
             gas_limit,
