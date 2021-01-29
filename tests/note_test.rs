@@ -16,7 +16,7 @@ fn transparent_note() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
@@ -32,7 +32,7 @@ fn obfuscated_note() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
     let value = 25;
 
@@ -50,7 +50,7 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
     let value = 25;
 
@@ -79,7 +79,7 @@ fn value_commitment_transparent() {
 
     let ssk = SecretSpendKey::random(rng);
     let vsk = ssk.view_key();
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
@@ -106,7 +106,7 @@ fn value_commitment_obfuscated() {
 
     let ssk = SecretSpendKey::random(rng);
     let vsk = ssk.view_key();
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(rng);
@@ -133,7 +133,7 @@ fn note_keys_consistency() {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
     let value = 25;
 
@@ -155,7 +155,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
     let value = 25;
 
@@ -170,7 +170,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     assert_ne!(note, wrong_note);
     assert_matches!(
         wrong_note.value(Some(&vk)),
-        Err(Error::PoseidonError),
+        Err(Error::InvalidCipher),
         "Expected to fail the decryption of the cipher"
     );
 
@@ -186,7 +186,7 @@ fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
@@ -206,7 +206,7 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
 
     let gas_consumed = 3;
@@ -231,7 +231,7 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
 
     let gas_consumed = 30;
