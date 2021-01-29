@@ -110,15 +110,16 @@ impl
         let mut bytes = [0u8; Self::SIZE];
         let mut b = &mut bytes[..];
 
-        let value_commitment =
-            JubJubAffine::from(self.value_commitment).to_bytes();
-        b[..JubJubAffine::SIZE].copy_from_slice(&value_commitment);
-        b = &mut b[JubJubAffine::SIZE..];
+        b[..JubJubAffine::SIZE].copy_from_slice(
+            &JubJubAffine::from(self.value_commitment).to_bytes(),
+        );
+        b = &mut bytes[JubJubAffine::SIZE..];
 
         b[..JubJubScalar::SIZE].copy_from_slice(&self.nonce.to_bytes());
-        b = &mut b[JubJubScalar::SIZE..];
+        b = &mut bytes[JubJubScalar::SIZE..];
 
-        b.copy_from_slice(&self.encrypted_data.to_bytes());
+        b[..PoseidonCipher::SIZE]
+            .copy_from_slice(&self.encrypted_data.to_bytes());
 
         bytes
     }
@@ -134,7 +135,6 @@ impl
 
         let nonce = JubJubScalar::from_slice(&bytes[..JubJubScalar::SIZE])
             .map_err(|_| Error::InvalidNonce)?;
-        bytes = &bytes[JubJubScalar::SIZE..];
 
         let encrypted_data = PoseidonCipher::from_slice(bytes)
             .map_err(|_| Error::InvalidCipher)?;
@@ -181,7 +181,6 @@ fn message_bytes() {
     use dusk_pki::SecretSpendKey;
 
     let rng = &mut rand::thread_rng();
-
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
 
@@ -189,8 +188,8 @@ fn message_bytes() {
     let value = 106;
 
     let m = Message::new(rng, &r, &psk, value);
-    let m_p = m.to_bytes();
-    let m_p = Message::from_bytes(&m_p).unwrap();
+    let bytes = m.to_bytes();
+    let m_p = Message::from_bytes(&bytes).unwrap();
 
     assert_eq!(m, m_p);
 }
