@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2021-02-01
+
+### Changed
+
+- Bump `poseidon252` to `v0.17.0`
+- Bump `dusk-pki` to `v0.5.1`
+
 ## [0.7.1] - 2021-01-29
 
 ### Changed
