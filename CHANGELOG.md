@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.3] - 2021-02-09
+
+### Changed
+
+- Bump `dusk-pki` to `v0.5.2`
+
 ## [0.7.2] - 2021-02-01
 
 ### Changed
