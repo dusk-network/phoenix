@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0]
+
+### Added
+
+- Add conversion from `Remainder` to (transparent) `Note`
+
+### Removed
+
+- Remove `Note::from_remainder` method
+
 ## [0.7.4] - 2021-02-09
 
 ### Changed

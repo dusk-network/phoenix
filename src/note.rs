@@ -20,11 +20,10 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
-use crate::fee::Remainder;
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 /// Blinder used for transparent
-const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
+pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -296,20 +295,6 @@ impl Note {
                 .map_err(|_| Error::InvalidCipher),
             _ => Err(Error::MissingViewKey),
         }
-    }
-
-    /// Create a new transparent note from a provided random number generator
-    /// and the remainder of a transaction for the provided public spend key
-    pub fn from_remainder<R: RngCore + CryptoRng>(
-        rng: &mut R,
-        remainder: Remainder,
-        psk: &PublicSpendKey,
-    ) -> Self {
-        let mut note = Note::transparent(rng, psk, remainder.gas_changes);
-
-        note.stealth_address = remainder.stealth_address;
-
-        note
     }
 }
 

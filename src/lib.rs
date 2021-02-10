@@ -26,6 +26,7 @@ pub mod note;
 pub use crossover::Crossover;
 pub use error::Error;
 pub use fee::Fee;
+pub use fee::Remainder;
 pub use message::Message;
 pub use note::{Note, NoteType};
 
