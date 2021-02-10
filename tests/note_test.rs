@@ -182,7 +182,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 }
 
 #[test]
-fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
+fn fail_fee_and_crossover_from_transparent() {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
@@ -197,8 +197,6 @@ fn fail_fee_and_crossover_from_transparent() -> Result<(), Error> {
         Err(Error::InvalidNoteConversion),
         "Expected to fail the Note Conversion"
     );
-
-    Ok(())
 }
 
 #[test]
@@ -215,7 +213,7 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
-    let note = Note::from_remainder(rng, remainder, &psk);
+    let note = Note::from(remainder);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(
@@ -240,7 +238,7 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
-    let note = Note::from_remainder(rng, remainder, &psk);
+    let note = Note::from(remainder);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
     assert_eq!(note.value(Some(&vk))?, 0);

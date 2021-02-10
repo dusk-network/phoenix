@@ -4,9 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{Crossover, Error, Fee, Note, NoteType};
+use crate::note::TRANSPARENT_BLINDER;
+use crate::{BlsScalar, JubJubScalar};
+use crate::{Crossover, Error, Fee, Note, NoteType, Remainder};
 
 use core::convert::TryFrom;
+use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use poseidon252::cipher::PoseidonCipher;
 
 impl From<(Fee, Crossover)> for Note {
     fn from((fee, crossover): (Fee, Crossover)) -> Note {
@@ -64,6 +68,39 @@ impl TryFrom<Note> for (Fee, Crossover) {
                 ))
             }
             _ => Err(Error::InvalidNoteConversion),
+        }
+    }
+}
+
+impl From<Remainder> for Note {
+    fn from(remainder: Remainder) -> Note {
+        let note_type = NoteType::Transparent;
+        let pos = u64::MAX;
+
+        let stealth_address = remainder.stealth_address;
+        let value = remainder.gas_changes;
+        let nonce = JubJubScalar::zero();
+
+        let value_commitment = JubJubScalar::from(value);
+        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
+            + (GENERATOR_NUMS_EXTENDED * TRANSPARENT_BLINDER);
+
+        let encrypted_data = {
+            let zero = TRANSPARENT_BLINDER.into();
+            let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
+
+            encrypted_data[0] = BlsScalar::from(value);
+
+            PoseidonCipher::new(encrypted_data)
+        };
+
+        Note {
+            note_type,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
         }
     }
 }
