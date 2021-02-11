@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use poseidon252::Error as PoseidonError;
+use dusk_poseidon::Error as PoseidonError;
 
 use core::fmt;
 

@@ -15,8 +15,8 @@ use canonical_derive::Canon;
 
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::JubJubAffine;
-use poseidon252::cipher::PoseidonCipher;
-use poseidon252::sponge::hash;
+use dusk_poseidon::cipher::PoseidonCipher;
+use dusk_poseidon::sponge::hash;
 
 /// Crossover structure containing obfuscated encrypted data
 #[derive(Clone, Copy, Debug, Default)]

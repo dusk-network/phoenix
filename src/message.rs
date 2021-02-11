@@ -14,7 +14,7 @@ use canonical_derive::Canon;
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine};
 use dusk_pki::PublicSpendKey;
-use poseidon252::cipher::PoseidonCipher;
+use dusk_poseidon::cipher::PoseidonCipher;
 use rand_core::{CryptoRng, RngCore};
 
 /// Message structure with value commitment
