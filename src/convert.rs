@@ -10,7 +10,7 @@ use crate::{Crossover, Error, Fee, Note, NoteType, Remainder};
 
 use core::convert::TryFrom;
 use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
-use poseidon252::cipher::PoseidonCipher;
+use dusk_poseidon::cipher::PoseidonCipher;
 
 impl From<(Fee, Crossover)> for Note {
     fn from((fee, crossover): (Fee, Crossover)) -> Note {

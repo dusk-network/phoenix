@@ -11,8 +11,8 @@ use dusk_jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{
     Ownable, PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey,
 };
-use poseidon252::cipher::PoseidonCipher;
-use poseidon252::sponge::hash;
+use dusk_poseidon::cipher::PoseidonCipher;
+use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "canon")]

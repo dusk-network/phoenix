@@ -8,7 +8,7 @@
 
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
-use poseidon252::sponge::hash;
+use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "canon")]

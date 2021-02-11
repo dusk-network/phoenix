@@ -14,7 +14,7 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
-use poseidon252::sponge::hash;
+use dusk_poseidon::sponge::hash;
 
 use crate::BlsScalar;
 
