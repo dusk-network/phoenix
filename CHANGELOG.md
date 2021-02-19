@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2021-02-19
+
+### Changed
+
+- Fee - Out of gas exceptions [#65](https://github.com/dusk-network/phoenix-core/issues/65)
+- Remainder - Generate note from consumed gas
+- Note - Create transparent note from stealth address
+
 ## [0.9.1] - 2021-02-11
 
 ### Changed

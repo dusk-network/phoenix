@@ -32,6 +32,8 @@ pub enum Error {
     InvalidCommitment,
     /// Invalid Nonce
     InvalidNonce,
+    /// Remainder is out of gas
+    OutOfGas,
 }
 
 impl<E: fmt::Debug> From<PoseidonError<E>> for Error {

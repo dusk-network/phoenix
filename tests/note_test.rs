@@ -4,12 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use core::convert::TryInto;
-
 use assert_matches::*;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
-use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
+use phoenix_core::{Error, Fee, Note, NoteType};
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
@@ -161,7 +159,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 
     let blinding_factor = JubJubScalar::random(rng);
     let note = Note::obfuscated(rng, &psk, value, blinding_factor);
-    let (fee, crossover): (Fee, Crossover) = note.try_into()?;
+    let (fee, crossover) = note.try_into_fee_crossover(10, 2)?;
 
     let ssk_fee = SecretSpendKey::random(rng);
     let wrong_fee = Fee::new(rng, 0, 0, &ssk_fee.into());
@@ -182,6 +180,30 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 }
 
 #[test]
+fn fee_and_crossover_from_note() -> Result<(), Error> {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let psk = ssk.public_spend_key();
+    let vk = ssk.view_key();
+    let value = 25;
+
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let gas_limit = 50;
+    let gas_price = 3;
+    let (fee, crossover) =
+        note.clone().try_into_fee_crossover(gas_limit, gas_price)?;
+
+    let correct_note: Note = (fee, crossover).into();
+
+    assert_eq!(note, correct_note);
+    assert_eq!(value, correct_note.value(Some(&vk))?);
+
+    Ok(())
+}
+
+#[test]
 fn fail_fee_and_crossover_from_transparent() {
     let rng = &mut rand::thread_rng();
 
@@ -190,7 +212,7 @@ fn fail_fee_and_crossover_from_transparent() {
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
-    let result: Result<(Fee, Crossover), Error> = note.try_into();
+    let result = note.try_into_fee_crossover(10, 2);
 
     assert_matches!(
         result,
@@ -212,7 +234,9 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let gas_price = 2;
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
-    let remainder = fee.gen_remainder(gas_consumed);
+    let remainder = fee
+        .try_into_remainder_note(gas_consumed)?
+        .ok_or(Error::OutOfGas)?;
     let note = Note::from(remainder);
 
     assert_eq!(note.stealth_address(), fee.stealth_address());
@@ -225,23 +249,43 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 }
 
 #[test]
+fn transparent_with_no_remainder() -> Result<(), Error> {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let psk = ssk.public_spend_key();
+
+    let gas_consumed = 10;
+    let gas_limit = 10;
+    let gas_price = 2;
+
+    let fee = Fee::new(rng, gas_limit, gas_price, &psk);
+    assert_matches!(
+        fee.try_into_remainder_note(gas_consumed),
+        Ok(None),
+        "No note should have been generated out of depleted gas!"
+    );
+
+    Ok(())
+}
+
+#[test]
 fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let rng = &mut rand::thread_rng();
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
-    let vk = ssk.view_key();
 
     let gas_consumed = 30;
     let gas_limit = 10;
     let gas_price = 2;
 
     let fee = Fee::new(rng, gas_limit, gas_price, &psk);
-    let remainder = fee.gen_remainder(gas_consumed);
-    let note = Note::from(remainder);
-
-    assert_eq!(note.stealth_address(), fee.stealth_address());
-    assert_eq!(note.value(Some(&vk))?, 0);
+    assert_matches!(
+        fee.try_into_remainder_note(gas_consumed),
+        Err(Error::OutOfGas),
+        "Expected to run out of gas!"
+    );
 
     Ok(())
 }

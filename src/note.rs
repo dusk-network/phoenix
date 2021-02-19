@@ -20,7 +20,10 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
-use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
+use crate::{
+    BlsScalar, Crossover, Error, Fee, JubJubAffine, JubJubExtended,
+    JubJubScalar,
+};
 
 /// Blinder used for transparent
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
@@ -103,6 +106,37 @@ impl Note {
         Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
     }
 
+    /// Create a note with a provided stealth address
+    pub fn transparent_with_stealth_address(
+        value: u64,
+        stealth_address: StealthAddress,
+    ) -> Self {
+        let note_type = NoteType::Transparent;
+        let pos = u64::MAX;
+
+        let value_commitment = (GENERATOR_EXTENDED * JubJubScalar::from(value))
+            + (GENERATOR_NUMS_EXTENDED * TRANSPARENT_BLINDER);
+
+        let nonce = JubJubScalar::zero();
+        let encrypted_data = {
+            let zero = TRANSPARENT_BLINDER.into();
+            let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
+
+            encrypted_data[0] = BlsScalar::from(value);
+
+            PoseidonCipher::new(encrypted_data)
+        };
+
+        Self {
+            note_type,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
+        }
+    }
+
     /// Creates a new obfuscated note
     ///
     /// The provided blinding factor will be used to calculate the value
@@ -116,6 +150,43 @@ impl Note {
         blinding_factor: JubJubScalar,
     ) -> Self {
         Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor)
+    }
+
+    /// Create a pair `(Fee, Crossover)`
+    ///
+    /// The pair can only be derived from obfuscated notes. Hence, if this
+    /// function is called from a transparent note, an
+    /// `Err(Error::InvalidNoteConversion)` will be returned.
+    pub fn try_into_fee_crossover(
+        self,
+        gas_limit: u64,
+        gas_price: u64,
+    ) -> Result<(Fee, Crossover), Error> {
+        if self.note_type == NoteType::Transparent {
+            return Err(Error::InvalidNoteConversion);
+        }
+
+        let Note {
+            stealth_address,
+            value_commitment,
+            nonce,
+            encrypted_data,
+            ..
+        } = self;
+
+        let fee = Fee {
+            gas_limit,
+            gas_price,
+            stealth_address,
+        };
+
+        let crossover = Crossover {
+            value_commitment,
+            nonce,
+            encrypted_data,
+        };
+
+        Ok((fee, crossover))
     }
 
     /// Create a new phoenix output note without inner randomness

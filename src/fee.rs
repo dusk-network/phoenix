@@ -16,9 +16,7 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
-use core::cmp;
-
-use crate::{BlsScalar, JubJubScalar};
+use crate::{BlsScalar, Error, JubJubScalar, Note};
 
 mod remainder;
 pub use remainder::Remainder;
@@ -84,19 +82,28 @@ impl Fee {
     }
 
     /// Generates a remainder from the fee and the given gas consumed
-    pub fn gen_remainder(&self, gas_consumed: u64) -> Remainder {
-        // Consuming more gas than the limit provided should never
-        // occur, and it's not responsability of the `Remainder` to
-        // check that.
-        // Here defensively ensure it's not panicking, capping the gas
-        // consumed to the gas limit.
-        let gas_consumed = cmp::min(gas_consumed, self.gas_limit);
-        let gas_changes = (self.gas_limit - gas_consumed) * self.gas_price;
-
-        Remainder {
-            gas_changes,
-            stealth_address: self.stealth_address,
+    ///
+    /// If the gas consumed equals the gas limit, return `Ok(None)`
+    ///
+    /// If the gas consumed is greater than the gas limit, return
+    /// `Err(Error::OutOfGas)`
+    pub fn try_into_remainder_note(
+        self,
+        gas_consumed: u64,
+    ) -> Result<Option<Note>, Error> {
+        if self.gas_limit < gas_consumed {
+            return Err(Error::OutOfGas);
+        } else if self.gas_limit == gas_consumed {
+            return Ok(None);
         }
+
+        let gas_changes = (self.gas_limit - gas_consumed) * self.gas_price;
+        let note = Note::transparent_with_stealth_address(
+            gas_changes,
+            self.stealth_address,
+        );
+
+        Ok(Some(note))
     }
 }
 
