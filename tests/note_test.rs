@@ -6,7 +6,6 @@
 
 use core::convert::TryInto;
 
-use assert_matches::*;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
 use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
@@ -168,9 +167,8 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let wrong_note: Note = (wrong_fee, crossover).into();
 
     assert_ne!(note, wrong_note);
-    assert_matches!(
-        wrong_note.value(Some(&vk)),
-        Err(Error::InvalidCipher),
+    assert!(
+        matches!(wrong_note.value(Some(&vk)), Err(Error::InvalidCipher),),
         "Expected to fail the decryption of the cipher"
     );
 
@@ -192,9 +190,8 @@ fn fail_fee_and_crossover_from_transparent() {
     let note = Note::transparent(rng, &psk, value);
     let result: Result<(Fee, Crossover), Error> = note.try_into();
 
-    assert_matches!(
-        result,
-        Err(Error::InvalidNoteConversion),
+    assert!(
+        matches!(result, Err(Error::InvalidNoteConversion),),
         "Expected to fail the Note Conversion"
     );
 }
