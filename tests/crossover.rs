@@ -8,7 +8,7 @@ use core::convert::TryInto;
 
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
-use phoenix_core::{Error, Note};
+use phoenix_core::{Error, Message, Note};
 
 #[test]
 fn crossover_hash() -> Result<(), Error> {
@@ -30,6 +30,28 @@ fn crossover_hash() -> Result<(), Error> {
 
     let hash = crossover.hash();
     let hash_p = crossover_p.hash();
+
+    assert_ne!(hash, hash_p);
+
+    Ok(())
+}
+
+#[test]
+fn message_hash() -> Result<(), Error> {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let psk = ssk.public_spend_key();
+    let value = 25;
+
+    let r = JubJubScalar::random(rng);
+    let message = Message::new(rng, &r, &psk, value);
+
+    let r_p = JubJubScalar::random(rng);
+    let message_p = Message::new(rng, &r_p, &psk, value);
+
+    let hash = message.hash();
+    let hash_p = message_p.hash();
 
     assert_ne!(hash, hash_p);
 
