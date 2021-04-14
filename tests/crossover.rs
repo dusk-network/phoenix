@@ -1,0 +1,37 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) DUSK NETWORK. All rights reserved.
+
+use core::convert::TryInto;
+
+use dusk_jubjub::JubJubScalar;
+use dusk_pki::SecretSpendKey;
+use phoenix_core::{Error, Note};
+
+#[test]
+fn crossover_hash() -> Result<(), Error> {
+    let rng = &mut rand::thread_rng();
+
+    let ssk = SecretSpendKey::random(rng);
+    let psk = ssk.public_spend_key();
+
+    let value = 25;
+    let blinding_factor = JubJubScalar::random(rng);
+    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+
+    let value = 25;
+    let blinding_factor = JubJubScalar::random(rng);
+    let note_p = Note::obfuscated(rng, &psk, value, blinding_factor);
+
+    let (_, crossover) = note.try_into()?;
+    let (_, crossover_p) = note_p.try_into()?;
+
+    let hash = crossover.hash();
+    let hash_p = crossover_p.hash();
+
+    assert_ne!(hash, hash_p);
+
+    Ok(())
+}
