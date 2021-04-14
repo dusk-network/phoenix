@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Crossover: use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
+- Message: use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
 
 ## [0.10.0] - 2021-04-06
 

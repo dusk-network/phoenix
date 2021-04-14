@@ -15,6 +15,7 @@ use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine};
 use dusk_pki::PublicSpendKey;
 use dusk_poseidon::cipher::PoseidonCipher;
+use dusk_poseidon::sponge;
 use rand_core::{CryptoRng, RngCore};
 
 /// Message structure with value commitment
@@ -61,18 +62,37 @@ impl Message {
         }
     }
 
+    /// Represent the message as a sequence of scalars to be used as input for
+    /// sponge hash functions
+    pub fn to_hash_inputs(
+        &self,
+    ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
+        let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
+
+        inputs[0..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
+        inputs[2] = self.nonce.into();
+        inputs[3..].copy_from_slice(self.encrypted_data.cipher());
+
+        inputs
+    }
+
+    /// Sponge hash of the message hash inputs representation
+    pub fn hash(&self) -> BlsScalar {
+        sponge::hash(&self.to_hash_inputs())
+    }
+
     /// Value commitment representation of the message
-    pub fn value_commitment(&self) -> &JubJubExtended {
+    pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Nonce used for the encryption of the value and blinding factor
-    pub fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &JubJubScalar {
         &self.nonce
     }
 
     /// Returns the cipher of the encrypted data
-    pub fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
+    pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
 
