@@ -8,7 +8,7 @@ use core::convert::TryInto;
 
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
-use phoenix_core::{Error, Note, Message};
+use phoenix_core::{Error, Message, Note};
 
 #[test]
 fn crossover_hash() -> Result<(), Error> {
