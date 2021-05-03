@@ -197,7 +197,7 @@ impl Note {
     pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
         let sk_r = BlsScalar::from(*sk_r.as_ref());
-        let pos = BlsScalar::from(self.pos());
+        let pos = BlsScalar::from(self.pos);
 
         hash(&[sk_r, pos])
     }
@@ -218,7 +218,7 @@ impl Note {
             pk_r[1],
             R[0],
             R[1],
-            BlsScalar::from(self.pos()),
+            BlsScalar::from(self.pos),
             cipher[0],
             cipher[1],
             cipher[2],
@@ -232,13 +232,13 @@ impl Note {
     }
 
     /// Return the type of the note
-    pub fn note(&self) -> NoteType {
+    pub const fn note(&self) -> NoteType {
         self.note_type
     }
 
     /// Return the position of the note on the tree.
-    pub fn pos(&self) -> u64 {
-        self.pos
+    pub const fn pos(&self) -> &u64 {
+        &self.pos
     }
 
     /// Set the position of the note on the tree.
@@ -248,17 +248,17 @@ impl Note {
     }
 
     /// Nonce used for the encrypt / decrypt of data for this note
-    pub fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &JubJubScalar {
         &self.nonce
     }
 
     /// Return the value commitment `H(value, blinding_factor)`
-    pub fn value_commitment(&self) -> &JubJubExtended {
+    pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the cipher of the encrypted data
-    pub fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
+    pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
 
