@@ -9,10 +9,11 @@ use core::convert::TryInto;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
 use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
+use rand_core::OsRng;
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -28,7 +29,7 @@ fn transparent_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_note() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -46,7 +47,7 @@ fn obfuscated_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_deterministic_note() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -74,7 +75,7 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
 
 #[test]
 fn value_commitment_transparent() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let vsk = ssk.view_key();
@@ -101,7 +102,7 @@ fn value_commitment_transparent() {
 
 #[test]
 fn value_commitment_obfuscated() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let vsk = ssk.view_key();
@@ -129,7 +130,7 @@ fn value_commitment_obfuscated() {
 
 #[test]
 fn note_keys_consistency() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -151,7 +152,7 @@ fn note_keys_consistency() {
 
 #[test]
 fn fee_and_crossover_generation() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -181,7 +182,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 
 #[test]
 fn fail_fee_and_crossover_from_transparent() {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -198,7 +199,7 @@ fn fail_fee_and_crossover_from_transparent() {
 
 #[test]
 fn transparent_from_fee_remainder() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -223,7 +224,7 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 
 #[test]
 fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();

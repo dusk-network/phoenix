@@ -10,8 +10,6 @@ use dusk_pki::Ownable;
 use dusk_pki::StealthAddress;
 
 #[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
 use dusk_poseidon::sponge::hash;

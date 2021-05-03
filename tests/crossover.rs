@@ -9,10 +9,11 @@ use core::convert::TryInto;
 use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use phoenix_core::{Error, Message, Note};
+use rand_core::OsRng;
 
 #[test]
 fn crossover_hash() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();
@@ -38,7 +39,7 @@ fn crossover_hash() -> Result<(), Error> {
 
 #[test]
 fn message_hash() -> Result<(), Error> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut OsRng;
 
     let ssk = SecretSpendKey::random(rng);
     let psk = ssk.public_spend_key();

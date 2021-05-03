@@ -12,8 +12,6 @@ use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
 use core::cmp;
