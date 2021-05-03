@@ -9,8 +9,6 @@
 use crate::{BlsScalar, JubJubExtended, JubJubScalar};
 
 #[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
