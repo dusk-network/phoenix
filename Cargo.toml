@@ -7,8 +7,8 @@ edition = "2018"
 [dependencies]
 rand_core = "0.6"
 dusk-bytes = "0.1"
-dusk-bls12_381 = {version="0.8.0-rc", default-features=false}
-dusk-jubjub = {version="0.10.0-rc", default-features=false}
+dusk-bls12_381 = {version="0.8", default-features=false}
+dusk-jubjub = {version="0.10", default-features=false}
 dusk-poseidon = {version="0.21.0-rc", default-features=false}
 dusk-pki = {version="0.7.0-rc", default-features=false}
 canonical = {version="0.6", optional=true}

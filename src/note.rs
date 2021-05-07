@@ -197,7 +197,7 @@ impl Note {
     pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
         let sk_r = BlsScalar::from(*sk_r.as_ref());
-        let pos = BlsScalar::from(self.pos());
+        let pos = BlsScalar::from(self.pos);
 
         hash(&[sk_r, pos])
     }
@@ -218,7 +218,7 @@ impl Note {
             pk_r[1],
             R[0],
             R[1],
-            BlsScalar::from(self.pos()),
+            BlsScalar::from(self.pos),
             cipher[0],
             cipher[1],
             cipher[2],
@@ -237,8 +237,8 @@ impl Note {
     }
 
     /// Return the position of the note on the tree.
-    pub fn pos(&self) -> u64 {
-        self.pos
+    pub fn pos(&self) -> &u64 {
+        &self.pos
     }
 
     /// Set the position of the note on the tree.
