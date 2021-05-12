@@ -7,14 +7,13 @@
 use crate::{BlsScalar, Error, JubJubExtended, JubJubScalar, Note, NoteType};
 
 #[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine};
 use dusk_pki::PublicSpendKey;
 use dusk_poseidon::cipher::PoseidonCipher;
+use dusk_poseidon::sponge;
 use rand_core::{CryptoRng, RngCore};
 
 /// Message structure with value commitment
@@ -61,18 +60,44 @@ impl Message {
         }
     }
 
+    /// Represent the message as a sequence of scalars to be used as input for
+    /// sponge hash functions
+    ///
+    /// It is composed by 3 scalars, in order:
+    /// * Value commitment X
+    /// * Value commitment Y
+    /// * Nonce
+    ///
+    /// And also appends the scalars that composes the [`PoseidonCipher`]
+    pub fn to_hash_inputs(
+        &self,
+    ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
+        let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
+
+        inputs[..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
+        inputs[2] = self.nonce.into();
+        inputs[3..].copy_from_slice(self.encrypted_data.cipher());
+
+        inputs
+    }
+
+    /// Sponge hash of the message hash inputs representation
+    pub fn hash(&self) -> BlsScalar {
+        sponge::hash(&self.to_hash_inputs())
+    }
+
     /// Value commitment representation of the message
-    pub fn value_commitment(&self) -> &JubJubExtended {
+    pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Nonce used for the encryption of the value and blinding factor
-    pub fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &JubJubScalar {
         &self.nonce
     }
 
     /// Returns the cipher of the encrypted data
-    pub fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
+    pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
 
@@ -145,52 +170,4 @@ impl
             encrypted_data,
         })
     }
-}
-
-#[test]
-fn message_consistency() {
-    use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
-    use dusk_pki::SecretSpendKey;
-
-    let rng = &mut rand::thread_rng();
-
-    let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_spend_key();
-    let psk_wrong = SecretSpendKey::random(rng).public_spend_key();
-
-    let r = JubJubScalar::random(rng);
-    let r_wrong = JubJubScalar::random(rng);
-    let value = 105;
-
-    let message = Message::new(rng, &r, &psk, value);
-    let value_commitment = message.value_commitment();
-    let (value_p, blinding_factor) = message.decrypt(&r, &psk).unwrap();
-    assert!(message.decrypt(&r_wrong, &psk).is_err());
-    assert!(message.decrypt(&r, &psk_wrong).is_err());
-
-    let a = GENERATOR_EXTENDED * JubJubScalar::from(value);
-    let b = GENERATOR_NUMS_EXTENDED * blinding_factor;
-    let value_commitment_p = a + b;
-
-    assert_eq!(value, value_p);
-    assert_eq!(value_commitment, &value_commitment_p);
-}
-
-#[test]
-fn message_bytes() {
-    use dusk_pki::SecretSpendKey;
-
-    let rng = &mut rand::thread_rng();
-
-    let ssk = SecretSpendKey::random(rng);
-    let psk = ssk.public_spend_key();
-
-    let r = JubJubScalar::random(rng);
-    let value = 106;
-
-    let m = Message::new(rng, &r, &psk, value);
-    let m_p = m.to_bytes();
-    let m_p = Message::from_bytes(&m_p).unwrap();
-
-    assert_eq!(m, m_p);
 }

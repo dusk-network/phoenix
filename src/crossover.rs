@@ -9,14 +9,12 @@
 use crate::{BlsScalar, JubJubExtended, JubJubScalar};
 
 #[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::JubJubAffine;
 use dusk_poseidon::cipher::PoseidonCipher;
-use dusk_poseidon::sponge::hash;
+use dusk_poseidon::sponge;
 
 /// Crossover structure containing obfuscated encrypted data
 #[derive(Clone, Copy, Debug, Default)]
@@ -68,25 +66,44 @@ impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
 }
 
 impl Crossover {
-    /// Returns a hash represented by `H(value_commitment)`
-    pub fn hash(&self) -> BlsScalar {
-        let value_commitment = self.value_commitment().to_hash_inputs();
+    /// Represent the crossover as a sequence of scalars to be used as input for
+    /// sponge hash functions
+    ///
+    /// It is composed by 3 scalars, in order:
+    /// * Value commitment X
+    /// * Value commitment Y
+    /// * Nonce
+    ///
+    /// And also appends the scalars that composes the [`PoseidonCipher`]
+    pub fn to_hash_inputs(
+        &self,
+    ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
+        let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
 
-        hash(&value_commitment)
+        inputs[..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
+        inputs[2] = self.nonce.into();
+        inputs[3..].copy_from_slice(self.encrypted_data.cipher());
+
+        inputs
+    }
+
+    /// Sponge hash of the crossover hash inputs representation
+    pub fn hash(&self) -> BlsScalar {
+        sponge::hash(&self.to_hash_inputs())
     }
 
     /// Returns the Nonce used for the encrypt / decrypt of data for this note
-    pub fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &JubJubScalar {
         &self.nonce
     }
 
     /// Returns the value commitment `H(value, blinding_factor)`
-    pub fn value_commitment(&self) -> &JubJubExtended {
+    pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the encrypted data
-    pub fn encrypted_data(&self) -> &PoseidonCipher {
+    pub const fn encrypted_data(&self) -> &PoseidonCipher {
         &self.encrypted_data
     }
 }

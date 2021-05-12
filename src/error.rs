@@ -10,7 +10,7 @@ use core::fmt;
 
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Error {
     /// Invalid u8 as Note Type (expected `0` or `1`, found {0})
     InvalidNoteType(u8),
@@ -27,16 +27,21 @@ pub enum Error {
     /// Invalid Fee for conversion
     InvalidFeeConversion,
     /// Poseidon Error
-    PoseidonError,
+    PoseidonError(PoseidonError),
     /// Invalid Value Commitment
     InvalidCommitment,
     /// Invalid Nonce
     InvalidNonce,
 }
 
-impl<E: fmt::Debug> From<PoseidonError<E>> for Error {
-    fn from(_p: PoseidonError<E>) -> Error {
-        // TODO - wrap the concrete error type
-        Error::PoseidonError
+impl From<PoseidonError> for Error {
+    fn from(p: PoseidonError) -> Self {
+        Self::PoseidonError(p)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Phoenix-Core Error: {:?}", &self)
     }
 }
