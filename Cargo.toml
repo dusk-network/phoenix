@@ -3,6 +3,10 @@ name = "phoenix-core"
 version = "0.11.0-rc.0"
 authors = ["zer0 <matteo@dusk.network>", "Victor Lopez <victor@dusk.network"]
 edition = "2018"
+repository = "https://github.com/dusk-network/phoenix-core"
+description = "Anonymity-preserving zero-knowledge proof-powered transaction model"
+license = "MPL-2.0"
+exclude = [".github/workflows/ci.yml", ".gitignore"]
 
 [dependencies]
 rand_core = "0.6"
