@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `dusk-bytes::BadLength` impl for crate Error [#88](https://github.com/dusk-network/phoenix-core/issues/88)
+
 ## [0.11.0] - 2021-06-09
 
 ### Added

@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bytes::BadLength;
 use dusk_poseidon::Error as PoseidonError;
 
 use core::fmt;
@@ -32,6 +33,8 @@ pub enum Error {
     InvalidCommitment,
     /// Invalid Nonce
     InvalidNonce,
+    /// Dusk-bytes BadLenght error
+    BadLenght(usize, usize),
 }
 
 impl From<PoseidonError> for Error {
@@ -43,5 +46,11 @@ impl From<PoseidonError> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Phoenix-Core Error: {:?}", &self)
+    }
+}
+
+impl BadLength for Error {
+    fn bad_length(found: usize, expected: usize) -> Self {
+        Error::BadLenght(found, expected)
     }
 }
