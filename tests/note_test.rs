@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use core::convert::TryInto;
-
+use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
 use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
@@ -55,7 +55,7 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let value = 25;
 
     let r = JubJubScalar::random(rng);
-    let nonce = JubJubScalar::random(rng);
+    let nonce = BlsScalar::random(rng);
     let blinding_factor = JubJubScalar::random(rng);
 
     let note = Note::deterministic(
