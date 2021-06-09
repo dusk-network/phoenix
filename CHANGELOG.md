@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2021-06-09
+
+### Changed
+
 - Change `Crossover` to use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
 - Change `Message` to use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
 - Update `canonical` from `v0.5` to `v0.6` [#72](https://github.com/dusk-network/phoenix-core/issues/72)
