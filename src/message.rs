@@ -21,7 +21,7 @@ use rand_core::{CryptoRng, RngCore};
 #[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Message {
     value_commitment: JubJubExtended,
-    nonce: JubJubScalar,
+    nonce: BlsScalar,
     encrypted_data: PoseidonCipher,
 }
 
@@ -35,7 +35,7 @@ impl Message {
         psk: &PublicSpendKey,
         value: u64,
     ) -> Self {
-        let nonce = JubJubScalar::random(rng);
+        let nonce = BlsScalar::random(rng);
         let blinding_factor = JubJubScalar::random(rng);
 
         let note = Note::deterministic(
@@ -92,7 +92,7 @@ impl Message {
     }
 
     /// Nonce used for the encryption of the value and blinding factor
-    pub const fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
@@ -157,9 +157,9 @@ impl
                 .into();
         bytes = &bytes[JubJubAffine::SIZE..];
 
-        let nonce = JubJubScalar::from_slice(&bytes[..JubJubScalar::SIZE])
+        let nonce = BlsScalar::from_slice(&bytes[..BlsScalar::SIZE])
             .map_err(|_| Error::InvalidNonce)?;
-        bytes = &bytes[JubJubScalar::SIZE..];
+        bytes = &bytes[BlsScalar::SIZE..];
 
         let encrypted_data = PoseidonCipher::from_slice(bytes)
             .map_err(|_| Error::InvalidCipher)?;

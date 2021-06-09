@@ -61,7 +61,7 @@ impl TryFrom<i32> for NoteType {
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,
-    pub(crate) nonce: JubJubScalar,
+    pub(crate) nonce: BlsScalar,
     pub(crate) stealth_address: StealthAddress,
     pub(crate) pos: u64,
     pub(crate) encrypted_data: PoseidonCipher,
@@ -85,7 +85,7 @@ impl Note {
         blinding_factor: JubJubScalar,
     ) -> Self {
         let r = JubJubScalar::random(rng);
-        let nonce = JubJubScalar::random(rng);
+        let nonce = BlsScalar::random(rng);
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
@@ -122,7 +122,7 @@ impl Note {
     pub fn deterministic(
         note_type: NoteType,
         r: &JubJubScalar,
-        nonce: JubJubScalar,
+        nonce: BlsScalar,
         psk: &PublicSpendKey,
         value: u64,
         blinding_factor: JubJubScalar,
@@ -175,11 +175,10 @@ impl Note {
     ) -> Result<(u64, JubJubScalar), BytesError> {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
-        let nonce = BlsScalar::from(self.nonce);
 
         let data = self
             .encrypted_data
-            .decrypt(&shared_secret, &nonce)
+            .decrypt(&shared_secret, &self.nonce)
             .map_err(|_| BytesError::InvalidData)?;
 
         let value = data[0].reduce();
@@ -213,7 +212,7 @@ impl Note {
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
-            BlsScalar::from(self.nonce),
+            self.nonce,
             pk_r[0],
             pk_r[1],
             R[0],
@@ -248,7 +247,7 @@ impl Note {
     }
 
     /// Nonce used for the encrypt / decrypt of data for this note
-    pub const fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
@@ -332,7 +331,7 @@ impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
             bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
         let value_commitment =
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[1..33])?);
-        let nonce = JubJubScalar::from_slice(&bytes[33..65])?;
+        let nonce = BlsScalar::from_slice(&bytes[33..65])?;
         let stealth_address = StealthAddress::from_slice(&bytes[65..129])?;
 
         one_u64.copy_from_slice(&bytes[129..137]);
