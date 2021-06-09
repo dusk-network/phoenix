@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2021-06-09
+
+### Added
+
+- Add rust-toolchain file set to nightly-2021-06-06 [#85](https://github.com/dusk-network/phoenix-core/issues/85)
+
+### Changed
+- Change CI rules to get toolchain from file [#86](https://github.com/dusk-network/phoenix-core/issues/86)
 - Change `Crossover` to use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
 - Change `Message` to use all attributes as hash inputs [#69](https://github.com/dusk-network/phoenix-core/issues/69)
 - Update `canonical` from `v0.5` to `v0.6` [#72](https://github.com/dusk-network/phoenix-core/issues/72)
 - Change note position to reference [#76](https://github.com/dusk-network/phoenix-core/issues/76)
+- Change `rand_core` to not use default features [#80](https://github.com/dusk-network/phoenix-core/issues/80)
 
 ## [0.10.0] - 2021-04-06
 
