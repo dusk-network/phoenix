@@ -6,7 +6,7 @@
 
 //! Fee module contains the logic related to `Crossover` structure
 
-use crate::{BlsScalar, JubJubExtended, JubJubScalar};
+use crate::{BlsScalar, JubJubExtended};
 
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
@@ -21,7 +21,7 @@ use dusk_poseidon::sponge;
 #[cfg_attr(feature = "canon", derive(Canon))]
 pub struct Crossover {
     pub(crate) value_commitment: JubJubExtended,
-    pub(crate) nonce: JubJubScalar,
+    pub(crate) nonce: BlsScalar,
     pub(crate) encrypted_data: PoseidonCipher,
 }
 
@@ -53,7 +53,7 @@ impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
         let value_commitment =
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[..32])?);
-        let nonce = JubJubScalar::from_slice(&bytes[32..])?;
+        let nonce = BlsScalar::from_slice(&bytes[32..])?;
 
         let encrypted_data = PoseidonCipher::from_slice(&bytes[64..])?;
 
@@ -81,7 +81,7 @@ impl Crossover {
         let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
 
         inputs[..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
-        inputs[2] = self.nonce.into();
+        inputs[2] = self.nonce;
         inputs[3..].copy_from_slice(self.encrypted_data.cipher());
 
         inputs
@@ -93,7 +93,7 @@ impl Crossover {
     }
 
     /// Returns the Nonce used for the encrypt / decrypt of data for this note
-    pub const fn nonce(&self) -> &JubJubScalar {
+    pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
