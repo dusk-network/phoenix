@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2021-07-05
+
+### Added
+
+- Add `dusk-bytes::BadLength` impl for crate Error [#88](https://github.com/dusk-network/phoenix-core/issues/88)
+- Add `From<Error>` impl for `dusk-bytes::Error` [#92](https://github.com/dusk-network/phoenix-core/issues/92)
+### Changed
+
+- Change `JubJubScalar` for `BlsScalar` for all `nonce` attributes. [#84](https://github.com/dusk-network/phoenix-core/issues/84)
+
 ## [0.11.0] - 2021-06-09
 
 ### Added

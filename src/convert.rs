@@ -79,7 +79,7 @@ impl From<Remainder> for Note {
 
         let stealth_address = remainder.stealth_address;
         let value = remainder.gas_changes;
-        let nonce = JubJubScalar::zero();
+        let nonce = BlsScalar::zero();
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
