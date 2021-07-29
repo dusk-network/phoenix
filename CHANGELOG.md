@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update nullifier to hash of pk' [#96]
+
 ## [0.13.0] - 2021-07-27
 
 ### Changed
@@ -137,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#96]: https://github.com/dusk-network/phoenix-core/issues/96
 [#94]: https://github.com/dusk-network/phoenix-core/issues/94
 [#92]: https://github.com/dusk-network/phoenix-core/issues/92
 [#88]: https://github.com/dusk-network/phoenix-core/issues/88

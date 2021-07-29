@@ -193,12 +193,16 @@ impl Note {
     }
 
     /// Create a unique nullifier for the note
+    ///
+    /// This nullifier is represeted as `H(sk_r · G', pos)`
     pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
-        let sk_r = BlsScalar::from(*sk_r.as_ref());
+        let pk_prime = GENERATOR_NUMS_EXTENDED * sk_r.as_ref();
+        let pk_prime = pk_prime.to_hash_inputs();
+
         let pos = BlsScalar::from(self.pos);
 
-        hash(&[sk_r, pos])
+        hash(&[pk_prime[0], pk_prime[1], pos])
     }
 
     /// Return the internal representation of scalars to be hashed
