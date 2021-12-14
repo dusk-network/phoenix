@@ -71,14 +71,18 @@ impl Fee {
 
     /// Return a hash represented by `H(gas_limit, gas_price, H([pskr]))`
     pub fn hash(&self) -> BlsScalar {
-        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
+        hash(&self.hash_inputs())
+    }
 
-        hash(&[
+    /// Return the internal representation of scalars to be hashed
+    pub fn hash_inputs(&self) -> [BlsScalar; 4] {
+        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
+        [
             BlsScalar::from(self.gas_limit),
             BlsScalar::from(self.gas_price),
             pk_r[0],
             pk_r[1],
-        ])
+        ]
     }
 
     /// Generates a remainder from the fee and the given gas consumed
