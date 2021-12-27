@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update nullifier to hash of pk' [#96]
+- Update dusk-poseidon to `v0.23` [#102]
 
 ## [0.13.0] - 2021-07-27
 
