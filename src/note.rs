@@ -147,7 +147,6 @@ impl Note {
             }
             NoteType::Obfuscated => {
                 let shared_secret = dhke(r, psk.A());
-                let nonce = BlsScalar::from(nonce);
                 let value = BlsScalar::from(value);
                 let blinding_factor = BlsScalar::from(blinding_factor);
 

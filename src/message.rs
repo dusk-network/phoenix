@@ -75,7 +75,7 @@ impl Message {
         let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
 
         inputs[..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
-        inputs[2] = self.nonce.into();
+        inputs[2] = self.nonce;
         inputs[3..].copy_from_slice(self.encrypted_data.cipher());
 
         inputs
@@ -109,7 +109,7 @@ impl Message {
         psk: &PublicSpendKey,
     ) -> Result<(u64, JubJubScalar), Error> {
         let shared_secret = dhke(r, psk.A());
-        let nonce = BlsScalar::from(self.nonce);
+        let nonce = self.nonce;
 
         let data = self.encrypted_data.decrypt(&shared_secret, &nonce)?;
 
