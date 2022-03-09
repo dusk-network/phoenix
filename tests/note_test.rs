@@ -28,6 +28,28 @@ fn transparent_note() -> Result<(), Error> {
 }
 
 #[test]
+fn transparent_stealth_note() -> Result<(), Error> {
+    let rng = &mut OsRng;
+
+    let ssk = SecretSpendKey::random(rng);
+    let psk = ssk.public_spend_key();
+
+    let r = JubJubScalar::random(rng);
+
+    let sa = psk.gen_stealth_address(&r);
+    let nonce = BlsScalar::random(rng);
+    let value = 25;
+
+    let note = Note::transparent_stealth(sa, value, nonce);
+
+    assert_eq!(note.note(), NoteType::Transparent);
+    assert_eq!(value, note.value(None)?);
+    assert_eq!(sa, *note.stealth_address());
+
+    Ok(())
+}
+
+#[test]
 fn obfuscated_note() -> Result<(), Error> {
     let rng = &mut OsRng;
 

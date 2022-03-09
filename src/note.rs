@@ -103,6 +103,39 @@ impl Note {
         Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
     }
 
+    /// Creates a new transparent note
+    ///
+    /// This is equivalent to [`transparent`] but taking only a stealth address,
+    /// a value, and a nonce. This is done to be able to generate a note
+    /// directly for a stealth address, as opposed to a public spend key.
+    pub fn transparent_stealth(
+        stealth_address: StealthAddress,
+        value: u64,
+        nonce: BlsScalar,
+    ) -> Self {
+        let value_commitment = JubJubScalar::from(value);
+        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
+            + (GENERATOR_NUMS_EXTENDED * TRANSPARENT_BLINDER);
+
+        let pos = u64::MAX;
+
+        let zero = TRANSPARENT_BLINDER.into();
+        let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
+
+        encrypted_data[0] = BlsScalar::from(value);
+
+        let encrypted_data = PoseidonCipher::new(encrypted_data);
+
+        Note {
+            note_type: NoteType::Transparent,
+            value_commitment,
+            nonce,
+            stealth_address,
+            pos,
+            encrypted_data,
+        }
+    }
+
     /// Creates a new obfuscated note
     ///
     /// The provided blinding factor will be used to calculate the value
