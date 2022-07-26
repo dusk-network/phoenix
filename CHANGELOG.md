@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `rkyv` implementations behind feature gate [#107]
+
 ### Changed
 
 - Update `dusk-jubjub` dependency to `0.12`
@@ -144,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#107]: https://github.com/dusk-network/phoenix-core/issues/107
 [#96]: https://github.com/dusk-network/phoenix-core/issues/96
 [#94]: https://github.com/dusk-network/phoenix-core/issues/94
 [#92]: https://github.com/dusk-network/phoenix-core/issues/92

@@ -17,6 +17,7 @@ dusk-poseidon = { version = "0.26.0-rc", default-features = false }
 dusk-pki = { version = "0.11.0-rc", default-features = false }
 canonical = { version = "0.7", optional = true }
 canonical_derive = { version = "0.7", optional = true }
+rkyv = { version = "0.7", optional = true }
 
 [dev-dependencies]
 assert_matches = "1.3"
@@ -28,4 +29,11 @@ canon = [
     "canonical_derive",
     "dusk-poseidon/canon",
     "dusk-pki/canon"
+]
+rkyv-impl = [
+    "dusk-poseidon/rkyv-impl",
+    "dusk-jubjub/rkyv-impl",
+    "dusk-pki/rkyv-impl",
+    "dusk-bls12_381/rkyv",
+    "rkyv"
 ]
