@@ -9,6 +9,9 @@ use crate::{BlsScalar, Error, JubJubExtended, JubJubScalar, Note, NoteType};
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
+#[cfg(feature = "rkyv-impl")]
+use rkyv::{Archive, Deserialize, Serialize};
+
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine};
 use dusk_pki::PublicSpendKey;
@@ -19,6 +22,7 @@ use rand_core::{CryptoRng, RngCore};
 /// Message structure with value commitment
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "canon", derive(Canon))]
+#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
 pub struct Message {
     value_commitment: JubJubExtended,
     nonce: BlsScalar,

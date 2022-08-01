@@ -20,6 +20,9 @@ use canonical::Canon;
 #[cfg(feature = "canon")]
 use canonical_derive::Canon;
 
+#[cfg(feature = "rkyv-impl")]
+use rkyv::{Archive, Deserialize, Serialize};
+
 use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 /// Blinder used for transparent
@@ -28,6 +31,7 @@ pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[cfg_attr(feature = "canon", derive(Canon))]
+#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
 pub enum NoteType {
     /// Defines a Transparent type of Note
     Transparent = 0,
@@ -58,6 +62,7 @@ impl TryFrom<i32> for NoteType {
 /// A note that does not encrypt its value
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "canon", derive(Canon))]
+#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,
