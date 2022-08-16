@@ -22,7 +22,11 @@ use rkyv::{Archive, Deserialize, Serialize};
 /// Crossover structure containing obfuscated encrypted data
 #[derive(Clone, Copy, Debug, Default)]
 #[cfg_attr(feature = "canon", derive(Canon))]
-#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct Crossover {
     pub(crate) value_commitment: JubJubExtended,
     pub(crate) nonce: BlsScalar,

@@ -27,7 +27,11 @@ pub use remainder::Remainder;
 /// The Fee structure
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "canon", derive(Canon))]
-#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct Fee {
     /// The gas limit set for the fee
     pub gas_limit: u64,

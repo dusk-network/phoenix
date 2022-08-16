@@ -22,7 +22,11 @@ use rand_core::{CryptoRng, RngCore};
 /// Message structure with value commitment
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[cfg_attr(feature = "canon", derive(Canon))]
-#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct Message {
     value_commitment: JubJubExtended,
     nonce: BlsScalar,
