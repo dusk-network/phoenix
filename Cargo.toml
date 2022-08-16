@@ -11,13 +11,14 @@ exclude = [".github/workflows/ci.yml", ".gitignore"]
 [dependencies]
 rand_core = { version = "0.6", default-features = false }
 dusk-bytes = "0.1"
-dusk-bls12_381 = { version = "0.10", default-features = false }
+dusk-bls12_381 = { version = "0.11.0-rc", default-features = false }
 dusk-jubjub = { version = "0.12.0-rc", default-features = false }
 dusk-poseidon = { version = "0.26.0-rc", default-features = false }
 dusk-pki = { version = "0.11.0-rc", default-features = false }
 canonical = { version = "0.7", optional = true }
 canonical_derive = { version = "0.7", optional = true }
 rkyv = { version = "0.7", optional = true }
+bytecheck = { version = "0.6", optional = true }
 
 [dev-dependencies]
 assert_matches = "1.3"
@@ -34,6 +35,7 @@ rkyv-impl = [
     "dusk-poseidon/rkyv-impl",
     "dusk-jubjub/rkyv-impl",
     "dusk-pki/rkyv-impl",
-    "dusk-bls12_381/rkyv",
-    "rkyv"
+    "dusk-bls12_381/rkyv-impl",
+    "rkyv",
+    "bytecheck"
 ]

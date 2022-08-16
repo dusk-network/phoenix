@@ -31,7 +31,11 @@ pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[cfg_attr(feature = "canon", derive(Canon))]
-#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub enum NoteType {
     /// Defines a Transparent type of Note
     Transparent = 0,
@@ -62,7 +66,11 @@ impl TryFrom<i32> for NoteType {
 /// A note that does not encrypt its value
 #[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "canon", derive(Canon))]
-#[cfg_attr(feature = "rkyv-impl", derive(Archive, Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,

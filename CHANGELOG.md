@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `CheckBytes` implementation to `rkyv`ed structures
 - Add `rkyv` implementations behind feature gate [#107]
 
 ### Changed
 
+- Update `dusk-bls12_381` dependency to `0.11`
 - Update `dusk-jubjub` dependency to `0.12`
 - Update `dusk-poseidon` dependency `0.26`
 - Update `dusk-pki` dependency `0.26`
