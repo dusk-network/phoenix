@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2022-08-17
+
 ### Added
 
 - Add `CheckBytes` implementation to `rkyv`ed structures
@@ -164,7 +166,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#69]: https://github.com/dusk-network/phoenix-core/issues/69
 [#67]: https://github.com/dusk-network/phoenix-core/issues/67
 [#61]: https://github.com/dusk-network/phoenix-core/issues/61
-[unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.11.0...HEAD
+[unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/dusk-network/phoenix-core/compare/v0.12.0...v0.17.0
 [0.12.0]: https://github.com/dusk-network/phoenix-core/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/dusk-network/phoenix-core/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/dusk-network/phoenix-core/compare/v0.9.1...v0.10.0
