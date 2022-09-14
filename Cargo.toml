@@ -17,8 +17,8 @@ dusk-poseidon = { version = "0.26", default-features = false }
 dusk-pki = { version = "0.11", default-features = false }
 canonical = { version = "0.7", optional = true }
 canonical_derive = { version = "0.7", optional = true }
-rkyv = { version = "0.7", optional = true }
-bytecheck = { version = "0.6", optional = true }
+rkyv = { version = "0.7", optional = true, default-features = false }
+bytecheck = { version = "0.6", optional = true, default-features = false }
 
 [dev-dependencies]
 assert_matches = "1.3"
