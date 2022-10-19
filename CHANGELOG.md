@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] - 2022-10-19
+
 ### Added
 
 - Add support for `rkyv-impl` under `no_std`
@@ -170,7 +172,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#69]: https://github.com/dusk-network/phoenix-core/issues/69
 [#67]: https://github.com/dusk-network/phoenix-core/issues/67
 [#61]: https://github.com/dusk-network/phoenix-core/issues/61
-[unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/dusk-network/phoenix-core/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/dusk-network/phoenix-core/compare/v0.12.0...v0.17.0
 [0.12.0]: https://github.com/dusk-network/phoenix-core/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/dusk-network/phoenix-core/compare/v0.10.0...v0.11.0
