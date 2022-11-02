@@ -9,9 +9,6 @@
 use dusk_pki::Ownable;
 use dusk_pki::StealthAddress;
 
-#[cfg(feature = "canon")]
-use canonical_derive::Canon;
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -21,7 +18,6 @@ use crate::BlsScalar;
 
 /// The Remainder structure.
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),

@@ -11,9 +11,6 @@ use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
 use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
-#[cfg(feature = "canon")]
-use canonical_derive::Canon;
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -26,7 +23,6 @@ pub use remainder::Remainder;
 
 /// The Fee structure
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),

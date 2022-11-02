@@ -6,9 +6,6 @@
 
 use crate::{BlsScalar, Error, JubJubExtended, JubJubScalar, Note, NoteType};
 
-#[cfg(feature = "canon")]
-use canonical_derive::Canon;
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -21,7 +18,6 @@ use rand_core::{CryptoRng, RngCore};
 
 /// Message structure with value commitment
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -119,7 +115,10 @@ impl Message {
         let shared_secret = dhke(r, psk.A());
         let nonce = self.nonce;
 
-        let data = self.encrypted_data.decrypt(&shared_secret, &nonce)?;
+        let data = self
+            .encrypted_data
+            .decrypt(&shared_secret, &nonce)
+            .ok_or(Error::Decryption)?;
 
         let value = data[0].reduce();
         let value = value.0[0];

@@ -8,9 +8,6 @@
 
 use crate::{BlsScalar, JubJubExtended};
 
-#[cfg(feature = "canon")]
-use canonical_derive::Canon;
-
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::JubJubAffine;
 use dusk_poseidon::cipher::PoseidonCipher;
@@ -21,7 +18,6 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 /// Crossover structure containing obfuscated encrypted data
 #[derive(Clone, Copy, Debug, Default)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
