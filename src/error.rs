@@ -4,10 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
-use dusk_poseidon::Error as PoseidonError;
-
 use core::fmt;
+use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
 
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
@@ -27,24 +25,18 @@ pub enum Error {
     InvalidCrossoverConversion,
     /// Invalid Fee for conversion
     InvalidFeeConversion,
-    /// Poseidon Error
-    PoseidonError(PoseidonError),
+    /// Failure to decrypt
+    Decryption,
     /// Invalid Value Commitment
     InvalidCommitment,
     /// Invalid Nonce
     InvalidNonce,
     /// Dusk-bytes InvalidData error
     InvalidData,
-    /// Dusk-bytes BadLenght error
-    BadLenght(usize, usize),
+    /// Dusk-bytes BadLength error
+    BadLength(usize, usize),
     /// Dusk-bytes InvalidChar error
     InvalidChar(char, usize),
-}
-
-impl From<PoseidonError> for Error {
-    fn from(p: PoseidonError) -> Self {
-        Self::PoseidonError(p)
-    }
 }
 
 impl fmt::Display for Error {
@@ -57,7 +49,7 @@ impl From<Error> for DuskBytesError {
     fn from(err: Error) -> Self {
         match err {
             Error::InvalidData => DuskBytesError::InvalidData,
-            Error::BadLenght(found, expected) => {
+            Error::BadLength(found, expected) => {
                 DuskBytesError::BadLength { found, expected }
             }
             Error::InvalidChar(ch, index) => {
@@ -70,7 +62,7 @@ impl From<Error> for DuskBytesError {
 
 impl BadLength for Error {
     fn bad_length(found: usize, expected: usize) -> Self {
-        Error::BadLenght(found, expected)
+        Error::BadLength(found, expected)
     }
 }
 

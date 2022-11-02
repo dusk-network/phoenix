@@ -15,11 +15,6 @@ use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
-#[cfg(feature = "canon")]
-use canonical::Canon;
-#[cfg(feature = "canon")]
-use canonical_derive::Canon;
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
@@ -30,7 +25,6 @@ pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -65,7 +59,6 @@ impl TryFrom<i32> for NoteType {
 
 /// A note that does not encrypt its value
 #[derive(Clone, Copy, Debug)]
-#[cfg_attr(feature = "canon", derive(Canon))]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -224,7 +217,7 @@ impl Note {
         let data = self
             .encrypted_data
             .decrypt(&shared_secret, &self.nonce)
-            .map_err(|_| BytesError::InvalidData)?;
+            .ok_or(BytesError::InvalidData)?;
 
         let value = data[0].reduce();
         let value = value.0[0];
