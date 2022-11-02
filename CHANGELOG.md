@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `Error::Decryption` variant [#114]
+
+### Changed
+
+- Update `dusk-poseidon` from `0.26` to `0.28` [#114]
+
+### Removed
+
+- Remove `canon` feature [#114]
+- Remove `Error::PoseidonError` variant [#114]
+
 ## [0.17.1] - 2022-10-19
 
 ### Added
@@ -158,6 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#114]: https://github.com/dusk-network/phoenix-core/issues/114
 [#107]: https://github.com/dusk-network/phoenix-core/issues/107
 [#96]: https://github.com/dusk-network/phoenix-core/issues/96
 [#94]: https://github.com/dusk-network/phoenix-core/issues/94
