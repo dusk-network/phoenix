@@ -24,6 +24,8 @@ rand = "0.8"
 rkyv = { version = "0.7", default-features = false, features = ["size_32"] }
 
 [features]
+default = ["alloc"]
+alloc = []
 rkyv-impl = [
     "dusk-poseidon/rkyv-impl",
     "dusk-jubjub/rkyv-impl",
