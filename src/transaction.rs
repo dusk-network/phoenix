@@ -87,7 +87,7 @@ impl Transaction {
 
 /// Signature message used for [`Stct`].
 #[must_use]
-pub fn sign_message_stct(
+pub fn process_message_stct(
     crossover: &Crossover,
     value: u64,
     module_id: BlsScalar,
@@ -101,7 +101,7 @@ pub fn sign_message_stct(
 
 /// Signature message used for [`Stco`].
 #[must_use]
-pub fn sign_message_stco(
+pub fn process_message_stco(
     crossover: &Crossover,
     message: &Message,
     module_id: BlsScalar,
