@@ -14,7 +14,6 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
-use dusk_pki::StealthAddress;
 use dusk_poseidon::cipher::PoseidonCipher;
 
 use crate::Crossover;
@@ -84,108 +83,6 @@ impl Transaction {
 
         bytes
     }
-}
-
-/// Send value to a contract transparently.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Stct {
-    /// Module to send the value to.
-    pub module: ModuleId,
-    /// The value to send to the contract.
-    pub value: u64,
-    /// Serialized proof of the `STCT` circuit.
-    pub proof: Vec<u8>,
-}
-
-/// Withdraw value from a contract transparently.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Wfct {
-    /// The value to withdraw
-    pub value: u64,
-    /// The note to withdraw transparently to
-    pub note: Note,
-    /// Serialized proof of the `WFCT` circuit.
-    pub proof: Vec<u8>,
-}
-
-/// Send value to a contract anonymously.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Stco {
-    /// Module to send the value to.
-    pub module: ModuleId,
-    /// Message containing the value commitment.
-    pub message: Message,
-    /// The stealth address of the message.
-    pub message_address: StealthAddress,
-    /// Serialized proof of the `STCO` circuit.
-    pub proof: Vec<u8>,
-}
-
-/// Withdraw value from a contract anonymously.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Wfco {
-    /// Message containing the value commitment.
-    pub message: Message,
-    /// The stealth address of the message.
-    pub message_address: StealthAddress,
-    /// Message containing commitment on the change value.
-    pub change: Message,
-    /// The stealth address of the change message.
-    pub change_address: StealthAddress,
-    /// The note to withdraw to.
-    pub output: Note,
-    /// Serialized proof of the `WFCO` circuit.
-    pub proof: Vec<u8>,
-}
-
-/// Withdraw value from the calling contract to another contract.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Wfctc {
-    /// The contract to transfer value to.
-    pub module: ModuleId,
-    /// The value to transfer.
-    pub value: u64,
-}
-
-/// Mint value to a stealth address.
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "rkyv-impl",
-    derive(Archive, Serialize, Deserialize),
-    archive_attr(derive(bytecheck::CheckBytes))
-)]
-pub struct Mint {
-    /// The address to mint to.
-    pub address: StealthAddress,
-    /// The value to mint to the address.
-    pub value: u64,
-    /// A nonce to prevent replay.
-    pub nonce: BlsScalar,
 }
 
 /// Signature message used for [`Stct`].
