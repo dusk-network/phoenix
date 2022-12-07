@@ -136,7 +136,7 @@ impl Message {
     }
 }
 
-#[allow (clippy::indexing_slicing)]
+#[allow(clippy::indexing_slicing)]
 impl
     Serializable<
         { JubJubAffine::SIZE + JubJubScalar::SIZE + PoseidonCipher::SIZE },
