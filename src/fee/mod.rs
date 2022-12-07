@@ -58,6 +58,7 @@ impl Fee {
     }
 
     /// Create a new Fee without inner randomness
+    #[must_use]
     pub fn deterministic(
         gas_limit: u64,
         gas_price: u64,
@@ -74,6 +75,7 @@ impl Fee {
     }
 
     /// Return a hash represented by `H(gas_limit, gas_price, H([pskr]))`
+    #[must_use]
     pub fn hash(&self) -> BlsScalar {
         let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
 
@@ -86,9 +88,10 @@ impl Fee {
     }
 
     /// Generates a remainder from the fee and the given gas consumed
+    #[must_use]
     pub fn gen_remainder(&self, gas_consumed: u64) -> Remainder {
         // Consuming more gas than the limit provided should never
-        // occur, and it's not responsability of the `Remainder` to
+        // occur, and it's not responsibility of the `Remainder` to
         // check that.
         // Here defensively ensure it's not panicking, capping the gas
         // consumed to the gas limit.
@@ -107,7 +110,7 @@ impl Serializable<{ 8 * 2 + StealthAddress::SIZE }> for Fee {
 
     /// Converts a Fee into it's byte representation
     fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
+        let mut buf = [0_u8; Self::SIZE];
 
         buf[..8].copy_from_slice(&self.gas_limit.to_le_bytes());
         buf[8..16].copy_from_slice(&self.gas_price.to_le_bytes());
@@ -118,7 +121,7 @@ impl Serializable<{ 8 * 2 + StealthAddress::SIZE }> for Fee {
     /// Attempts to convert a byte representation of a note into a `Note`,
     /// failing if the input is invalid
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        let mut one_u64 = [0u8; 8];
+        let mut one_u64 = [0_u8; 8];
 
         one_u64.copy_from_slice(&bytes[..8]);
         let gas_limit = u64::from_le_bytes(one_u64);

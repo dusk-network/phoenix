@@ -39,13 +39,13 @@ impl Message {
         psk: &PublicSpendKey,
         value: u64,
     ) -> Self {
-        let nonce = BlsScalar::random(rng);
+        let this_nonce = BlsScalar::random(rng);
         let blinding_factor = JubJubScalar::random(rng);
 
         let note = Note::deterministic(
             NoteType::Obfuscated,
             r,
-            nonce,
+            this_nonce,
             psk,
             value,
             blinding_factor,
@@ -73,6 +73,7 @@ impl Message {
     /// * Nonce
     ///
     /// And also appends the scalars that composes the [`PoseidonCipher`]
+    #[must_use]
     pub fn to_hash_inputs(
         &self,
     ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
@@ -86,21 +87,25 @@ impl Message {
     }
 
     /// Sponge hash of the message hash inputs representation
+    #[must_use]
     pub fn hash(&self) -> BlsScalar {
         sponge::hash(&self.to_hash_inputs())
     }
 
     /// Value commitment representation of the message
+    #[must_use]
     pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Nonce used for the encryption of the value and blinding factor
+    #[must_use]
     pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
     /// Returns the cipher of the encrypted data
+    #[must_use]
     pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
@@ -131,6 +136,7 @@ impl Message {
     }
 }
 
+#[allow (clippy::indexing_slicing)]
 impl
     Serializable<
         { JubJubAffine::SIZE + JubJubScalar::SIZE + PoseidonCipher::SIZE },
@@ -139,7 +145,7 @@ impl
     type Error = Error;
 
     fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut bytes = [0u8; Self::SIZE];
+        let mut bytes = [0_u8; Self::SIZE];
         let mut b = &mut bytes[..];
 
         let value_commitment =

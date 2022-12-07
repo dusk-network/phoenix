@@ -42,7 +42,7 @@ impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
 
     /// Converts a Crossover into it's byte representation
     fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
+        let mut buf = [0_u8; Self::SIZE];
 
         buf[..32].copy_from_slice(
             &JubJubAffine::from(&self.value_commitment).to_bytes(),
@@ -79,6 +79,7 @@ impl Crossover {
     /// * Nonce
     ///
     /// And also appends the scalars that composes the [`PoseidonCipher`]
+    #[must_use]
     pub fn to_hash_inputs(
         &self,
     ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
@@ -92,21 +93,25 @@ impl Crossover {
     }
 
     /// Sponge hash of the crossover hash inputs representation
+    #[must_use]
     pub fn hash(&self) -> BlsScalar {
         sponge::hash(&self.to_hash_inputs())
     }
 
     /// Returns the Nonce used for the encrypt / decrypt of data for this note
+    #[must_use]
     pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
     /// Returns the value commitment `H(value, blinding_factor)`
+    #[must_use]
     pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the encrypted data
+    #[must_use]
     pub const fn encrypted_data(&self) -> &PoseidonCipher {
         &self.encrypted_data
     }

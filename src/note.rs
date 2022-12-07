@@ -4,6 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![allow(clippy::exhaustive_enums)] // Must be at module level to apply to derive Archive :-L
+                                    // Added #[non_exhaustive] nevertheless
+
 use core::convert::{TryFrom, TryInto};
 
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
@@ -30,6 +33,8 @@ pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
     derive(Archive, Serialize, Deserialize),
     archive_attr(derive(bytecheck::CheckBytes))
 )]
+#[non_exhaustive]
+#[allow(clippy::module_name_repetitions)]
 pub enum NoteType {
     /// Defines a Transparent type of Note
     Transparent = 0,
@@ -49,6 +54,11 @@ impl TryFrom<u8> for NoteType {
     }
 }
 
+#[allow(
+    clippy::cast_sign_loss,
+    clippy::as_conversions,
+    clippy::cast_possible_truncation
+)]
 impl TryFrom<i32> for NoteType {
     type Error = Error;
 
@@ -114,6 +124,7 @@ impl Note {
     /// This is equivalent to [`transparent`] but taking only a stealth address,
     /// a value, and a nonce. This is done to be able to generate a note
     /// directly for a stealth address, as opposed to a public spend key.
+    #[must_use]
     pub fn transparent_stealth(
         stealth_address: StealthAddress,
         value: u64,
@@ -145,7 +156,7 @@ impl Note {
     /// Creates a new obfuscated note
     ///
     /// The provided blinding factor will be used to calculate the value
-    /// commitment of the note. The tuple (value, blinding_factor), known by
+    /// commitment of the note. The tuple (value, ``blinding_factor``), known by
     /// the caller of this function, must be later used to prove the
     /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
@@ -158,6 +169,7 @@ impl Note {
     }
 
     /// Create a new phoenix output note without inner randomness
+    #[must_use]
     pub fn deterministic(
         note_type: NoteType,
         r: &JubJubScalar,
@@ -211,8 +223,8 @@ impl Note {
         &self,
         vk: &ViewKey,
     ) -> Result<(u64, JubJubScalar), BytesError> {
-        let R = self.stealth_address.R();
-        let shared_secret = dhke(vk.a(), R);
+        let r = self.stealth_address.R();
+        let shared_secret = dhke(vk.a(), r);
 
         let data = self
             .encrypted_data
@@ -233,6 +245,7 @@ impl Note {
     /// Create a unique nullifier for the note
     ///
     /// This nullifier is represeted as `H(sk_r · G', pos)`
+    #[must_use]
     pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
         let pk_prime = GENERATOR_NUMS_EXTENDED * sk_r.as_ref();
@@ -244,10 +257,12 @@ impl Note {
     }
 
     /// Return the internal representation of scalars to be hashed
+    #[must_use]
+    #[allow(clippy::as_conversions)]
     pub fn hash_inputs(&self) -> [BlsScalar; 12] {
         let value_commitment = self.value_commitment().to_hash_inputs();
         let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
-        let R = self.stealth_address().R().to_hash_inputs();
+        let r = self.stealth_address().R().to_hash_inputs();
         let cipher = self.encrypted_data.cipher();
 
         [
@@ -257,8 +272,8 @@ impl Note {
             self.nonce,
             pk_r[0],
             pk_r[1],
-            R[0],
-            R[1],
+            r[0],
+            r[1],
             BlsScalar::from(self.pos),
             cipher[0],
             cipher[1],
@@ -267,17 +282,20 @@ impl Note {
     }
 
     /// Return a hash represented by `H(note_type, value_commitment,
-    /// H(StealthAddress), pos, encrypted_data)
+    /// H(StealthAddress), pos, encrypted_data)`
+    #[must_use]
     pub fn hash(&self) -> BlsScalar {
         hash(&self.hash_inputs())
     }
 
     /// Return the type of the note
+    #[must_use]
     pub const fn note(&self) -> NoteType {
         self.note_type
     }
 
     /// Return the position of the note on the tree.
+    #[must_use]
     pub const fn pos(&self) -> &u64 {
         &self.pos
     }
@@ -289,16 +307,19 @@ impl Note {
     }
 
     /// Nonce used for the encrypt / decrypt of data for this note
+    #[must_use]
     pub const fn nonce(&self) -> &BlsScalar {
         &self.nonce
     }
 
     /// Return the value commitment `H(value, blinding_factor)`
+    #[must_use]
     pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the cipher of the encrypted data
+    #[must_use]
     pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
         self.encrypted_data.cipher()
     }
@@ -349,8 +370,9 @@ impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
     type Error = BytesError;
     /// Converts a Note into a byte representation
 
+    #[allow(clippy::as_conversions)]
     fn to_bytes(&self) -> [u8; Self::SIZE] {
-        let mut buf = [0u8; Self::SIZE];
+        let mut buf = [0_u8; Self::SIZE];
 
         buf[0] = self.note_type as u8;
 
@@ -367,7 +389,7 @@ impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
     /// Attempts to convert a byte representation of a note into a `Note`,
     /// failing if the input is invalid
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        let mut one_u64 = [0u8; 8];
+        let mut one_u64 = [0_u8; 8];
 
         let note_type =
             bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;

@@ -21,7 +21,6 @@ impl From<(Fee, Crossover)> for Note {
             value_commitment,
             nonce,
             encrypted_data,
-            ..
         } = crossover;
 
         let note_type = NoteType::Obfuscated;
@@ -67,7 +66,7 @@ impl TryFrom<Note> for (Fee, Crossover) {
                     },
                 ))
             }
-            _ => Err(Error::InvalidNoteConversion),
+            NoteType::Transparent => Err(Error::InvalidNoteConversion),
         }
     }
 }

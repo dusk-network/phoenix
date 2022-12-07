@@ -10,6 +10,7 @@ use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Error {
     /// Invalid u8 as Note Type (expected `0` or `1`, found {0})
     InvalidNoteType(u8),
@@ -45,6 +46,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(clippy::unreachable, clippy::wildcard_enum_match_arm)]
 impl From<Error> for DuskBytesError {
     fn from(err: Error) -> Self {
         match err {

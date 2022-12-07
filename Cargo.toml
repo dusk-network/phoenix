@@ -7,6 +7,7 @@ repository = "https://github.com/dusk-network/phoenix-core"
 description = "Anonymity-preserving zero-knowledge proof-powered transaction model"
 license = "MPL-2.0"
 exclude = [".github/workflows/ci.yml", ".gitignore"]
+rust-version = "1.62"
 
 [dependencies]
 rand_core = { version = "0.6", default-features = false }

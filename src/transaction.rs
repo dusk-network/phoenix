@@ -21,7 +21,7 @@ use crate::Fee;
 use crate::Message;
 use crate::Note;
 
-/// For the purposes of our transaction model, ModuleId is always a BlsScalar
+/// For the purposes of our transaction model, ``ModuleId`` is always a ``BlsScalar``
 pub type ModuleId = BlsScalar;
 
 const STCO_MESSAGE_SIZE: usize = 7 + 2 * PoseidonCipher::cipher_size();
@@ -87,6 +87,7 @@ impl Transaction {
 
 /// Signature message used for [`Stct`].
 #[must_use]
+#[allow (clippy::indexing_slicing)]
 pub fn process_message_stct(
     crossover: &Crossover,
     value: u64,
@@ -101,6 +102,7 @@ pub fn process_message_stct(
 
 /// Signature message used for [`Stco`].
 #[must_use]
+#[allow (clippy::indexing_slicing)]
 pub fn process_message_stco(
     crossover: &Crossover,
     message: &Message,
