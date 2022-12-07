@@ -34,9 +34,6 @@
 )]
 #![no_std]
 
-#[cfg(feature = "alloc")]
-extern crate alloc;
-
 /// Type's Conversion module
 mod convert;
 /// Crossover
@@ -49,10 +46,6 @@ pub mod fee;
 pub mod message;
 /// Transparent and Obfuscated Notes
 pub mod note;
-
-/// Transaction types & utilities
-#[cfg(feature = "alloc")]
-pub mod transaction;
 
 pub use crossover::Crossover;
 pub use error::Error;
