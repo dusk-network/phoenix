@@ -15,6 +15,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_poseidon::cipher::PoseidonCipher;
+use rusk_abi::hash::Hasher;
 
 use crate::Crossover;
 use crate::Fee;
@@ -116,4 +117,84 @@ pub fn process_message_stco(
     array[crossover_inputs.len() + message_inputs.len()..]
         .copy_from_slice(&[module_id]);
     array
+}
+
+/// Hash input bytes from decomposed input
+pub fn hash_input_from_components(
+    nullifiers: &[BlsScalar],
+    outputs: &[Note],
+    anchor: &BlsScalar,
+    fee: &Fee,
+    crossover: &Option<Crossover>,
+    call: &Option<(ModuleId, String, Vec<u8>)>,
+) {
+    let mut hasher = Hasher::new();
+
+    nullifiers.iter().for_each(|n| hasher.update(n.to_bytes()));
+    outputs.iter().for_each(|o| hasher.update(o.to_bytes()));
+
+    hasher.update(anchor.to_bytes());
+    hasher.update(fee.to_bytes());
+
+    if let Some(c) = crossover {
+        hasher.update(c.to_bytes());
+    };
+
+    if let Some((module_id, string, txdata)) = call {
+        hasher.update(module_id.to_bytes());
+        hasher.update(string.as_bytes());
+        hasher.update(txdata);
+    };
+
+    hasher.finalize();
+}
+
+/// Serialize a transaction
+pub fn to_var_bytes() {
+    // ...
+}
+
+/// Deserialize a transaction
+pub fn from_bytes() {
+    // ...
+}
+
+#[cfg(test)]
+mod test_transfer {
+    use super::*;
+    use crate::Error;
+
+    #[test]
+    fn find_existing_nullifiers() -> Result<(), Error> {
+        let mut transfer = TransferContract::default();
+
+        let (zero, one, two, three, ten, eleven) = (
+            BlsScalar::from(0),
+            BlsScalar::from(1),
+            BlsScalar::from(2),
+            BlsScalar::from(3),
+            BlsScalar::from(10),
+            BlsScalar::from(11),
+        );
+
+        let existing = transfer
+            .find_existing_nullifiers(&[zero, one, two, three, ten, eleven])?;
+
+        assert_eq!(existing.len(), 0);
+
+        for i in 1..10 {
+            transfer.nullifiers.insert(BlsScalar::from(i), ())?;
+        }
+
+        let existing = transfer
+            .find_existing_nullifiers(&[zero, one, two, three, ten, eleven])?;
+
+        assert_eq!(existing.len(), 3);
+
+        assert!(existing.contains(&one));
+        assert!(existing.contains(&two));
+        assert!(existing.contains(&three));
+
+        Ok(())
+    }
 }
