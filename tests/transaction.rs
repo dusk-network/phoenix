@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![cfg (feature = "alloc")]
+
 use core::convert::TryInto;
 
 use dusk_bls12_381::BlsScalar;
@@ -11,14 +13,6 @@ use dusk_jubjub::JubJubScalar;
 use dusk_pki::SecretSpendKey;
 use phoenix_core::{Error, Note, Transaction};
 use rand_core::OsRng;
-
-// pub anchor: BlsScalar,
-// pub nullifiers: Vec<BlsScalar>,
-// pub outputs: Vec<Note>,
-// pub fee: Fee,
-// pub crossover: Option<Crossover>,
-// pub proof: Vec<u8>,
-// pub call: Option<(BlsScalar, String, Vec<u8>)>,
 
 #[test]
 fn transaction_parse() -> Result<(), Error> {
