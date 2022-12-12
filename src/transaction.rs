@@ -13,23 +13,16 @@ use alloc::vec::Vec;
 use rkyv::{Archive, Deserialize, Serialize};
 
 use dusk_bls12_381::BlsScalar;
-use dusk_bytes::Serializable;
+use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_poseidon::cipher::PoseidonCipher;
-use rusk_abi::hash::Hasher;
 
-use crate::Crossover;
-use crate::Fee;
-use crate::Message;
-use crate::Note;
-
-/// For the purposes of our transaction model, ModuleId is always a BlsScalar
-pub type ModuleId = BlsScalar;
+use crate::{Crossover, Fee, Message, Note};
 
 const STCO_MESSAGE_SIZE: usize = 7 + 2 * PoseidonCipher::cipher_size();
 const STCT_MESSAGE_SIZE: usize = 5 + PoseidonCipher::cipher_size();
 
 /// A phoenix transaction.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -53,7 +46,7 @@ pub struct Transaction {
     /// A call to a contract. The `Vec<u8>` must be an `rkyv`ed representation
     /// of the data the contract expects, and the `String` the name of the
     /// function to call.
-    pub call: Option<(ModuleId, String, Vec<u8>)>,
+    pub call: Option<(BlsScalar, String, Vec<u8>)>,
 }
 
 impl Transaction {
@@ -83,6 +76,139 @@ impl Transaction {
         }
 
         bytes
+    }
+
+    /// Serialize the transaction to a variable length byte buffer.
+    #[allow(unused_must_use)]
+    pub fn to_var_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        bytes.extend(self.anchor.to_bytes());
+
+        let size = self.nullifiers.len() as u64;
+        bytes.extend(size.to_bytes());
+
+        self.nullifiers.iter().for_each(|val| {
+            bytes.extend(val.to_bytes());
+        });
+
+        let size = self.nullifiers.len() as u64;
+        bytes.extend(size.to_bytes());
+        self.outputs.iter().for_each(|val| {
+            bytes.extend(val.to_bytes());
+        });
+
+        bytes.extend(self.fee.to_bytes());
+
+        if let Some(co) = self.crossover {
+            bytes.push(1);
+            bytes.extend(co.to_bytes());
+        } else {
+            bytes.push(0);
+        }
+
+        let proof_len = self.proof.len() as u64;
+        bytes.extend(proof_len.to_bytes());
+        bytes.extend(&self.proof);
+
+        if let Some((module, fn_name, call_data)) = &self.call {
+            bytes.push(1);
+            bytes.extend(module.to_bytes());
+
+            let size = fn_name.len() as u64;
+            bytes.extend(size.to_bytes());
+            bytes.extend(fn_name.as_bytes());
+            bytes.extend(call_data);
+        } else {
+            bytes.push(0);
+        }
+        bytes
+    }
+
+    /// Deserialize the transaction from a bytes buffer.
+    pub fn from_slice(buf: &[u8]) -> Result<Self, BytesError> {
+        let mut buffer = buf;
+        let anchor = BlsScalar::from_reader(&mut buffer)?;
+        let num_nullifiers = u64::from_reader(&mut buffer)?;
+        let mut nullifiers = Vec::with_capacity(num_nullifiers as usize);
+
+        for _ in 0..num_nullifiers {
+            nullifiers.push(BlsScalar::from_reader(&mut buffer)?);
+        }
+
+        let num_outputs = u64::from_reader(&mut buffer)?;
+        let mut outputs = Vec::with_capacity(num_outputs as usize);
+        for _ in 0..num_outputs {
+            outputs.push(Note::from_reader(&mut buffer)?);
+        }
+
+        let fee = Fee::from_reader(&mut buffer)?;
+
+        let has_crossover = buffer[0] != 0;
+        let mut buffer = &buffer[1..];
+
+        let crossover = if has_crossover {
+            Some(Crossover::from_reader(&mut buffer)?)
+        } else {
+            None
+        };
+
+        let proof_size = u64::from_reader(&mut buffer)? as usize;
+        let proof = buffer[..proof_size].to_vec();
+        let buffer = &buffer[proof_size..];
+
+        let has_call = buffer[0] != 0;
+        let mut buffer = &buffer[1..];
+        let call = if has_call {
+            let module = BlsScalar::from_reader(&mut buffer)?;
+            let fn_name_size = u64::from_reader(&mut buffer)? as usize;
+            let fn_name = String::from_utf8(buffer[..fn_name_size].to_vec())
+                .map_err(|_err| BytesError::InvalidData)?;
+            let call_data = buffer[fn_name_size..].to_vec();
+            Some((module, fn_name, call_data))
+        } else {
+            None
+        };
+
+        Ok(Self {
+            anchor,
+            nullifiers,
+            outputs,
+            fee,
+            crossover,
+            proof,
+            call,
+        })
+    }
+
+    /// Returns the hash of the transaction.
+    pub fn hash(&self) -> BlsScalar {
+        todo!()
+    }
+
+    /// Returns the inputs to the transaction.
+    pub fn nullifiers(&self) -> &[BlsScalar] {
+        &self.nullifiers
+    }
+
+    /// Returns the outputs of the transaction.
+    pub fn outputs(&self) -> &[Note] {
+        &self.outputs
+    }
+
+    /// Returns the fee of the transaction.
+    pub fn fee(&self) -> &Fee {
+        &self.fee
+    }
+
+    /// Returns the crossover of the transaction.
+    pub fn crossover(&self) -> Option<&Crossover> {
+        self.crossover.as_ref()
+    }
+
+    /// Returns the call of the transaction.
+    pub fn call(&self) -> Option<&(BlsScalar, String, Vec<u8>)> {
+        self.call.as_ref()
     }
 }
 
@@ -117,84 +243,4 @@ pub fn process_message_stco(
     array[crossover_inputs.len() + message_inputs.len()..]
         .copy_from_slice(&[module_id]);
     array
-}
-
-/// Hash input bytes from decomposed input
-pub fn hash_input_from_components(
-    nullifiers: &[BlsScalar],
-    outputs: &[Note],
-    anchor: &BlsScalar,
-    fee: &Fee,
-    crossover: &Option<Crossover>,
-    call: &Option<(ModuleId, String, Vec<u8>)>,
-) {
-    let mut hasher = Hasher::new();
-
-    nullifiers.iter().for_each(|n| hasher.update(n.to_bytes()));
-    outputs.iter().for_each(|o| hasher.update(o.to_bytes()));
-
-    hasher.update(anchor.to_bytes());
-    hasher.update(fee.to_bytes());
-
-    if let Some(c) = crossover {
-        hasher.update(c.to_bytes());
-    };
-
-    if let Some((module_id, string, txdata)) = call {
-        hasher.update(module_id.to_bytes());
-        hasher.update(string.as_bytes());
-        hasher.update(txdata);
-    };
-
-    hasher.finalize();
-}
-
-/// Serialize a transaction
-pub fn to_var_bytes() {
-    // ...
-}
-
-/// Deserialize a transaction
-pub fn from_bytes() {
-    // ...
-}
-
-#[cfg(test)]
-mod test_transfer {
-    use super::*;
-    use crate::Error;
-
-    #[test]
-    fn find_existing_nullifiers() -> Result<(), Error> {
-        let mut transfer = TransferContract::default();
-
-        let (zero, one, two, three, ten, eleven) = (
-            BlsScalar::from(0),
-            BlsScalar::from(1),
-            BlsScalar::from(2),
-            BlsScalar::from(3),
-            BlsScalar::from(10),
-            BlsScalar::from(11),
-        );
-
-        let existing = transfer
-            .find_existing_nullifiers(&[zero, one, two, three, ten, eleven])?;
-
-        assert_eq!(existing.len(), 0);
-
-        for i in 1..10 {
-            transfer.nullifiers.insert(BlsScalar::from(i), ())?;
-        }
-
-        let existing = transfer
-            .find_existing_nullifiers(&[zero, one, two, three, ten, eleven])?;
-
-        assert_eq!(existing.len(), 3);
-
-        assert!(existing.contains(&one));
-        assert!(existing.contains(&two));
-        assert!(existing.contains(&three));
-
-        Ok(())
-    }
 }
