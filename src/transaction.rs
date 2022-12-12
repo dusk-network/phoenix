@@ -92,7 +92,7 @@ impl Transaction {
             bytes.extend(val.to_bytes());
         });
 
-        let size = self.nullifiers.len() as u64;
+        let size = self.outputs.len() as u64;
         bytes.extend(size.to_bytes());
         self.outputs.iter().for_each(|val| {
             bytes.extend(val.to_bytes());
@@ -179,11 +179,6 @@ impl Transaction {
             proof,
             call,
         })
-    }
-
-    /// Returns the hash of the transaction.
-    pub fn hash(&self) -> BlsScalar {
-        todo!()
     }
 
     /// Returns the inputs to the transaction.

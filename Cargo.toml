@@ -15,7 +15,6 @@ dusk-bls12_381 = { version = "0.11", default-features = false }
 dusk-jubjub = { version = "0.12", default-features = false }
 dusk-poseidon = { version = "0.28", default-features = false }
 dusk-pki = { version = "0.11", default-features = false }
-rusk-abi = { version = "0.7", default-features = false }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
 
