@@ -36,6 +36,7 @@ pub use fee::Fee;
 pub use fee::Remainder;
 pub use message::Message;
 pub use note::{Note, NoteType};
+#[cfg(feature = "alloc")]
 pub use transaction::Transaction;
 
 use dusk_bls12_381::BlsScalar;
