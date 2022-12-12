@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-#![cfg (feature = "alloc")]
+#![cfg(feature = "alloc")]
 
 use core::convert::TryInto;
 
