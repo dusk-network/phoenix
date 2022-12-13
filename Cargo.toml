@@ -24,6 +24,8 @@ rand = "0.8"
 rkyv = { version = "0.7", default-features = false, features = ["size_32"] }
 
 [features]
+default = []    # "alloc" is suggested as default feature but would be breaking change
+alloc = []
 rkyv-impl = [
     "dusk-poseidon/rkyv-impl",
     "dusk-jubjub/rkyv-impl",

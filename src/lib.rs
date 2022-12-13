@@ -10,6 +10,9 @@
 #![deny(missing_docs)]
 #![no_std]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 /// Type's Conversion module
 mod convert;
 /// Crossover
@@ -23,12 +26,18 @@ pub mod message;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
+/// Transaction types & utilities
+#[cfg(feature = "alloc")]
+pub mod transaction;
+
 pub use crossover::Crossover;
 pub use error::Error;
 pub use fee::Fee;
 pub use fee::Remainder;
 pub use message::Message;
 pub use note::{Note, NoteType};
+#[cfg(feature = "alloc")]
+pub use transaction::Transaction;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
