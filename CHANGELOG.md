@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   interaction with the stake contract [#119]
 - Add `Stct`, `Wfct`, `Stco`, `Wfco`, `Wfctc`, `Mint`, and `TreeLeaf` structs to
   allow interaction with the transfer contract [#119]
+- Add `Transaction` structure [#116]
+
+## [0.18.0] - 2022-11-02
+
+### Added
+
 - Add `Error::Decryption` variant [#114]
 
 ### Changed
@@ -181,6 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 [#119]: https://github.com/dusk-network/phoenix-core/issues/119
+[#116]: https://github.com/dusk-network/phoenix-core/issues/116
 [#114]: https://github.com/dusk-network/phoenix-core/issues/114
 [#107]: https://github.com/dusk-network/phoenix-core/issues/107
 [#96]: https://github.com/dusk-network/phoenix-core/issues/96
