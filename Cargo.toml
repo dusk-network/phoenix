@@ -12,6 +12,7 @@ exclude = [".github/workflows/ci.yml", ".gitignore"]
 rand_core = { version = "0.6", default-features = false }
 dusk-bytes = "0.1"
 dusk-bls12_381 = { version = "0.11", default-features = false }
+dusk-bls12_381-sign = { version = "0.4", default-features = false }
 dusk-jubjub = { version = "0.12", default-features = false }
 dusk-poseidon = { version = "0.28", default-features = false }
 dusk-pki = { version = "0.11", default-features = false }
@@ -31,6 +32,7 @@ rkyv-impl = [
     "dusk-jubjub/rkyv-impl",
     "dusk-pki/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
+    "dusk-bls12_381-sign/rkyv-impl",
     "rkyv",
     "bytecheck"
 ]

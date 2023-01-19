@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Add `allow_signature_message`, `stake_signature_message`,
+  `unstake_signature_message`, and `withdraw_signature_message`
+  to generate signature messages for stake contract interaction [#119]
+- Add `stct_signature_message` and `stco_signature_message` to generate
+  signature messages for transfer contract interaction [#119]
+- Add `Stake`, `Unstake`, `Withdraw`, `Allow`, and `StakeData` structs to allow
+  interaction with the stake contract [#119]
+- Add `Stct`, `Wfct`, `Stco`, `Wfco`, `Wfctc`, `Mint`, and `TreeLeaf` structs to
+  allow interaction with the transfer contract [#119]
+- Add `Transaction` structure [#116]
+
 ## [0.18.0] - 2022-11-02
 
 ### Added
@@ -173,6 +186,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#119]: https://github.com/dusk-network/phoenix-core/issues/119
+[#116]: https://github.com/dusk-network/phoenix-core/issues/116
 [#114]: https://github.com/dusk-network/phoenix-core/issues/114
 [#107]: https://github.com/dusk-network/phoenix-core/issues/107
 [#96]: https://github.com/dusk-network/phoenix-core/issues/96
