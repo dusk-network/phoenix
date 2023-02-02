@@ -244,25 +244,17 @@ impl Note {
     }
 
     /// Return the internal representation of scalars to be hashed
-    pub fn hash_inputs(&self) -> [BlsScalar; 12] {
+    pub fn hash_inputs(&self) -> [BlsScalar; 6] {
         let value_commitment = self.value_commitment().to_hash_inputs();
         let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
-        let R = self.stealth_address().R().to_hash_inputs();
-        let cipher = self.encrypted_data.cipher();
 
         [
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
-            self.nonce,
             pk_r[0],
             pk_r[1],
-            R[0],
-            R[1],
             BlsScalar::from(self.pos),
-            cipher[0],
-            cipher[1],
-            cipher[2],
         ]
     }
 
