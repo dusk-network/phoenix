@@ -1,72 +1,29 @@
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 name: Continuous integration
 
 jobs:
-  analyze:
+  code_analysis:
+    name: Code Analysis
+    uses: dusk-network/.github/.github/workflows/code-analysis.yml@main
+    with:
+      clippy_default: false
+      clippy_args: --release -- -D warnings
+
+  dusk_analyzer:
     name: Dusk Analyzer
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: --git https://github.com/dusk-network/cargo-dusk-analyzer
-      - uses: actions-rs/cargo@v1
-        with:
-          command: dusk-analyzer
+    uses: dusk-network/.github/.github/workflows/dusk-analysis.yml@main
 
-  check:
-    name: Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
+  test_std:
+    name: tests std
+    uses: dusk-network/.github/.github/workflows/run-tests.yml@main
 
-  test_nightly:
-    name: Nightly tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release
-
-  test_nightly_rkyv:
-    name: Nightly tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --features rkyv-impl
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-      - run: rustup component add rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+  test_rkyv:
+    name: tests rkyv
+    uses: dusk-network/.github/.github/workflows/run-tests.yml@main
+    with:
+      test_flags: --features rkyv-impl
