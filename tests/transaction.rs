@@ -30,11 +30,7 @@ fn transaction_parse() -> Result<(), Error> {
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
     let outputs = vec![note];
     let proof = vec![23, 45, 67];
-    let call = Some((
-        BlsScalar::from(234),
-        "TestString".to_string(),
-        vec![4, 5, 6],
-    ));
+    let call = Some(([0; 32], "TestString".to_string(), vec![4, 5, 6]));
     let transaction = Transaction {
         anchor,
         nullifiers,
