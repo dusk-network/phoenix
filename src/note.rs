@@ -13,6 +13,7 @@ use dusk_pki::{
 };
 use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge::hash;
+use ff::Field;
 use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "rkyv-impl")]
@@ -91,7 +92,7 @@ impl Note {
         blinding_factor: JubJubScalar,
     ) -> Self {
         let r = JubJubScalar::random(rng);
-        let nonce = BlsScalar::random(rng);
+        let nonce = BlsScalar::random(&mut *rng);
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
     }
@@ -225,7 +226,11 @@ impl Note {
         // Converts the BLS Scalar into a JubJub Scalar.
         // If the `vk` is wrong it might fails since the resulting BLS Scalar
         // might not fit into a JubJub Scalar.
-        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes())?;
+        let blinding_factor =
+            match JubJubScalar::from_bytes(&data[1].to_bytes()).into() {
+                Some(scalar) => scalar,
+                None => return Err(BytesError::InvalidData),
+            };
 
         Ok((value, blinding_factor))
     }

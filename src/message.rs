@@ -14,6 +14,7 @@ use dusk_jubjub::{dhke, JubJubAffine};
 use dusk_pki::PublicSpendKey;
 use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge;
+use ff::Field;
 use rand_core::{CryptoRng, RngCore};
 
 /// Message structure with value commitment
@@ -39,7 +40,7 @@ impl Message {
         psk: &PublicSpendKey,
         value: u64,
     ) -> Self {
-        let nonce = BlsScalar::random(rng);
+        let nonce = BlsScalar::random(&mut *rng);
         let blinding_factor = JubJubScalar::random(rng);
 
         let note = Note::deterministic(
@@ -124,8 +125,11 @@ impl Message {
         let value = value.0[0];
 
         // Converts the BLS Scalar into a JubJub Scalar.
-        let blinding_factor = JubJubScalar::from_bytes(&data[1].to_bytes())
-            .map_err(|_| Error::InvalidBlindingFactor)?;
+        let blinding_factor =
+            match JubJubScalar::from_bytes(&data[1].to_bytes()).into() {
+                Some(scalar) => scalar,
+                None => return Err(Error::InvalidBlindingFactor),
+            };
 
         Ok((value, blinding_factor))
     }

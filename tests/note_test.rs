@@ -8,6 +8,7 @@ use core::convert::TryInto;
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_pki::{Ownable, SecretSpendKey};
+use ff::Field;
 use phoenix_core::{Crossover, Error, Fee, Note, NoteType};
 use rand_core::OsRng;
 
@@ -29,15 +30,15 @@ fn transparent_note() -> Result<(), Error> {
 
 #[test]
 fn transparent_stealth_note() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretSpendKey::random(rng);
+    let ssk = SecretSpendKey::random(&mut rng);
     let psk = ssk.public_spend_key();
 
-    let r = JubJubScalar::random(rng);
+    let r = JubJubScalar::random(&mut rng);
 
     let sa = psk.gen_stealth_address(&r);
-    let nonce = BlsScalar::random(rng);
+    let nonce = BlsScalar::random(&mut rng);
     let value = 25;
 
     let note = Note::transparent_stealth(sa, value, nonce);
@@ -69,16 +70,16 @@ fn obfuscated_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_deterministic_note() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretSpendKey::random(rng);
+    let ssk = SecretSpendKey::random(&mut rng);
     let psk = ssk.public_spend_key();
     let vk = ssk.view_key();
     let value = 25;
 
-    let r = JubJubScalar::random(rng);
-    let nonce = BlsScalar::random(rng);
-    let blinding_factor = JubJubScalar::random(rng);
+    let r = JubJubScalar::random(&mut rng);
+    let nonce = BlsScalar::random(&mut rng);
+    let blinding_factor = JubJubScalar::random(&mut rng);
 
     let note = Note::deterministic(
         NoteType::Obfuscated,

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `dusk-bls12_381` to `0.12`
+- Update `dusk-bls12_381-sign` to `0.5`
+- Update `dusk-jubjub` to `0.13`
+- Update `dusk-poseidon` to `0.31`
+- Update `dusk-pki` to `0.13`
+
+### Added
+
+- Add `ff` dependency
+
+### Changed
+
 - Update to `dusk-poseidon@0.30`
 - Update to `dusk-pki@0.12`
 
