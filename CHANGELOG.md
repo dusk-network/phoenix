@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+[0.21.0] - 2023-10-12
+
 ### Changed
 
 - Update `dusk-bls12_381` to `0.12`
@@ -229,7 +231,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#67]: https://github.com/dusk-network/phoenix-core/issues/67
 [#61]: https://github.com/dusk-network/phoenix-core/issues/61
 
-[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/dusk-network/phoenix-core/compare/v0.19.0...v0.21.0
 [0.19.0]: https://github.com/dusk-network/phoenix-core/compare/v0.18.1...v0.19.0
 [0.18.1]: https://github.com/dusk-network/phoenix-core/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/dusk-network/phoenix-core/compare/v0.17.1...v0.18.0
