@@ -6,15 +6,13 @@
 
 //! Remainder module contains the logic related to `Remainder` structure
 
-use dusk_pki::Ownable;
-use dusk_pki::StealthAddress;
+use crate::{Ownable, StealthAddress};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
+use dusk_bls12_381::BlsScalar;
 use dusk_poseidon::sponge::hash;
-
-use crate::BlsScalar;
 
 /// The Remainder structure.
 #[derive(Clone, Copy, Debug)]

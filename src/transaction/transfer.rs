@@ -7,16 +7,15 @@
 use alloc::vec::Vec;
 
 use dusk_bls12_381::BlsScalar;
-use dusk_pki::StealthAddress;
 use dusk_poseidon::cipher::PoseidonCipher;
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
-use super::ModuleId;
-
 use crate::crossover::Crossover;
 use crate::message::Message;
 use crate::note::Note;
+use crate::transaction::ModuleId;
+use crate::StealthAddress;
 
 /// The depth of the transfer tree.
 pub const TRANSFER_TREE_DEPTH: usize = 17;

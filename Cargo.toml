@@ -15,7 +15,8 @@ dusk-bls12_381 = { version = "0.12", default-features = false }
 dusk-bls12_381-sign = { version = "0.5", default-features = false }
 dusk-jubjub = { version = "0.13", default-features = false }
 dusk-poseidon = { version = "0.31", default-features = false }
-dusk-pki = { version = "0.13", default-features = false }
+dusk-schnorr = { version = "0.15.0", default-features = false }
+subtle = { version = "^2.2.1", default-features = false }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
 ff = { version = "0.13", default-features = false }
@@ -31,7 +32,7 @@ alloc = []
 rkyv-impl = [
     "dusk-poseidon/rkyv-impl",
     "dusk-jubjub/rkyv-impl",
-    "dusk-pki/rkyv-impl",
+    "dusk-schnorr/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
     "dusk-bls12_381-sign/rkyv-impl",
     "rkyv",

@@ -4,14 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{BlsScalar, Error, JubJubExtended, JubJubScalar, Note, NoteType};
+use crate::{Error, Note, NoteType};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
+use crate::PublicKey;
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_jubjub::{dhke, JubJubAffine};
-use dusk_pki::PublicSpendKey;
+use dusk_jubjub::{dhke, JubJubAffine, JubJubExtended, JubJubScalar};
 use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge;
 use ff::Field;
@@ -37,7 +38,7 @@ impl Message {
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         r: &JubJubScalar,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
         value: u64,
     ) -> Self {
         let nonce = BlsScalar::random(&mut *rng);
@@ -111,7 +112,7 @@ impl Message {
     pub fn decrypt(
         &self,
         r: &JubJubScalar,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
     ) -> Result<(u64, JubJubScalar), Error> {
         let shared_secret = dhke(r, psk.A());
         let nonce = self.nonce;

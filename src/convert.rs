@@ -5,11 +5,11 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use crate::note::TRANSPARENT_BLINDER;
-use crate::{BlsScalar, JubJubScalar};
 use crate::{Crossover, Error, Fee, Note, NoteType, Remainder};
 
 use core::convert::TryFrom;
-use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use dusk_bls12_381::BlsScalar;
+use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use dusk_poseidon::cipher::PoseidonCipher;
 
 impl From<(Fee, Crossover)> for Note {

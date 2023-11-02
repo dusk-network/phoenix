@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[0.21.0] - 2023-10-12
+### Added
+
+- Move `PublicSpendKey` (now named `PublicKey`), `SecretSpendKey` (now named `SecretKey`), `SteathAddress`, `ViewKey` from dusk_pki [#126]
+
+## [0.21.0] - 2023-10-12
 
 ### Changed
 
@@ -213,6 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#126]: https://github.com/dusk-network/phoenix-core/issues/126
 [#119]: https://github.com/dusk-network/phoenix-core/issues/119
 [#116]: https://github.com/dusk-network/phoenix-core/issues/116
 [#114]: https://github.com/dusk-network/phoenix-core/issues/114

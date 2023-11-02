@@ -6,10 +6,9 @@
 
 //! Fee module contains the logic related to `Crossover` structure
 
-use crate::{BlsScalar, JubJubExtended};
-
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
-use dusk_jubjub::JubJubAffine;
+use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge;
 
