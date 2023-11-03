@@ -6,10 +6,12 @@
 
 use core::convert::{TryFrom, TryInto};
 
+use crate::{Error, Ownable, PublicKey, SecretKey, StealthAddress, ViewKey};
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
-use dusk_jubjub::{dhke, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
-use dusk_pki::{
-    Ownable, PublicSpendKey, SecretSpendKey, StealthAddress, ViewKey,
+use dusk_jubjub::{
+    dhke, JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
+    GENERATOR_NUMS_EXTENDED,
 };
 use dusk_poseidon::cipher::PoseidonCipher;
 use dusk_poseidon::sponge::hash;
@@ -18,8 +20,6 @@ use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
-
-use crate::{BlsScalar, Error, JubJubAffine, JubJubExtended, JubJubScalar};
 
 /// Blinder used for transparent
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
@@ -87,7 +87,7 @@ impl Note {
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
@@ -104,7 +104,7 @@ impl Note {
     /// notes, so this can be trivially treated as a constant.
     pub fn transparent<R: RngCore + CryptoRng>(
         rng: &mut R,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
         value: u64,
     ) -> Self {
         Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
@@ -114,7 +114,7 @@ impl Note {
     ///
     /// This is equivalent to [`transparent`] but taking only a stealth address,
     /// a value, and a nonce. This is done to be able to generate a note
-    /// directly for a stealth address, as opposed to a public spend key.
+    /// directly for a stealth address, as opposed to a public key.
     pub fn transparent_stealth(
         stealth_address: StealthAddress,
         value: u64,
@@ -151,7 +151,7 @@ impl Note {
     /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
@@ -163,7 +163,7 @@ impl Note {
         note_type: NoteType,
         r: &JubJubScalar,
         nonce: BlsScalar,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
@@ -238,7 +238,7 @@ impl Note {
     /// Create a unique nullifier for the note
     ///
     /// This nullifier is represeted as `H(sk_r · G', pos)`
-    pub fn gen_nullifier(&self, sk: &SecretSpendKey) -> BlsScalar {
+    pub fn gen_nullifier(&self, sk: &SecretKey) -> BlsScalar {
         let sk_r = sk.sk_r(&self.stealth_address);
         let pk_prime = GENERATOR_NUMS_EXTENDED * sk_r.as_ref();
         let pk_prime = pk_prime.to_hash_inputs();

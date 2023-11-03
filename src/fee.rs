@@ -6,8 +6,10 @@
 
 //! Fee module contains the logic related to `Fee` and `Remainder` structure
 
+use crate::{Ownable, PublicKey, StealthAddress};
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
-use dusk_pki::{Ownable, PublicSpendKey, StealthAddress};
+use dusk_jubjub::JubJubScalar;
 use dusk_poseidon::sponge::hash;
 use rand_core::{CryptoRng, RngCore};
 
@@ -15,8 +17,6 @@ use rand_core::{CryptoRng, RngCore};
 use rkyv::{Archive, Deserialize, Serialize};
 
 use core::cmp;
-
-use crate::{BlsScalar, JubJubScalar};
 
 mod remainder;
 pub use remainder::Remainder;
@@ -50,7 +50,7 @@ impl Fee {
         rng: &mut R,
         gas_limit: u64,
         gas_price: u64,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
     ) -> Self {
         let r = JubJubScalar::random(rng);
 
@@ -62,7 +62,7 @@ impl Fee {
         gas_limit: u64,
         gas_price: u64,
         r: &JubJubScalar,
-        psk: &PublicSpendKey,
+        psk: &PublicKey,
     ) -> Self {
         let stealth_address = psk.gen_stealth_address(r);
 

@@ -26,6 +26,20 @@ pub mod message;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
+/// Phoenix Core Keys & Addresses
+mod keys;
+
+mod permutation;
+
+/// Public (Spend) Key
+pub use keys::public::PublicKey;
+/// Secret (Spend) Key
+pub use keys::secret::SecretKey;
+/// Stealth Address
+pub use keys::stealth::{Ownable, StealthAddress};
+/// ViewKey
+pub use keys::view::ViewKey;
+
 /// Transaction types & utilities
 #[cfg(feature = "alloc")]
 pub mod transaction;
@@ -38,6 +52,3 @@ pub use message::Message;
 pub use note::{Note, NoteType};
 #[cfg(feature = "alloc")]
 pub use transaction::Transaction;
-
-use dusk_bls12_381::BlsScalar;
-use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
