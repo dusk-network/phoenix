@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Removed
+
+- Remove `HexDebug` trait for keys [#136]
+- Remove `public_key` and `view_key` methods from `SecretKey` in favor of the `From` trait [#136]
+- Remove `public_key` method from `ViewKey` in favor of the `From` trait [#136]
+
+## Added
+
+- Derive `Debug` trait for keys [#136]
+
 ## [0.22.0] - 2023-11-22
 
 ### Added
@@ -219,6 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+[#136]: https://github.com/dusk-network/phoenix-core/issues/136
 [#126]: https://github.com/dusk-network/phoenix-core/issues/126
 [#119]: https://github.com/dusk-network/phoenix-core/issues/119
 [#116]: https://github.com/dusk-network/phoenix-core/issues/116

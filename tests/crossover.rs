@@ -7,7 +7,7 @@
 use core::convert::TryInto;
 
 use dusk_jubjub::JubJubScalar;
-use phoenix_core::{Error, Message, Note, SecretKey};
+use phoenix_core::{Error, Message, Note, PublicKey, SecretKey};
 use rand_core::OsRng;
 
 #[test]
@@ -15,7 +15,7 @@ fn crossover_hash() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
 
     let value = 25;
     let blinding_factor = JubJubScalar::random(rng);
@@ -41,7 +41,7 @@ fn message_hash() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
     let value = 25;
 
     let r = JubJubScalar::random(rng);

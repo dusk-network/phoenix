@@ -7,7 +7,7 @@
 use dusk_bytes::Serializable;
 use dusk_jubjub::JubJubScalar;
 use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
-use phoenix_core::{Message, SecretKey};
+use phoenix_core::{Message, PublicKey, SecretKey};
 use rand_core::OsRng;
 
 #[test]
@@ -15,8 +15,8 @@ fn message_consistency() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let psk_wrong = SecretKey::random(rng).public_key();
+    let psk = PublicKey::from(ssk);
+    let psk_wrong = PublicKey::from(SecretKey::random(rng));
 
     let r = JubJubScalar::random(rng);
     let r_wrong = JubJubScalar::random(rng);
@@ -41,7 +41,7 @@ fn message_bytes() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
 
     let r = JubJubScalar::random(rng);
     let value = 106;

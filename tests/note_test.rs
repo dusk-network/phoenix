@@ -8,7 +8,10 @@ use core::convert::TryInto;
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use ff::Field;
-use phoenix_core::{Crossover, Error, Fee, Note, NoteType, Ownable, SecretKey};
+use phoenix_core::{
+    Crossover, Error, Fee, Note, NoteType, Ownable, PublicKey, SecretKey,
+    ViewKey,
+};
 use rand_core::OsRng;
 
 #[test]
@@ -16,7 +19,7 @@ fn transparent_note() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
@@ -32,7 +35,7 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let ssk = SecretKey::random(&mut rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
 
     let r = JubJubScalar::random(&mut rng);
 
@@ -54,8 +57,8 @@ fn obfuscated_note() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(rng);
@@ -72,8 +75,8 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let ssk = SecretKey::random(&mut rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
     let value = 25;
 
     let r = JubJubScalar::random(&mut rng);
@@ -100,19 +103,19 @@ fn value_commitment_transparent() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let vsk = ssk.view_key();
-    let psk = ssk.public_key();
+    let vk = ViewKey::from(ssk);
+    let psk = PublicKey::from(ssk);
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
 
     let value = note
-        .value(Some(&vsk))
+        .value(Some(&vk))
         .expect("Value not returned with the correct view key");
     let value = JubJubScalar::from(value);
 
     let blinding_factor = note
-        .blinding_factor(Some(&vsk))
+        .blinding_factor(Some(&vk))
         .expect("Blinding factor not returned with the correct view key");
 
     let commitment = note.value_commitment();
@@ -127,20 +130,20 @@ fn value_commitment_obfuscated() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let vsk = ssk.view_key();
-    let psk = ssk.public_key();
+    let vk = ViewKey::from(ssk);
+    let psk = PublicKey::from(ssk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(rng);
     let note = Note::obfuscated(rng, &psk, value, blinding_factor);
 
     let value = note
-        .value(Some(&vsk))
+        .value(Some(&vk))
         .expect("Value not returned with the correct view key");
     let value = JubJubScalar::from(value);
 
     let blinding_factor = note
-        .blinding_factor(Some(&vsk))
+        .blinding_factor(Some(&vk))
         .expect("Blinding factor not returned with the correct view key");
 
     let commitment = note.value_commitment();
@@ -155,12 +158,12 @@ fn note_keys_consistency() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
     let value = 25;
 
     let wrong_ssk = SecretKey::random(rng);
-    let wrong_vk = wrong_ssk.view_key();
+    let wrong_vk = ViewKey::from(wrong_ssk);
 
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);
@@ -177,8 +180,8 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(rng);
@@ -207,7 +210,7 @@ fn fail_fee_and_crossover_from_transparent() {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
     let value = 25;
 
     let note = Note::transparent(rng, &psk, value);
@@ -224,8 +227,8 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
 
     let gas_consumed = 3;
     let gas_limit = 10;
@@ -249,8 +252,8 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
 
     let gas_consumed = 30;
     let gas_limit = 10;
