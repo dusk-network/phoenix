@@ -10,7 +10,7 @@ use core::convert::TryInto;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
-use phoenix_core::{Error, Note, SecretKey, Transaction};
+use phoenix_core::{Error, Note, PublicKey, SecretKey, Transaction};
 use rand_core::OsRng;
 
 #[test]
@@ -18,7 +18,7 @@ fn transaction_parse() -> Result<(), Error> {
     let rng = &mut OsRng;
 
     let ssk = SecretKey::random(rng);
-    let psk = ssk.public_key();
+    let psk = PublicKey::from(ssk);
 
     let value = 25;
     let blinding_factor = JubJubScalar::random(rng);

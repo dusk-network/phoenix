@@ -6,9 +6,9 @@
 
 use crate::keys::stealth;
 
-use crate::{permutation, PublicKey, SecretKey};
+use crate::{permutation, SecretKey};
 
-use dusk_bytes::{DeserializableSlice, Error, HexDebug, Serializable};
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
     JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
 };
@@ -21,7 +21,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 ///
 /// The notes are encrypted against secret a, so this is used to decrypt the
 /// blinding factor and value
-#[derive(Clone, Copy, HexDebug)]
+#[derive(Clone, Copy, Debug)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -54,13 +54,6 @@ impl ViewKey {
         Self { a, B }
     }
 
-    /// Derive the secret to deterministically construct a [`PublicKey`]
-    pub fn public_key(&self) -> PublicKey {
-        let A = GENERATOR_EXTENDED * self.a;
-
-        PublicKey::new(A, self.B)
-    }
-
     /// Gets `a`
     pub fn a(&self) -> &JubJubScalar {
         &self.a
@@ -85,14 +78,16 @@ impl ViewKey {
 }
 
 impl From<SecretKey> for ViewKey {
-    fn from(secret: SecretKey) -> Self {
-        secret.view_key()
+    fn from(sk: SecretKey) -> Self {
+        Self::from(&sk)
     }
 }
 
 impl From<&SecretKey> for ViewKey {
-    fn from(secret: &SecretKey) -> Self {
-        secret.view_key()
+    fn from(sk: &SecretKey) -> Self {
+        let B = GENERATOR_EXTENDED * sk.b();
+
+        ViewKey::new(*sk.a(), B)
     }
 }
 

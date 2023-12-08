@@ -4,20 +4,19 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{permutation, PublicKey, StealthAddress, ViewKey};
+use crate::{permutation, StealthAddress};
 use dusk_jubjub::JubJubScalar;
 use dusk_schnorr::NoteSecretKey;
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
-use dusk_bytes::{DeserializableSlice, Error, HexDebug, Serializable};
-use dusk_jubjub::GENERATOR_EXTENDED;
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use rand_core::{CryptoRng, RngCore};
 use subtle::{Choice, ConstantTimeEq};
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]
-#[derive(Clone, Copy, Eq, HexDebug)]
+#[derive(Clone, Copy, Eq, Debug)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -61,21 +60,6 @@ impl SecretKey {
         let aR = permutation::hash(&aR);
 
         (aR + self.b).into()
-    }
-
-    /// Derive the secret to deterministically construct a [`PublicKey`]
-    pub fn public_key(&self) -> PublicKey {
-        let A = GENERATOR_EXTENDED * self.a;
-        let B = GENERATOR_EXTENDED * self.b;
-
-        PublicKey::new(A, B)
-    }
-
-    /// Derive the secret to deterministically construct a [`ViewKey`]
-    pub fn view_key(&self) -> ViewKey {
-        let B = GENERATOR_EXTENDED * self.b;
-
-        ViewKey::new(self.a, B)
     }
 }
 

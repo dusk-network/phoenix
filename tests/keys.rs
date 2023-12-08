@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::{DeserializableSlice, ParseHexStr, Serializable};
+use dusk_bytes::{DeserializableSlice, Serializable};
 use phoenix_core::{PublicKey, SecretKey, ViewKey};
 use rand_core::OsRng;
 
@@ -20,17 +20,11 @@ fn ssk_from_bytes() {
 #[test]
 fn keys_encoding() {
     let ssk = SecretKey::random(&mut OsRng);
-    let vk = ssk.view_key();
-    let psk = ssk.public_key();
+    let vk = ViewKey::from(ssk);
+    let psk = PublicKey::from(ssk);
 
-    assert_eq!(
-        vk,
-        ViewKey::from_hex_str(format!("{:x}", vk).as_str()).unwrap()
-    );
-    assert_eq!(
-        psk,
-        PublicKey::from_hex_str(format!("{:x}", psk).as_str()).unwrap()
-    );
+    assert_eq!(vk, ViewKey::from_bytes(&vk.to_bytes()).unwrap());
+    assert_eq!(psk, PublicKey::from_bytes(&psk.to_bytes()).unwrap());
 }
 
 #[test]
@@ -39,14 +33,14 @@ fn keys_consistency() {
 
     let r = JubJubScalar::random(&mut OsRng);
     let ssk = SecretKey::random(&mut OsRng);
-    let psk = ssk.public_key();
-    let vk = ssk.view_key();
+    let psk = PublicKey::from(ssk);
+    let vk = ViewKey::from(ssk);
     let sa = psk.gen_stealth_address(&r);
 
     assert!(vk.owns(&sa));
 
     let wrong_ssk = SecretKey::random(&mut OsRng);
-    let wrong_vk = wrong_ssk.view_key();
+    let wrong_vk = ViewKey::from(wrong_ssk);
 
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);

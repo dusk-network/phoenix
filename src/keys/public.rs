@@ -4,19 +4,19 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{permutation, SecretKey, StealthAddress};
+use crate::{permutation, SecretKey, StealthAddress, ViewKey};
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
-use dusk_bytes::{DeserializableSlice, Error, HexDebug, Serializable};
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::GENERATOR_EXTENDED;
 use subtle::{Choice, ConstantTimeEq};
 
 /// Public pair of `a·G` and `b·G` defining a [`PublicKey`]
-#[derive(HexDebug, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -75,14 +75,31 @@ impl PartialEq for PublicKey {
 impl Eq for PublicKey {}
 
 impl From<SecretKey> for PublicKey {
-    fn from(secret: SecretKey) -> Self {
-        secret.public_key()
+    fn from(sk: SecretKey) -> Self {
+        Self::from(&sk)
     }
 }
 
 impl From<&SecretKey> for PublicKey {
-    fn from(secret: &SecretKey) -> Self {
-        secret.public_key()
+    fn from(sk: &SecretKey) -> Self {
+        let A = GENERATOR_EXTENDED * sk.a();
+        let B = GENERATOR_EXTENDED * sk.b();
+
+        PublicKey::new(A, B)
+    }
+}
+
+impl From<ViewKey> for PublicKey {
+    fn from(vk: ViewKey) -> Self {
+        Self::from(&vk)
+    }
+}
+
+impl From<&ViewKey> for PublicKey {
+    fn from(vk: &ViewKey) -> Self {
+        let A = GENERATOR_EXTENDED * vk.a();
+
+        PublicKey::new(A, *vk.B())
     }
 }
 

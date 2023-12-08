@@ -7,7 +7,7 @@
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use dusk_schnorr::NotePublicKey;
 
-use dusk_bytes::{DeserializableSlice, Error, HexDebug, Serializable};
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 
 use subtle::{Choice, ConstantTimeEq};
 
@@ -17,8 +17,8 @@ use rkyv::{Archive, Deserialize, Serialize};
 /// To obfuscate the identity of the participants, we utilizes a Stealth Address
 /// system.
 /// A `StealthAddress` is composed by a one-time public key (`pk_r`, the actual
-// address) and a random point `R`.
-#[derive(Default, HexDebug, Clone, Copy)]
+/// address) and a random point `R`.
+#[derive(Default, Debug, Clone, Copy)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
