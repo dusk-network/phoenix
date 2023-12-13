@@ -6,7 +6,8 @@
 
 use crate::{permutation, StealthAddress};
 use dusk_jubjub::JubJubScalar;
-use dusk_schnorr::NoteSecretKey;
+use dusk_schnorr::SecretKey as NoteSecretKey;
+use ff::Field;
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
@@ -47,8 +48,8 @@ impl SecretKey {
     /// Deterministically create a new [`SecretKey`] from a random number
     /// generator
     pub fn random<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
-        let a = JubJubScalar::random(rng);
-        let b = JubJubScalar::random(rng);
+        let a = JubJubScalar::random(&mut *rng);
+        let b = JubJubScalar::random(&mut *rng);
 
         SecretKey::new(a, b)
     }

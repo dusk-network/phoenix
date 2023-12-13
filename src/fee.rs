@@ -11,6 +11,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::JubJubScalar;
 use dusk_poseidon::sponge::hash;
+use ff::Field;
 use rand_core::{CryptoRng, RngCore};
 
 #[cfg(feature = "rkyv-impl")]
@@ -52,7 +53,7 @@ impl Fee {
         gas_price: u64,
         psk: &PublicKey,
     ) -> Self {
-        let r = JubJubScalar::random(rng);
+        let r = JubJubScalar::random(&mut *rng);
 
         Self::deterministic(gas_limit, gas_price, &r, psk)
     }

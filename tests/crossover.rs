@@ -7,23 +7,24 @@
 use core::convert::TryInto;
 
 use dusk_jubjub::JubJubScalar;
+use ff::Field;
 use phoenix_core::{Error, Message, Note, PublicKey, SecretKey};
 use rand_core::OsRng;
 
 #[test]
 fn crossover_hash() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
 
     let value = 25;
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     let value = 25;
-    let blinding_factor = JubJubScalar::random(rng);
-    let note_p = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note_p = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     let (_, crossover) = note.try_into()?;
     let (_, crossover_p) = note_p.try_into()?;
@@ -38,17 +39,17 @@ fn crossover_hash() -> Result<(), Error> {
 
 #[test]
 fn message_hash() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let value = 25;
 
-    let r = JubJubScalar::random(rng);
-    let message = Message::new(rng, &r, &psk, value);
+    let r = JubJubScalar::random(&mut rng);
+    let message = Message::new(&mut rng, &r, &psk, value);
 
-    let r_p = JubJubScalar::random(rng);
-    let message_p = Message::new(rng, &r_p, &psk, value);
+    let r_p = JubJubScalar::random(&mut rng);
+    let message_p = Message::new(&mut rng, &r_p, &psk, value);
 
     let hash = message.hash();
     let hash_p = message_p.hash();

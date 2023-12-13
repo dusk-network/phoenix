@@ -7,22 +7,23 @@
 use dusk_bytes::Serializable;
 use dusk_jubjub::JubJubScalar;
 use dusk_jubjub::{GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use ff::Field;
 use phoenix_core::{Message, PublicKey, SecretKey};
 use rand_core::OsRng;
 
 #[test]
 fn message_consistency() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
-    let psk_wrong = PublicKey::from(SecretKey::random(rng));
+    let psk_wrong = PublicKey::from(SecretKey::random(&mut rng));
 
-    let r = JubJubScalar::random(rng);
-    let r_wrong = JubJubScalar::random(rng);
+    let r = JubJubScalar::random(&mut rng);
+    let r_wrong = JubJubScalar::random(&mut rng);
     let value = 105;
 
-    let message = Message::new(rng, &r, &psk, value);
+    let message = Message::new(&mut rng, &r, &psk, value);
     let value_commitment = message.value_commitment();
     let (value_p, blinding_factor) = message.decrypt(&r, &psk).unwrap();
     assert!(message.decrypt(&r_wrong, &psk).is_err());
@@ -38,15 +39,15 @@ fn message_consistency() {
 
 #[test]
 fn message_bytes() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
 
-    let r = JubJubScalar::random(rng);
+    let r = JubJubScalar::random(&mut rng);
     let value = 106;
 
-    let m = Message::new(rng, &r, &psk, value);
+    let m = Message::new(&mut rng, &r, &psk, value);
     let m_p = m.to_bytes();
     let m_p = Message::from_bytes(&m_p).unwrap();
 

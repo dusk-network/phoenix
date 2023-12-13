@@ -5,6 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_bytes::{DeserializableSlice, Serializable};
+use ff::Field;
 use phoenix_core::{PublicKey, SecretKey, ViewKey};
 use rand_core::OsRng;
 
