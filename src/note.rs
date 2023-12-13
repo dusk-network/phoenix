@@ -91,7 +91,7 @@ impl Note {
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        let r = JubJubScalar::random(rng);
+        let r = JubJubScalar::random(&mut *rng);
         let nonce = BlsScalar::random(&mut *rng);
 
         Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)

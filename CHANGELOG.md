@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Derive `Debug` trait for keys [#136]
 
+## Changed
+
+- Update dusk-bls12_381 -> 0.13
+- Update dusk-jubjub -> 0.14
+- Update dusk-poseidon -> 0.32
+- Update bls12_381-sign -> 0.6
+- Update dusk-schnorr -> 0.17
+
 ## [0.22.0] - 2023-11-22
 
 ### Added

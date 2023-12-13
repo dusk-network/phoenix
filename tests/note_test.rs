@@ -16,13 +16,13 @@ use rand_core::OsRng;
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let note = Note::transparent(&mut rng, &psk, value);
 
     assert_eq!(note.note(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
@@ -54,15 +54,15 @@ fn transparent_stealth_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_note() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let vk = ViewKey::from(ssk);
     let value = 25;
 
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     assert_eq!(note.note(), NoteType::Obfuscated);
     assert_eq!(value, note.value(Some(&vk))?);
@@ -100,14 +100,14 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
 
 #[test]
 fn value_commitment_transparent() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let vk = ViewKey::from(ssk);
     let psk = PublicKey::from(ssk);
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let note = Note::transparent(&mut rng, &psk, value);
 
     let value = note
         .value(Some(&vk))
@@ -127,15 +127,15 @@ fn value_commitment_transparent() {
 
 #[test]
 fn value_commitment_obfuscated() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let vk = ViewKey::from(ssk);
     let psk = PublicKey::from(ssk);
     let value = 25;
 
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     let value = note
         .value(Some(&vk))
@@ -155,21 +155,21 @@ fn value_commitment_obfuscated() {
 
 #[test]
 fn note_keys_consistency() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let vk = ViewKey::from(ssk);
     let value = 25;
 
-    let wrong_ssk = SecretKey::random(rng);
+    let wrong_ssk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(wrong_ssk);
 
     assert_ne!(ssk, wrong_ssk);
     assert_ne!(vk, wrong_vk);
 
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
@@ -177,19 +177,19 @@ fn note_keys_consistency() {
 
 #[test]
 fn fee_and_crossover_generation() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let vk = ViewKey::from(ssk);
     let value = 25;
 
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
     let (fee, crossover): (Fee, Crossover) = note.try_into()?;
 
-    let ssk_fee = SecretKey::random(rng);
-    let wrong_fee = Fee::new(rng, 0, 0, &ssk_fee.into());
+    let ssk_fee = SecretKey::random(&mut rng);
+    let wrong_fee = Fee::new(&mut rng, 0, 0, &ssk_fee.into());
     let wrong_note: Note = (wrong_fee, crossover).into();
 
     assert_ne!(note, wrong_note);
@@ -207,13 +207,13 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 
 #[test]
 fn fail_fee_and_crossover_from_transparent() {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let value = 25;
 
-    let note = Note::transparent(rng, &psk, value);
+    let note = Note::transparent(&mut rng, &psk, value);
     let result: Result<(Fee, Crossover), Error> = note.try_into();
 
     assert!(
@@ -224,9 +224,9 @@ fn fail_fee_and_crossover_from_transparent() {
 
 #[test]
 fn transparent_from_fee_remainder() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let vk = ViewKey::from(ssk);
 
@@ -234,7 +234,7 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let gas_limit = 10;
     let gas_price = 2;
 
-    let fee = Fee::new(rng, gas_limit, gas_price, &psk);
+    let fee = Fee::new(&mut rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
     let note = Note::from(remainder);
 
@@ -249,9 +249,9 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
 
 #[test]
 fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
     let vk = ViewKey::from(ssk);
 
@@ -259,7 +259,7 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let gas_limit = 10;
     let gas_price = 2;
 
-    let fee = Fee::new(rng, gas_limit, gas_price, &psk);
+    let fee = Fee::new(&mut rng, gas_limit, gas_price, &psk);
     let remainder = fee.gen_remainder(gas_consumed);
     let note = Note::from(remainder);
 

@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
-use dusk_schnorr::NotePublicKey;
+use dusk_schnorr::PublicKey as NotePublicKey;
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 
