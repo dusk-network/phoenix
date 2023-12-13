@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2023-12-13
+
 ## Removed
 
 - Remove `HexDebug` trait for keys [#136]
@@ -237,6 +239,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
+<!-- VERSIONS -->
 [#136]: https://github.com/dusk-network/phoenix-core/issues/136
 [#126]: https://github.com/dusk-network/phoenix-core/issues/126
 [#119]: https://github.com/dusk-network/phoenix-core/issues/119
@@ -257,7 +260,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#67]: https://github.com/dusk-network/phoenix-core/issues/67
 [#61]: https://github.com/dusk-network/phoenix-core/issues/61
 
-[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.22.0...HEAD
+<!-- ISSUES -->
+[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/dusk-network/phoenix-core/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/dusk-network/phoenix-core/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/dusk-network/phoenix-core/compare/v0.19.0...v0.21.0
 [0.19.0]: https://github.com/dusk-network/phoenix-core/compare/v0.18.1...v0.19.0
