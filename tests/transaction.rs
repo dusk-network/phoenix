@@ -10,19 +10,20 @@ use core::convert::TryInto;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
+use ff::Field;
 use phoenix_core::{Error, Note, PublicKey, SecretKey, Transaction};
 use rand_core::OsRng;
 
 #[test]
 fn transaction_parse() -> Result<(), Error> {
-    let rng = &mut OsRng;
+    let mut rng = OsRng;
 
-    let ssk = SecretKey::random(rng);
+    let ssk = SecretKey::random(&mut rng);
     let psk = PublicKey::from(ssk);
 
     let value = 25;
-    let blinding_factor = JubJubScalar::random(rng);
-    let note = Note::obfuscated(rng, &psk, value, blinding_factor);
+    let blinding_factor = JubJubScalar::random(&mut rng);
+    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
     let (fee, crossover) = note.try_into()?;
     let anchor = BlsScalar::from(123);
