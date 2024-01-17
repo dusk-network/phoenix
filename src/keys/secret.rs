@@ -6,8 +6,8 @@
 
 use crate::{permutation, StealthAddress};
 use dusk_jubjub::JubJubScalar;
-use dusk_schnorr::SecretKey as NoteSecretKey;
 use ff::Field;
+use jubjub_schnorr::SecretKey as NoteSecretKey;
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};

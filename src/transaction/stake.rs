@@ -7,8 +7,8 @@
 use alloc::vec::Vec;
 
 use crate::StealthAddress;
+use bls12_381_bls::{PublicKey, Signature};
 use dusk_bls12_381::BlsScalar;
-use dusk_bls12_381_sign::{PublicKey, Signature};
 use dusk_bytes::Serializable;
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
