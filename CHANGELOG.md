@@ -7,26 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Exchanged `dusk-schnorr@0.18` dependency for `jubjub-schnorr@0.1`
+- Exchanged `dusk-bls12_381-sign@0.6` dependency for `bls12_381-bls@0.1`
+
 ## [0.24.0] - 2024-01-03
 
-## Changed
+### Changed
 
 - Update dusk-poseidon -> 0.33
 - Update dusk-schnorr -> 0.18
 
 ## [0.23.0] - 2023-12-13
 
-## Removed
+### Removed
 
 - Remove `HexDebug` trait for keys [#136]
 - Remove `public_key` and `view_key` methods from `SecretKey` in favor of the `From` trait [#136]
 - Remove `public_key` method from `ViewKey` in favor of the `From` trait [#136]
 
-## Added
+### Added
 
 - Derive `Debug` trait for keys [#136]
 
-## Changed
+### Changed
 
 - Update dusk-bls12_381 -> 0.13
 - Update dusk-jubjub -> 0.14
