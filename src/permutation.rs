@@ -4,11 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubExtended, JubJubScalar};
-use dusk_poseidon::sponge::truncated;
+use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 
-/// Hashes a JubJub's ExtendedPoint into a JubJub's Scalar using the poseidon
-/// hash function
+/// Hashes a JubJub's ExtendedPoint into a JubJub's Scalar using the JubJub's
+/// hash to scalar function
 pub fn hash(p: &JubJubExtended) -> JubJubScalar {
-    truncated::hash(&p.to_hash_inputs())
+    dusk_jubjub::Fr::hash_to_scalar(&JubJubAffine::from(p).to_bytes())
 }
