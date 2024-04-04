@@ -4,7 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
+
 pub mod public;
 pub mod secret;
 pub mod stealth;
 pub mod view;
+
+/// Hashes a JubJub's ExtendedPoint into a JubJub's Scalar using the JubJub's
+/// hash to scalar function
+pub fn hash(p: &JubJubExtended) -> JubJubScalar {
+    JubJubScalar::hash_to_scalar(&JubJubAffine::from(p).to_bytes())
+}

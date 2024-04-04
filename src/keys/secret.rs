@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{permutation, StealthAddress};
+use crate::{keys::hash, StealthAddress};
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
@@ -58,7 +58,7 @@ impl SecretKey {
     /// With the formula: `sk_r = H(a · R) + b`
     pub fn sk_r(&self, sa: &StealthAddress) -> NoteSecretKey {
         let aR = sa.R() * self.a;
-        let aR = permutation::hash(&aR);
+        let aR = hash(&aR);
 
         (aR + self.b).into()
     }

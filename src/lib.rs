@@ -29,8 +29,6 @@ pub mod note;
 /// Phoenix Core Keys & Addresses
 mod keys;
 
-mod permutation;
-
 /// Public (Spend) Key
 pub use keys::public::PublicKey;
 /// Secret (Spend) Key
