@@ -6,7 +6,7 @@
 
 use crate::keys::stealth;
 
-use crate::{permutation, SecretKey};
+use crate::{keys::hash, SecretKey};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
@@ -69,7 +69,7 @@ impl ViewKey {
         let sa = owner.stealth_address();
 
         let aR = sa.R() * self.a();
-        let aR = permutation::hash(&aR);
+        let aR = hash(&aR);
         let aR = GENERATOR_EXTENDED * aR;
         let pk_r = aR + self.B();
 

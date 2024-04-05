@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{permutation, SecretKey, StealthAddress, ViewKey};
+use crate::{keys::hash, SecretKey, StealthAddress, ViewKey};
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 
@@ -50,7 +50,7 @@ impl PublicKey {
         let R = G * r;
 
         let rA = self.A * r;
-        let rA = permutation::hash(&rA);
+        let rA = hash(&rA);
         let rA = G * rA;
 
         let pk_r = rA + self.B;
