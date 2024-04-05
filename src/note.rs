@@ -13,7 +13,9 @@ use dusk_jubjub::{
     dhke, JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
     GENERATOR_NUMS_EXTENDED,
 };
-use dusk_poseidon::cipher::PoseidonCipher;
+
+use crate::encryption::{decrypt, encrypt, ENCRYPTION_EXTRA_SIZE};
+
 use dusk_poseidon::sponge::hash;
 use ff::Field;
 use rand_core::{CryptoRng, RngCore};
@@ -23,6 +25,13 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 /// Blinder used for transparent
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
+
+/// Size of the Phoenix notes plaintext: value (8 bytes) + blinder (32 bytes)
+pub(crate) const PLAINTEXT_SIZE: usize = 40;
+
+/// Size of the Phoenix notes encryption
+pub(crate) const ENCRYPTION_SIZE: usize =
+    PLAINTEXT_SIZE + ENCRYPTION_EXTRA_SIZE;
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -59,7 +68,7 @@ impl TryFrom<i32> for NoteType {
 }
 
 /// A note that does not encrypt its value
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -68,10 +77,9 @@ impl TryFrom<i32> for NoteType {
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,
-    pub(crate) nonce: BlsScalar,
     pub(crate) stealth_address: StealthAddress,
     pub(crate) pos: u64,
-    pub(crate) encrypted_data: PoseidonCipher,
+    pub(crate) encryption: [u8; ENCRYPTION_SIZE],
 }
 
 impl PartialEq for Note {
@@ -87,14 +95,46 @@ impl Note {
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
+        r: &JubJubScalar,
         psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        let r = JubJubScalar::random(&mut *rng);
-        let nonce = BlsScalar::random(&mut *rng);
+        let stealth_address = psk.gen_stealth_address(r);
 
-        Self::deterministic(note_type, &r, nonce, psk, value, blinding_factor)
+        let value_commitment = JubJubScalar::from(value);
+        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
+            + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+
+        // Output notes have undefined position, equals to u64's MAX value
+        let pos = u64::MAX;
+
+        let encryption = match note_type {
+            NoteType::Transparent => {
+                let mut encryption = [0u8; ENCRYPTION_SIZE];
+                encryption[..u64::SIZE].copy_from_slice(&value.to_bytes());
+
+                encryption
+            }
+            NoteType::Obfuscated => {
+                let shared_secret = dhke(r, psk.A());
+                let blinding_factor = BlsScalar::from(blinding_factor);
+
+                let mut plaintext = value.to_bytes().to_vec();
+                plaintext.append(&mut blinding_factor.to_bytes().to_vec());
+
+                encrypt(&shared_secret, &plaintext, rng)
+                    .expect("Encrypted correctly.")
+            }
+        };
+
+        Note {
+            note_type,
+            value_commitment,
+            stealth_address,
+            pos,
+            encryption,
+        }
     }
 
     /// Creates a new transparent note
@@ -107,18 +147,25 @@ impl Note {
         psk: &PublicKey,
         value: u64,
     ) -> Self {
-        Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
+        let r = JubJubScalar::random(&mut *rng);
+        Self::new(
+            rng,
+            NoteType::Transparent,
+            &r,
+            psk,
+            value,
+            TRANSPARENT_BLINDER,
+        )
     }
 
     /// Creates a new transparent note
     ///
     /// This is equivalent to [`transparent`] but taking only a stealth address,
-    /// a value, and a nonce. This is done to be able to generate a note
+    /// and a value. This is done to be able to generate a note
     /// directly for a stealth address, as opposed to a public key.
     pub fn transparent_stealth(
         stealth_address: StealthAddress,
         value: u64,
-        nonce: BlsScalar,
     ) -> Self {
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
@@ -126,20 +173,15 @@ impl Note {
 
         let pos = u64::MAX;
 
-        let zero = TRANSPARENT_BLINDER.into();
-        let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
-
-        encrypted_data[0] = BlsScalar::from(value);
-
-        let encrypted_data = PoseidonCipher::new(encrypted_data);
+        let mut encryption = [0u8; ENCRYPTION_SIZE];
+        encryption[..u64::SIZE].copy_from_slice(&value.to_bytes());
 
         Note {
             note_type: NoteType::Transparent,
             value_commitment,
-            nonce,
             stealth_address,
             pos,
-            encrypted_data,
+            encryption,
         }
     }
 
@@ -155,57 +197,8 @@ impl Note {
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor)
-    }
-
-    /// Create a new phoenix output note without inner randomness
-    pub fn deterministic(
-        note_type: NoteType,
-        r: &JubJubScalar,
-        nonce: BlsScalar,
-        psk: &PublicKey,
-        value: u64,
-        blinding_factor: JubJubScalar,
-    ) -> Self {
-        let stealth_address = psk.gen_stealth_address(r);
-
-        let value_commitment = JubJubScalar::from(value);
-        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
-            + (GENERATOR_NUMS_EXTENDED * blinding_factor);
-
-        // Output notes have undefined position, equals to u64's MAX value
-        let pos = u64::MAX;
-
-        let encrypted_data = match note_type {
-            NoteType::Transparent => {
-                let zero = TRANSPARENT_BLINDER.into();
-                let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
-
-                encrypted_data[0] = BlsScalar::from(value);
-
-                PoseidonCipher::new(encrypted_data)
-            }
-            NoteType::Obfuscated => {
-                let shared_secret = dhke(r, psk.A());
-                let value = BlsScalar::from(value);
-                let blinding_factor = BlsScalar::from(blinding_factor);
-
-                PoseidonCipher::encrypt(
-                    &[value, blinding_factor],
-                    &shared_secret,
-                    &nonce,
-                )
-            }
-        };
-
-        Note {
-            note_type,
-            value_commitment,
-            nonce,
-            stealth_address,
-            pos,
-            encrypted_data,
-        }
+        let r = JubJubScalar::random(&mut *rng);
+        Self::new(rng, NoteType::Obfuscated, &r, psk, value, blinding_factor)
     }
 
     fn decrypt_data(
@@ -215,19 +208,17 @@ impl Note {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
 
-        let data = self
-            .encrypted_data
-            .decrypt(&shared_secret, &self.nonce)
-            .ok_or(BytesError::InvalidData)?;
+        let dec_plaintext: [u8; PLAINTEXT_SIZE] =
+            decrypt(&shared_secret, &self.encryption)?;
 
-        let value = data[0].reduce();
-        let value = value.0[0];
+        let value = u64::from_slice(&dec_plaintext[..u64::SIZE])?;
 
         // Converts the BLS Scalar into a JubJub Scalar.
         // If the `vk` is wrong it might fails since the resulting BLS Scalar
         // might not fit into a JubJub Scalar.
         let blinding_factor =
-            match JubJubScalar::from_bytes(&data[1].to_bytes()).into() {
+            match JubJubScalar::from_slice(&dec_plaintext[u64::SIZE..])?.into()
+            {
                 Some(scalar) => scalar,
                 None => return Err(BytesError::InvalidData),
             };
@@ -285,19 +276,14 @@ impl Note {
         self.pos = pos;
     }
 
-    /// Nonce used for the encrypt / decrypt of data for this note
-    pub const fn nonce(&self) -> &BlsScalar {
-        &self.nonce
-    }
-
     /// Return the value commitment `H(value, blinding_factor)`
     pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the cipher of the encrypted data
-    pub const fn cipher(&self) -> &[BlsScalar; PoseidonCipher::cipher_size()] {
-        self.encrypted_data.cipher()
+    pub const fn encryption(&self) -> &[u8; ENCRYPTION_SIZE] {
+        &self.encryption
     }
 
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
@@ -306,9 +292,9 @@ impl Note {
     pub fn value(&self, vk: Option<&ViewKey>) -> Result<u64, Error> {
         match (self.note_type, vk) {
             (NoteType::Transparent, _) => {
-                let value = self.encrypted_data.cipher();
-                let value = value[0].reduce();
-                Ok(value.0[0])
+                let value =
+                    u64::from_slice(&self.encryption[..u64::SIZE]).unwrap();
+                Ok(value)
             }
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_data(vk)
@@ -342,10 +328,13 @@ impl Ownable for Note {
     }
 }
 
-impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
+// Serialize into 105 + ENCRYPTION_SIZE bytes, where 105 is the size of all the
+// note elements without the encryption. ENCRYPTION_SIZE = PLAINTEXT_SIZE +
+// ENCRYPTION_EXTRA_SIZE
+impl Serializable<{ 105 + ENCRYPTION_SIZE }> for Note {
     type Error = BytesError;
-    /// Converts a Note into a byte representation
 
+    /// Converts a Note into a byte representation
     fn to_bytes(&self) -> [u8; Self::SIZE] {
         let mut buf = [0u8; Self::SIZE];
 
@@ -354,10 +343,9 @@ impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
         buf[1..33].copy_from_slice(
             &JubJubAffine::from(&self.value_commitment).to_bytes(),
         );
-        buf[33..65].copy_from_slice(&self.nonce.to_bytes());
-        buf[65..129].copy_from_slice(&self.stealth_address.to_bytes());
-        buf[129..137].copy_from_slice(&self.pos.to_le_bytes());
-        buf[137..].copy_from_slice(&self.encrypted_data.to_bytes());
+        buf[33..97].copy_from_slice(&self.stealth_address.to_bytes());
+        buf[97..105].copy_from_slice(&self.pos.to_le_bytes());
+        buf[105..].copy_from_slice(&self.encryption);
         buf
     }
 
@@ -370,21 +358,20 @@ impl Serializable<{ 137 + PoseidonCipher::SIZE }> for Note {
             bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
         let value_commitment =
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[1..33])?);
-        let nonce = BlsScalar::from_slice(&bytes[33..65])?;
-        let stealth_address = StealthAddress::from_slice(&bytes[65..129])?;
+        let stealth_address = StealthAddress::from_slice(&bytes[33..97])?;
 
-        one_u64.copy_from_slice(&bytes[129..137]);
+        one_u64.copy_from_slice(&bytes[97..105]);
         let pos = u64::from_le_bytes(one_u64);
 
-        let encrypted_data = PoseidonCipher::from_slice(&bytes[137..])?;
+        let mut encryption = [0u8; ENCRYPTION_SIZE];
+        encryption.copy_from_slice(&bytes[105..]);
 
         Ok(Note {
             note_type,
             value_commitment,
-            nonce,
             stealth_address,
             pos,
-            encrypted_data,
+            encryption,
         })
     }
 }

@@ -8,7 +8,7 @@ use core::convert::TryInto;
 
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
-use phoenix_core::{Error, Message, Note, PublicKey, SecretKey};
+use phoenix_core::{Error, Note, PublicKey, SecretKey};
 use rand_core::OsRng;
 
 #[test]
@@ -29,32 +29,7 @@ fn crossover_hash() -> Result<(), Error> {
     let (_, crossover) = note.try_into()?;
     let (_, crossover_p) = note_p.try_into()?;
 
-    let hash = crossover.hash();
-    let hash_p = crossover_p.hash();
-
-    assert_ne!(hash, hash_p);
-
-    Ok(())
-}
-
-#[test]
-fn message_hash() -> Result<(), Error> {
-    let mut rng = OsRng;
-
-    let ssk = SecretKey::random(&mut rng);
-    let psk = PublicKey::from(ssk);
-    let value = 25;
-
-    let r = JubJubScalar::random(&mut rng);
-    let message = Message::new(&mut rng, &r, &psk, value);
-
-    let r_p = JubJubScalar::random(&mut rng);
-    let message_p = Message::new(&mut rng, &r_p, &psk, value);
-
-    let hash = message.hash();
-    let hash_p = message_p.hash();
-
-    assert_ne!(hash, hash_p);
+    assert_ne!(crossover.value_commitment(), crossover_p.value_commitment());
 
     Ok(())
 }

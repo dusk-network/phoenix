@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add an `Encryption` module that uses AES-GCM [#152].
+
 ### Changed
 
 - Update bls12_381-bls -> 0.2
 - Update jubjub-schnorr -> 0.2
 - Use Blake for computing the stealth addresses, instead of Poseidon.
+- Use AES-GCM from the `Encryption` module throughout the code, instead of `PoseidonCipher`.
+
+### Removed 
+
+- Remove the `Message` module.
 
 ## [0.25.0] - 2024-01-24
 
@@ -259,7 +268,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removal of anyhow error implementation.
 - Canonical implementation shielded by feature.
 
-<!-- VERSIONS -->
+<!-- ISSUES -->
+[#152]: https://github.com/dusk-network/phoenix-core/issues/152
 [#136]: https://github.com/dusk-network/phoenix-core/issues/136
 [#126]: https://github.com/dusk-network/phoenix-core/issues/126
 [#119]: https://github.com/dusk-network/phoenix-core/issues/119
@@ -280,7 +290,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#67]: https://github.com/dusk-network/phoenix-core/issues/67
 [#61]: https://github.com/dusk-network/phoenix-core/issues/61
 
-<!-- ISSUES -->
+<!-- VERSIONS -->
 [Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.25.0...HEAD
 [0.25.0]: https://github.com/dusk-network/phoenix-core/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/dusk-network/phoenix-core/compare/v0.23.0...v0.24.0

@@ -21,14 +21,17 @@ pub mod crossover;
 pub mod error;
 /// Fee
 pub mod fee;
-/// Message representation
-pub mod message;
 /// Transparent and Obfuscated Notes
 pub mod note;
 
 /// Phoenix Core Keys & Addresses
 mod keys;
 
+/// Encryption and decryption methods
+mod encryption;
+
+/// Encryption and decryption methods
+pub use encryption::{decrypt, encrypt, ENCRYPTION_EXTRA_SIZE};
 /// Hash function
 pub use keys::hash;
 /// Public (Spend) Key
@@ -48,7 +51,6 @@ pub use crossover::Crossover;
 pub use error::Error;
 pub use fee::Fee;
 pub use fee::Remainder;
-pub use message::Message;
 pub use note::{Note, NoteType};
 #[cfg(feature = "alloc")]
 pub use transaction::Transaction;

@@ -4,8 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use aes_gcm::Error as AesError;
 use core::fmt;
 use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
+
+extern crate alloc;
 
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
@@ -25,8 +28,8 @@ pub enum Error {
     InvalidCrossoverConversion,
     /// Invalid Fee for conversion
     InvalidFeeConversion,
-    /// Failure to decrypt
-    Decryption,
+    /// Failure to encrypt / decrypt
+    BadEncryption,
     /// Invalid Value Commitment
     InvalidCommitment,
     /// Invalid Nonce
@@ -42,6 +45,14 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Phoenix-Core Error: {:?}", &self)
+    }
+}
+
+impl From<AesError> for Error {
+    fn from(aes_error: AesError) -> Self {
+        match aes_error {
+            AesError => Self::BadEncryption,
+        }
     }
 }
 
