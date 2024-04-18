@@ -93,13 +93,13 @@ impl Eq for Note {}
 impl Note {
     /// Creates a new phoenix output note
     pub fn new<R: RngCore + CryptoRng>(
-        mut rng: &mut R,
+        rng: &mut R,
         note_type: NoteType,
         psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        let r = JubJubScalar::random(&mut rng);
+        let r = JubJubScalar::random(&mut *rng);
         let stealth_address = psk.gen_stealth_address(&r);
 
         let value_commitment = JubJubScalar::from(value);
@@ -123,7 +123,7 @@ impl Note {
                 let mut plaintext = value.to_bytes().to_vec();
                 plaintext.append(&mut blinding_factor.to_bytes().to_vec());
 
-                encrypt(&shared_secret, &plaintext, rng)
+                encrypt(&shared_secret, &plaintext, &mut *rng)
                     .expect("Encrypted correctly.")
             }
         };
