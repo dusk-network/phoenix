@@ -77,17 +77,10 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let vk = ViewKey::from(ssk);
     let value = 25;
 
-    let r = JubJubScalar::random(&mut rng);
     let blinding_factor = JubJubScalar::random(&mut rng);
 
-    let note = Note::new(
-        &mut rng,
-        NoteType::Obfuscated,
-        &r,
-        &psk,
-        value,
-        blinding_factor,
-    );
+    let note =
+        Note::new(&mut rng, NoteType::Obfuscated, &psk, value, blinding_factor);
 
     assert_eq!(value, note.value(Some(&vk))?);
     assert_eq!(blinding_factor, note.blinding_factor(Some(&vk))?);

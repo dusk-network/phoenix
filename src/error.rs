@@ -8,8 +8,6 @@ use aes_gcm::Error as AesError;
 use core::fmt;
 use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
 
-extern crate alloc;
-
 /// All possible errors for Phoenix's Core
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]

@@ -93,14 +93,14 @@ impl Eq for Note {}
 impl Note {
     /// Creates a new phoenix output note
     pub fn new<R: RngCore + CryptoRng>(
-        rng: &mut R,
+        mut rng: &mut R,
         note_type: NoteType,
-        r: &JubJubScalar,
         psk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        let stealth_address = psk.gen_stealth_address(r);
+        let r = JubJubScalar::random(&mut rng);
+        let stealth_address = psk.gen_stealth_address(&r);
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
@@ -117,7 +117,7 @@ impl Note {
                 encryption
             }
             NoteType::Obfuscated => {
-                let shared_secret = dhke(r, psk.A());
+                let shared_secret = dhke(&r, psk.A());
                 let blinding_factor = BlsScalar::from(blinding_factor);
 
                 let mut plaintext = value.to_bytes().to_vec();
@@ -147,15 +147,7 @@ impl Note {
         psk: &PublicKey,
         value: u64,
     ) -> Self {
-        let r = JubJubScalar::random(&mut *rng);
-        Self::new(
-            rng,
-            NoteType::Transparent,
-            &r,
-            psk,
-            value,
-            TRANSPARENT_BLINDER,
-        )
+        Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
     }
 
     /// Creates a new transparent note
@@ -197,8 +189,7 @@ impl Note {
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        let r = JubJubScalar::random(&mut *rng);
-        Self::new(rng, NoteType::Obfuscated, &r, psk, value, blinding_factor)
+        Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor)
     }
 
     fn decrypt_data(
