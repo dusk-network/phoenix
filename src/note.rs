@@ -123,7 +123,7 @@ impl Note {
                 let mut plaintext = value.to_bytes().to_vec();
                 plaintext.append(&mut blinding_factor.to_bytes().to_vec());
 
-                encrypt(&shared_secret, &plaintext, &mut *rng)
+                encrypt(&shared_secret, &plaintext, rng)
                     .expect("Encrypted correctly.")
             }
         };
