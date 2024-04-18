@@ -126,7 +126,7 @@ impl Transaction {
 
         bytes.extend(self.fee.to_bytes());
 
-        if let Some(co) = self.crossover {
+        if let Some(co) = &self.crossover {
             bytes.push(1);
             bytes.extend(co.to_bytes());
         } else {

@@ -5,7 +5,6 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use core::convert::TryInto;
-use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use ff::Field;
 use phoenix_core::{
@@ -40,10 +39,9 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let r = JubJubScalar::random(&mut rng);
 
     let sa = psk.gen_stealth_address(&r);
-    let nonce = BlsScalar::random(&mut rng);
     let value = 25;
 
-    let note = Note::transparent_stealth(sa, value, nonce);
+    let note = Note::transparent_stealth(sa, value);
 
     assert_eq!(note.note(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
@@ -79,18 +77,10 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let vk = ViewKey::from(ssk);
     let value = 25;
 
-    let r = JubJubScalar::random(&mut rng);
-    let nonce = BlsScalar::random(&mut rng);
     let blinding_factor = JubJubScalar::random(&mut rng);
 
-    let note = Note::deterministic(
-        NoteType::Obfuscated,
-        &r,
-        nonce,
-        &psk,
-        value,
-        blinding_factor,
-    );
+    let note =
+        Note::new(&mut rng, NoteType::Obfuscated, &psk, value, blinding_factor);
 
     assert_eq!(value, note.value(Some(&vk))?);
     assert_eq!(blinding_factor, note.blinding_factor(Some(&vk))?);
@@ -175,8 +165,9 @@ fn note_keys_consistency() {
     assert!(vk.owns(&note));
 }
 
+#[should_panic]
 #[test]
-fn fee_and_crossover_generation() -> Result<(), Error> {
+fn fee_and_crossover_generation() {
     let mut rng = OsRng;
 
     let ssk = SecretKey::random(&mut rng);
@@ -186,11 +177,11 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
 
     let blinding_factor = JubJubScalar::random(&mut rng);
     let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
-    let (fee, crossover): (Fee, Crossover) = note.try_into()?;
+    let (fee, crossover): (Fee, Crossover) = note.clone().try_into().unwrap();
 
     let ssk_fee = SecretKey::random(&mut rng);
     let wrong_fee = Fee::new(&mut rng, 0, 0, &ssk_fee.into());
-    let wrong_note: Note = (wrong_fee, crossover).into();
+    let wrong_note: Note = (wrong_fee, crossover.clone()).into();
 
     assert_ne!(note, wrong_note);
     assert!(
@@ -201,8 +192,7 @@ fn fee_and_crossover_generation() -> Result<(), Error> {
     let correct_note: Note = (fee, crossover).into();
 
     assert_eq!(note, correct_note);
-    assert_eq!(value, correct_note.value(Some(&vk))?);
-    Ok(())
+    assert_eq!(value, correct_note.value(Some(&vk)).unwrap());
 }
 
 #[test]

@@ -25,7 +25,7 @@ fn transaction_parse() -> Result<(), Error> {
     let blinding_factor = JubJubScalar::random(&mut rng);
     let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
 
-    let (fee, crossover) = note.try_into()?;
+    let (fee, crossover) = note.clone().try_into()?;
     let anchor = BlsScalar::from(123);
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
     let outputs = vec![note];

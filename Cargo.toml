@@ -20,6 +20,7 @@ subtle = { version = "^2.2.1", default-features = false }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
 ff = { version = "0.13", default-features = false }
+aes-gcm = "0.10"
 
 [dev-dependencies]
 assert_matches = "1.3"

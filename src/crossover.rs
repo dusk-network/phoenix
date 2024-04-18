@@ -6,17 +6,16 @@
 
 //! Fee module contains the logic related to `Crossover` structure
 
-use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
-use dusk_poseidon::cipher::PoseidonCipher;
-use dusk_poseidon::sponge;
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
+use crate::note::ENCRYPTION_SIZE;
+
 /// Crossover structure containing obfuscated encrypted data
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -24,19 +23,27 @@ use rkyv::{Archive, Deserialize, Serialize};
 )]
 pub struct Crossover {
     pub(crate) value_commitment: JubJubExtended,
-    pub(crate) nonce: BlsScalar,
-    pub(crate) encrypted_data: PoseidonCipher,
+    pub(crate) encryption: [u8; ENCRYPTION_SIZE],
+}
+
+impl Default for Crossover {
+    fn default() -> Self {
+        Self {
+            value_commitment: JubJubExtended::default(),
+            encryption: [0; ENCRYPTION_SIZE],
+        }
+    }
 }
 
 impl PartialEq for Crossover {
     fn eq(&self, other: &Self) -> bool {
-        self.hash() == other.hash()
+        self.value_commitment() == other.value_commitment()
     }
 }
 
 impl Eq for Crossover {}
 
-impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
+impl Serializable<{ 32 + ENCRYPTION_SIZE }> for Crossover {
     type Error = BytesError;
 
     /// Converts a Crossover into it's byte representation
@@ -46,8 +53,7 @@ impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
         buf[..32].copy_from_slice(
             &JubJubAffine::from(&self.value_commitment).to_bytes(),
         );
-        buf[32..64].copy_from_slice(&self.nonce.to_bytes());
-        buf[64..].copy_from_slice(&self.encrypted_data.to_bytes());
+        buf[32..].copy_from_slice(&self.encryption);
         buf
     }
 
@@ -56,57 +62,25 @@ impl Serializable<{ 64 + PoseidonCipher::SIZE }> for Crossover {
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
         let value_commitment =
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[..32])?);
-        let nonce = BlsScalar::from_slice(&bytes[32..])?;
 
-        let encrypted_data = PoseidonCipher::from_slice(&bytes[64..])?;
+        let mut encryption = [0u8; ENCRYPTION_SIZE];
+        encryption.copy_from_slice(&bytes[32..]);
 
         Ok(Crossover {
             value_commitment,
-            nonce,
-            encrypted_data,
+            encryption,
         })
     }
 }
 
 impl Crossover {
-    /// Represent the crossover as a sequence of scalars to be used as input for
-    /// sponge hash functions
-    ///
-    /// It is composed by 3 scalars, in order:
-    /// * Value commitment X
-    /// * Value commitment Y
-    /// * Nonce
-    ///
-    /// And also appends the scalars that composes the [`PoseidonCipher`]
-    pub fn to_hash_inputs(
-        &self,
-    ) -> [BlsScalar; 3 + PoseidonCipher::cipher_size()] {
-        let mut inputs = [BlsScalar::zero(); 3 + PoseidonCipher::cipher_size()];
-
-        inputs[..2].copy_from_slice(&self.value_commitment().to_hash_inputs());
-        inputs[2] = self.nonce;
-        inputs[3..].copy_from_slice(self.encrypted_data.cipher());
-
-        inputs
-    }
-
-    /// Sponge hash of the crossover hash inputs representation
-    pub fn hash(&self) -> BlsScalar {
-        sponge::hash(&self.to_hash_inputs())
-    }
-
-    /// Returns the Nonce used for the encrypt / decrypt of data for this note
-    pub const fn nonce(&self) -> &BlsScalar {
-        &self.nonce
-    }
-
     /// Returns the value commitment `H(value, blinding_factor)`
     pub const fn value_commitment(&self) -> &JubJubExtended {
         &self.value_commitment
     }
 
     /// Returns the encrypted data
-    pub const fn encrypted_data(&self) -> &PoseidonCipher {
-        &self.encrypted_data
+    pub const fn encryption(&self) -> &[u8; ENCRYPTION_SIZE] {
+        &self.encryption
     }
 }

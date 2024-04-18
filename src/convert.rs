@@ -4,13 +4,13 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::note::ENCRYPTION_SIZE;
 use crate::note::TRANSPARENT_BLINDER;
 use crate::{Crossover, Error, Fee, Note, NoteType, Remainder};
 
 use core::convert::TryFrom;
-use dusk_bls12_381::BlsScalar;
+use dusk_bytes::Serializable;
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
-use dusk_poseidon::cipher::PoseidonCipher;
 
 impl From<(Fee, Crossover)> for Note {
     fn from((fee, crossover): (Fee, Crossover)) -> Note {
@@ -19,8 +19,7 @@ impl From<(Fee, Crossover)> for Note {
         } = fee;
         let Crossover {
             value_commitment,
-            nonce,
-            encrypted_data,
+            encryption,
             ..
         } = crossover;
 
@@ -30,10 +29,9 @@ impl From<(Fee, Crossover)> for Note {
         Note {
             note_type,
             value_commitment,
-            nonce,
             stealth_address,
             pos,
-            encrypted_data,
+            encryption,
         }
     }
 }
@@ -49,8 +47,7 @@ impl TryFrom<Note> for (Fee, Crossover) {
                 let Note {
                     stealth_address,
                     value_commitment,
-                    nonce,
-                    encrypted_data,
+                    encryption,
                     ..
                 } = note;
 
@@ -62,8 +59,7 @@ impl TryFrom<Note> for (Fee, Crossover) {
                     },
                     Crossover {
                         value_commitment,
-                        nonce,
-                        encrypted_data,
+                        encryption,
                     },
                 ))
             }
@@ -79,28 +75,20 @@ impl From<Remainder> for Note {
 
         let stealth_address = remainder.stealth_address;
         let value = remainder.gas_changes;
-        let nonce = BlsScalar::zero();
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
             + (GENERATOR_NUMS_EXTENDED * TRANSPARENT_BLINDER);
 
-        let encrypted_data = {
-            let zero = TRANSPARENT_BLINDER.into();
-            let mut encrypted_data = [zero; PoseidonCipher::cipher_size()];
-
-            encrypted_data[0] = BlsScalar::from(value);
-
-            PoseidonCipher::new(encrypted_data)
-        };
+        let mut encryption = [0u8; ENCRYPTION_SIZE];
+        encryption[..u64::SIZE].copy_from_slice(&value.to_bytes());
 
         Note {
             note_type,
             value_commitment,
-            nonce,
             stealth_address,
             pos,
-            encrypted_data,
+            encryption,
         }
     }
 }
