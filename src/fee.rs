@@ -51,11 +51,11 @@ impl Fee {
         rng: &mut R,
         gas_limit: u64,
         gas_price: u64,
-        psk: &PublicKey,
+        pk: &PublicKey,
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
 
-        Self::deterministic(gas_limit, gas_price, &r, psk)
+        Self::deterministic(gas_limit, gas_price, &r, pk)
     }
 
     /// Create a new Fee without inner randomness
@@ -63,9 +63,9 @@ impl Fee {
         gas_limit: u64,
         gas_price: u64,
         r: &JubJubScalar,
-        psk: &PublicKey,
+        pk: &PublicKey,
     ) -> Self {
-        let stealth_address = psk.gen_stealth_address(r);
+        let stealth_address = pk.gen_stealth_address(r);
 
         Fee {
             gas_limit,
@@ -74,15 +74,16 @@ impl Fee {
         }
     }
 
-    /// Return a hash represented by `H(gas_limit, gas_price, H([pskr]))`
+    /// Return a hash represented by `H(gas_limit, gas_price, H([note_pk]))`
     pub fn hash(&self) -> BlsScalar {
-        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
+        let note_pk =
+            self.stealth_address().note_pk().as_ref().to_hash_inputs();
 
         hash(&[
             BlsScalar::from(self.gas_limit),
             BlsScalar::from(self.gas_price),
-            pk_r[0],
-            pk_r[1],
+            note_pk[0],
+            note_pk[1],
         ])
     }
 

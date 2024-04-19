@@ -16,7 +16,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 /// To obfuscate the identity of the participants, we utilizes a Stealth Address
 /// system.
-/// A `StealthAddress` is composed by a one-time public key (`pk_r`, the actual
+/// A `StealthAddress` is composed by a one-time note-public-key (the actual
 /// address) and a random point `R`.
 #[derive(Default, Debug, Clone, Copy)]
 #[cfg_attr(
@@ -26,7 +26,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 )]
 pub struct StealthAddress {
     pub(crate) R: JubJubExtended,
-    pub(crate) pk_r: NotePublicKey,
+    pub(crate) note_pk: NotePublicKey,
 }
 
 /// The trait `Ownable` is required by any type that wants to prove its
@@ -48,9 +48,9 @@ impl StealthAddress {
     /// For additional information, check [PublicKey::from_raw_unchecked].
     pub const fn from_raw_unchecked(
         R: JubJubExtended,
-        pk_r: NotePublicKey,
+        note_pk: NotePublicKey,
     ) -> Self {
-        Self { R, pk_r }
+        Self { R, note_pk }
     }
 
     /// Gets the random point `R`
@@ -58,26 +58,28 @@ impl StealthAddress {
         &self.R
     }
 
-    /// Gets the `pk_r`
-    pub const fn pk_r(&self) -> &NotePublicKey {
-        &self.pk_r
-    }
-
-    /// Gets the underline `JubJubExtended` point of `pk_r`
-    pub fn address(&self) -> &JubJubExtended {
-        self.pk_r.as_ref()
+    /// Gets the `note_pk`
+    pub const fn note_pk(&self) -> &NotePublicKey {
+        &self.note_pk
     }
 }
 
 impl ConstantTimeEq for StealthAddress {
     fn ct_eq(&self, other: &Self) -> Choice {
-        self.pk_r.as_ref().ct_eq(other.pk_r.as_ref()) & self.R.ct_eq(&other.R)
+        self.note_pk().as_ref().ct_eq(other.note_pk().as_ref())
+            & self.R.ct_eq(&other.R)
     }
 }
 
 impl PartialEq for StealthAddress {
     fn eq(&self, other: &Self) -> bool {
         self.ct_eq(other).into()
+    }
+}
+
+impl Ownable for &StealthAddress {
+    fn stealth_address(&self) -> &StealthAddress {
+        self
     }
 }
 
@@ -94,7 +96,7 @@ impl Serializable<64> for StealthAddress {
         let mut bytes = [0u8; Self::SIZE];
         bytes[..32].copy_from_slice(&JubJubAffine::from(self.R).to_bytes());
         bytes[32..].copy_from_slice(
-            &JubJubAffine::from(self.pk_r.as_ref()).to_bytes(),
+            &JubJubAffine::from(self.note_pk().as_ref()).to_bytes(),
         );
         bytes
     }
@@ -102,10 +104,10 @@ impl Serializable<64> for StealthAddress {
     /// Decode the `StealthAddress` from an array of 64 bytes
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Error> {
         let R = JubJubExtended::from(JubJubAffine::from_slice(&bytes[..32])?);
-        let pk_r =
+        let note_pk =
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[32..])?);
-        let pk_r = NotePublicKey::from_raw_unchecked(pk_r);
+        let note_pk = NotePublicKey::from_raw_unchecked(note_pk);
 
-        Ok(StealthAddress { R, pk_r })
+        Ok(StealthAddress { R, note_pk })
     }
 }
