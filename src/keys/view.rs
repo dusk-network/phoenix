@@ -64,16 +64,16 @@ impl ViewKey {
         &self.B
     }
 
-    /// Checks `PKr = H(R · a) · G + B`
+    /// Checks `note_pk = H(R · a) · G + B`
     pub fn owns(&self, owner: &impl stealth::Ownable) -> bool {
         let sa = owner.stealth_address();
 
         let aR = sa.R() * self.a();
         let aR = hash(&aR);
         let aR = GENERATOR_EXTENDED * aR;
-        let pk_r = aR + self.B();
+        let note_pk = aR + self.B();
 
-        sa.address() == &pk_r
+        sa.note_pk().as_ref() == &note_pk
     }
 }
 

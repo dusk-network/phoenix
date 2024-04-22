@@ -14,10 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Use AES-GCM from the `Encryption` module throughout the code, instead of `PoseidonCipher`.
+- Rename `SecretKey::sk_r` to `SecretKey::gen_note_sk` [#156]
+- Rename `StealthAddress::pk_r` to `StealthAddress::note_pk` [#156]
 
 ### Removed 
 
 - Remove the `Message` module.
+- Remove `StealthAddress::address` method [#156]
 
 ## [0.26.0] - 2024-04-10
 
@@ -274,6 +277,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#156]: https://github.com/dusk-network/phoenix-core/issues/156
 [#152]: https://github.com/dusk-network/phoenix-core/issues/152
 [#136]: https://github.com/dusk-network/phoenix-core/issues/136
 [#126]: https://github.com/dusk-network/phoenix-core/issues/126

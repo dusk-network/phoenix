@@ -10,22 +10,24 @@ use phoenix_core::{PublicKey, SecretKey, ViewKey};
 use rand_core::OsRng;
 
 #[test]
-fn ssk_from_bytes() {
-    let ssk_a = SecretKey::random(&mut OsRng);
-    let bytes = ssk_a.to_bytes();
-    let ssk_b = SecretKey::from_slice(&bytes).expect("Serde error");
+fn sk_from_bytes() {
+    let sk = SecretKey::random(&mut OsRng);
+    let sk_bytes = sk.to_bytes();
 
-    assert_eq!(ssk_a, ssk_b);
+    assert_eq!(
+        sk,
+        SecretKey::from_slice(&sk_bytes).expect("deserialization should pass")
+    );
 }
 
 #[test]
 fn keys_encoding() {
-    let ssk = SecretKey::random(&mut OsRng);
-    let vk = ViewKey::from(ssk);
-    let psk = PublicKey::from(ssk);
+    let sk = SecretKey::random(&mut OsRng);
+    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(sk);
 
     assert_eq!(vk, ViewKey::from_bytes(&vk.to_bytes()).unwrap());
-    assert_eq!(psk, PublicKey::from_bytes(&psk.to_bytes()).unwrap());
+    assert_eq!(pk, PublicKey::from_bytes(&pk.to_bytes()).unwrap());
 }
 
 #[test]
@@ -33,24 +35,30 @@ fn keys_consistency() {
     use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
 
     let r = JubJubScalar::random(&mut OsRng);
-    let ssk = SecretKey::random(&mut OsRng);
-    let psk = PublicKey::from(ssk);
-    let vk = ViewKey::from(ssk);
-    let sa = psk.gen_stealth_address(&r);
+    let sk = SecretKey::random(&mut OsRng);
+    let pk = PublicKey::from(sk);
+    let vk = ViewKey::from(sk);
+    let sa = pk.gen_stealth_address(&r);
 
     assert!(vk.owns(&sa));
 
-    let wrong_ssk = SecretKey::random(&mut OsRng);
-    let wrong_vk = ViewKey::from(wrong_ssk);
+    let wrong_sk = SecretKey::random(&mut OsRng);
+    let wrong_vk = ViewKey::from(wrong_sk);
 
-    assert_ne!(ssk, wrong_ssk);
+    assert_ne!(sk, wrong_sk);
     assert_ne!(vk, wrong_vk);
 
     assert!(!wrong_vk.owns(&sa));
 
-    let sk_r = ssk.sk_r(&sa);
-    let wrong_sk_r = wrong_ssk.sk_r(&sa);
+    let note_sk = sk.gen_note_sk(&sa);
+    let wrong_note_sk = wrong_sk.gen_note_sk(&sa);
 
-    assert_eq!(sa.address(), &(GENERATOR_EXTENDED * sk_r.as_ref()));
-    assert_ne!(sa.address(), &(GENERATOR_EXTENDED * wrong_sk_r.as_ref()));
+    assert_eq!(
+        sa.note_pk().as_ref(),
+        &(GENERATOR_EXTENDED * note_sk.as_ref())
+    );
+    assert_ne!(
+        sa.note_pk().as_ref(),
+        &(GENERATOR_EXTENDED * wrong_note_sk.as_ref())
+    );
 }

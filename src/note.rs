@@ -95,12 +95,12 @@ impl Note {
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
-        psk: &PublicKey,
+        pk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
-        let stealth_address = psk.gen_stealth_address(&r);
+        let stealth_address = pk.gen_stealth_address(&r);
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
@@ -117,7 +117,7 @@ impl Note {
                 encryption
             }
             NoteType::Obfuscated => {
-                let shared_secret = dhke(&r, psk.A());
+                let shared_secret = dhke(&r, pk.A());
                 let blinding_factor = BlsScalar::from(blinding_factor);
 
                 let mut plaintext = value.to_bytes().to_vec();
@@ -144,10 +144,10 @@ impl Note {
     /// notes, so this can be trivially treated as a constant.
     pub fn transparent<R: RngCore + CryptoRng>(
         rng: &mut R,
-        psk: &PublicKey,
+        pk: &PublicKey,
         value: u64,
     ) -> Self {
-        Self::new(rng, NoteType::Transparent, psk, value, TRANSPARENT_BLINDER)
+        Self::new(rng, NoteType::Transparent, pk, value, TRANSPARENT_BLINDER)
     }
 
     /// Creates a new transparent note
@@ -185,11 +185,11 @@ impl Note {
     /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
-        psk: &PublicKey,
+        pk: &PublicKey,
         value: u64,
         blinding_factor: JubJubScalar,
     ) -> Self {
-        Self::new(rng, NoteType::Obfuscated, psk, value, blinding_factor)
+        Self::new(rng, NoteType::Obfuscated, pk, value, blinding_factor)
     }
 
     fn decrypt_data(
@@ -219,10 +219,10 @@ impl Note {
 
     /// Create a unique nullifier for the note
     ///
-    /// This nullifier is represeted as `H(sk_r · G', pos)`
+    /// This nullifier is represeted as `H(note_sk · G', pos)`
     pub fn gen_nullifier(&self, sk: &SecretKey) -> BlsScalar {
-        let sk_r = sk.sk_r(&self.stealth_address);
-        let pk_prime = GENERATOR_NUMS_EXTENDED * sk_r.as_ref();
+        let note_sk = sk.gen_note_sk(self.stealth_address);
+        let pk_prime = GENERATOR_NUMS_EXTENDED * note_sk.as_ref();
         let pk_prime = pk_prime.to_hash_inputs();
 
         let pos = BlsScalar::from(self.pos);
@@ -233,14 +233,15 @@ impl Note {
     /// Return the internal representation of scalars to be hashed
     pub fn hash_inputs(&self) -> [BlsScalar; 6] {
         let value_commitment = self.value_commitment().to_hash_inputs();
-        let pk_r = self.stealth_address().pk_r().as_ref().to_hash_inputs();
+        let note_pk =
+            self.stealth_address().note_pk().as_ref().to_hash_inputs();
 
         [
             BlsScalar::from(self.note_type as u64),
             value_commitment[0],
             value_commitment[1],
-            pk_r[0],
-            pk_r[1],
+            note_pk[0],
+            note_pk[1],
             BlsScalar::from(self.pos),
         ]
     }

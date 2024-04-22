@@ -18,12 +18,12 @@ use rand_core::OsRng;
 fn transaction_parse() -> Result<(), Error> {
     let mut rng = OsRng;
 
-    let ssk = SecretKey::random(&mut rng);
-    let psk = PublicKey::from(ssk);
+    let sk = SecretKey::random(&mut rng);
+    let pk = PublicKey::from(sk);
 
     let value = 25;
     let blinding_factor = JubJubScalar::random(&mut rng);
-    let note = Note::obfuscated(&mut rng, &psk, value, blinding_factor);
+    let note = Note::obfuscated(&mut rng, &pk, value, blinding_factor);
 
     let (fee, crossover) = note.clone().try_into()?;
     let anchor = BlsScalar::from(123);

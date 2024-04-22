@@ -44,7 +44,7 @@ impl PublicKey {
         &self.B
     }
 
-    /// Generates new `PKr = H(A · r) · G + B` from a given `r`
+    /// Generates new `note_pk = H(A · r) · G + B` from a given `r`
     pub fn gen_stealth_address(&self, r: &JubJubScalar) -> StealthAddress {
         let G = GENERATOR_EXTENDED;
         let R = G * r;
@@ -53,10 +53,10 @@ impl PublicKey {
         let rA = hash(&rA);
         let rA = G * rA;
 
-        let pk_r = rA + self.B;
-        let pk_r = pk_r.into();
+        let note_pk = rA + self.B;
+        let note_pk = note_pk.into();
 
-        StealthAddress { R, pk_r }
+        StealthAddress { R, note_pk }
     }
 }
 
