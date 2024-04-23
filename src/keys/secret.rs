@@ -8,6 +8,7 @@ use crate::{keys::hash, Ownable};
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
+use zeroize::Zeroize;
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
@@ -17,7 +18,30 @@ use rand_core::{CryptoRng, RngCore};
 use subtle::{Choice, ConstantTimeEq};
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]
-#[derive(Clone, Copy, Eq, Debug)]
+///
+/// ## Safety
+///
+/// To ensure that no secret information lingers in memory after the variable
+/// goes out of scope, we advice calling `zeroize` before the variable goes out
+/// of scope.
+///
+/// ## Examples
+///
+/// Generate a random `SecretKey`:
+/// ```
+/// use phoenix_core::SecretKey;
+/// use rand::rngs::StdRng;
+/// use rand::SeedableRng;
+/// use zeroize::Zeroize;
+///
+/// let mut rng = StdRng::seed_from_u64(12345);
+/// let mut sk = SecretKey::random(&mut rng);
+///
+/// // do something with the sk
+///
+/// sk.zeroize();
+/// ```
+#[derive(Clone, Eq, Debug, Zeroize)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
