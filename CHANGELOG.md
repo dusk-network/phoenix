@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use AES-GCM from the `Encryption` module throughout the code, instead of `PoseidonCipher`.
 - Rename `SecretKey::sk_r` to `SecretKey::gen_note_sk` [#156]
 - Rename `StealthAddress::pk_r` to `StealthAddress::note_pk` [#156]
+- Update `bls12_381-bls` to v0.3.0
+- Update `jubjub-schnorr` to v0.3.0
 
 ### Removed 
 
