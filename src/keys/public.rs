@@ -74,12 +74,6 @@ impl PartialEq for PublicKey {
 
 impl Eq for PublicKey {}
 
-impl From<SecretKey> for PublicKey {
-    fn from(sk: SecretKey) -> Self {
-        Self::from(&sk)
-    }
-}
-
 impl From<&SecretKey> for PublicKey {
     fn from(sk: &SecretKey) -> Self {
         let A = GENERATOR_EXTENDED * sk.a();

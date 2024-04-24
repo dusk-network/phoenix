@@ -77,12 +77,6 @@ impl ViewKey {
     }
 }
 
-impl From<SecretKey> for ViewKey {
-    fn from(sk: SecretKey) -> Self {
-        Self::from(&sk)
-    }
-}
-
 impl From<&SecretKey> for ViewKey {
     fn from(sk: &SecretKey) -> Self {
         let B = GENERATOR_EXTENDED * sk.b();

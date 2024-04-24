@@ -18,7 +18,7 @@ fn transparent_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
+    let pk = PublicKey::from(&sk);
     let value = 25;
 
     let note = Note::transparent(&mut rng, &pk, value);
@@ -34,7 +34,7 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
+    let pk = PublicKey::from(&sk);
 
     let r = JubJubScalar::random(&mut rng);
 
@@ -55,8 +55,8 @@ fn obfuscated_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(&mut rng);
@@ -73,8 +73,8 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(&mut rng);
@@ -93,8 +93,8 @@ fn value_commitment_transparent() {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let vk = ViewKey::from(sk);
-    let pk = PublicKey::from(sk);
+    let vk = ViewKey::from(&sk);
+    let pk = PublicKey::from(&sk);
     let value = 25;
 
     let note = Note::transparent(&mut rng, &pk, value);
@@ -120,8 +120,8 @@ fn value_commitment_obfuscated() {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let vk = ViewKey::from(sk);
-    let pk = PublicKey::from(sk);
+    let vk = ViewKey::from(&sk);
+    let pk = PublicKey::from(&sk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(&mut rng);
@@ -148,12 +148,12 @@ fn note_keys_consistency() {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
     let value = 25;
 
     let wrong_sk = SecretKey::random(&mut rng);
-    let wrong_vk = ViewKey::from(wrong_sk);
+    let wrong_vk = ViewKey::from(&wrong_sk);
 
     assert_ne!(sk, wrong_sk);
     assert_ne!(vk, wrong_vk);
@@ -171,8 +171,8 @@ fn fee_and_crossover_generation() {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
     let value = 25;
 
     let blinding_factor = JubJubScalar::random(&mut rng);
@@ -180,7 +180,7 @@ fn fee_and_crossover_generation() {
     let (fee, crossover): (Fee, Crossover) = note.clone().try_into().unwrap();
 
     let sk_fee = SecretKey::random(&mut rng);
-    let wrong_fee = Fee::new(&mut rng, 0, 0, &sk_fee.into());
+    let wrong_fee = Fee::new(&mut rng, 0, 0, &PublicKey::from(&sk_fee));
     let wrong_note: Note = (wrong_fee, crossover.clone()).into();
 
     assert_ne!(note, wrong_note);
@@ -200,7 +200,7 @@ fn fail_fee_and_crossover_from_transparent() {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
+    let pk = PublicKey::from(&sk);
     let value = 25;
 
     let note = Note::transparent(&mut rng, &pk, value);
@@ -217,8 +217,8 @@ fn transparent_from_fee_remainder() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
 
     let gas_consumed = 3;
     let gas_limit = 10;
@@ -242,8 +242,8 @@ fn transparent_from_fee_remainder_with_invalid_consumed() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
-    let vk = ViewKey::from(sk);
+    let pk = PublicKey::from(&sk);
+    let vk = ViewKey::from(&sk);
 
     let gas_consumed = 30;
     let gas_limit = 10;

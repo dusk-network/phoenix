@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add an `Encryption` module that uses AES-GCM [#152].
+- Add an `Encryption` module that uses AES-GCM [#152]
+- Add `Zeroize` trait implmentation for `SecretKey` [#155]
 
 ### Changed
 
@@ -21,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove the `Message` module.
 - Remove `StealthAddress::address` method [#156]
+- Remove `Copy` from `SecretKey` [#155]
+- Remove `From<SecretKey>` for `ViewKey` and `PublicKey`, use `From<&SecretKey>` instead [#155]
 
 ## [0.26.0] - 2024-04-10
 
@@ -278,6 +281,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ISSUES -->
 [#156]: https://github.com/dusk-network/phoenix-core/issues/156
+[#155]: https://github.com/dusk-network/phoenix-core/issues/155
 [#152]: https://github.com/dusk-network/phoenix-core/issues/152
 [#136]: https://github.com/dusk-network/phoenix-core/issues/136
 [#126]: https://github.com/dusk-network/phoenix-core/issues/126

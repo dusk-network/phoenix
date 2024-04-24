@@ -19,7 +19,7 @@ fn transaction_parse() -> Result<(), Error> {
     let mut rng = OsRng;
 
     let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(sk);
+    let pk = PublicKey::from(&sk);
 
     let value = 25;
     let blinding_factor = JubJubScalar::random(&mut rng);
