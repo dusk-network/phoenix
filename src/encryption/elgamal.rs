@@ -49,9 +49,9 @@ pub fn zk_encrypt(
     let r = composer.append_witness(*r);
 
     // ENCRYPT
-    let S = composer.component_mul_point(r, public_key);
+    let R = composer.component_mul_point(r, public_key);
     let ciphertext_1 = composer.component_mul_generator(r, GENERATOR)?;
-    let ciphertext_2 = composer.component_add_point(plaintext, S);
+    let ciphertext_2 = composer.component_add_point(plaintext, R);
 
     Ok((ciphertext_1, ciphertext_2))
 }
