@@ -4,20 +4,23 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+//! This module implements the ElGamal asymmetric cipher. It allows to
+//! encrypt, decrypt, and prove encryption in Zero-Knowledge of JubJub points.
+//!
+//! Reference: https://link.springer.com/chapter/10.1007/3-540-39568-7_2
+
 use dusk_jubjub::{JubJubExtended, JubJubScalar, GENERATOR};
 use dusk_plonk::prelude::*;
 
 /// Encrypts a JubJubExtended plaintext given a public key and a fresh random
-/// number, returning a ciphertext (JubJubExtended, JubJubExtended)
+/// number 'r', returning a ciphertext (JubJubExtended, JubJubExtended)
 pub fn encrypt(
     public_key: &JubJubExtended,
     plaintext: &JubJubExtended,
     r: &JubJubScalar,
 ) -> (JubJubExtended, JubJubExtended) {
-    let S = public_key * r;
-
     let ciphertext_1 = GENERATOR * r;
-    let ciphertext_2 = plaintext + S;
+    let ciphertext_2 = plaintext + public_key * r;
 
     (ciphertext_1, ciphertext_2)
 }
@@ -32,7 +35,8 @@ pub fn decrypt(
     ciphertext_2 - ciphertext_1 * secret_key
 }
 
-/// Encrypt in-circuit a plaintext
+/// Encrypt in-circuit a plaintext, returning
+/// a ciphertext (WitnessPoint, WitnessPoint)
 pub fn zk_encrypt(
     composer: &mut Composer,
     public_key: &JubJubAffine,
