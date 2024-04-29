@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add contract deployment transaction [#163]
+- Add `Transaction::exec` function and field [#163]
+
+### Removed
+
+- Remove `Transaction::call` function [#163]
+
 ## [0.27.0] - 2024-04-24
 
 ### Added
@@ -22,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `bls12_381-bls` to v0.3.0
 - Update `jubjub-schnorr` to v0.3.0
 
-### Removed 
+### Removed
 
 - Remove the `Message` module.
 - Remove `StealthAddress::address` method [#156]
@@ -284,6 +293,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#163]: https://github.com/dusk-network/phoenix-core/issues/163
 [#156]: https://github.com/dusk-network/phoenix-core/issues/156
 [#155]: https://github.com/dusk-network/phoenix-core/issues/155
 [#152]: https://github.com/dusk-network/phoenix-core/issues/152
