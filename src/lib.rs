@@ -27,11 +27,13 @@ pub mod note;
 /// Phoenix Core Keys & Addresses
 mod keys;
 
-/// Encryption and decryption methods
+/// Encryption algorithms
 mod encryption;
 
-/// Encryption and decryption methods
-pub use encryption::{decrypt, encrypt, ENCRYPTION_EXTRA_SIZE};
+/// AES symmetric cipher
+pub use encryption::aes;
+/// ElGamal asymmetric cipher
+pub use encryption::elgamal;
 /// Hash function
 pub use keys::hash;
 /// Public (Spend) Key

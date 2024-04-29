@@ -14,7 +14,7 @@ use dusk_jubjub::{
     GENERATOR_NUMS_EXTENDED,
 };
 
-use crate::encryption::{decrypt, encrypt, ENCRYPTION_EXTRA_SIZE};
+use crate::aes;
 
 use dusk_poseidon::sponge::hash;
 use ff::Field;
@@ -31,7 +31,7 @@ pub(crate) const PLAINTEXT_SIZE: usize = 40;
 
 /// Size of the Phoenix notes encryption
 pub(crate) const ENCRYPTION_SIZE: usize =
-    PLAINTEXT_SIZE + ENCRYPTION_EXTRA_SIZE;
+    PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -123,7 +123,7 @@ impl Note {
                 let mut plaintext = value.to_bytes().to_vec();
                 plaintext.append(&mut blinding_factor.to_bytes().to_vec());
 
-                encrypt(&shared_secret, &plaintext, rng)
+                aes::encrypt(&shared_secret, &plaintext, rng)
                     .expect("Encrypted correctly.")
             }
         };
@@ -200,7 +200,7 @@ impl Note {
         let shared_secret = dhke(vk.a(), R);
 
         let dec_plaintext: [u8; PLAINTEXT_SIZE] =
-            decrypt(&shared_secret, &self.encryption)?;
+            aes::decrypt(&shared_secret, &self.encryption)?;
 
         let value = u64::from_slice(&dec_plaintext[..u64::SIZE])?;
 
