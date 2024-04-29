@@ -38,9 +38,7 @@ pub fn zk_encrypt(
     public_key: &JubJubAffine,
     plaintext: &JubJubAffine,
     r: &JubJubScalar,
-    ciphertext_1: &JubJubAffine,
-    ciphertext_2: &JubJubAffine,
-) -> Result<(), Error> {
+) -> Result<(WitnessPoint, WitnessPoint), Error> {
     // IMPORT INPUTS
     let public_key = composer.append_point(*public_key);
     let plaintext = composer.append_point(*plaintext);
@@ -48,12 +46,8 @@ pub fn zk_encrypt(
 
     // ENCRYPT
     let S = composer.component_mul_point(r, public_key);
-    let ciphertext_1_p = composer.component_mul_generator(r, GENERATOR)?;
-    let ciphertext_2_p = composer.component_add_point(plaintext, S);
+    let ciphertext_1 = composer.component_mul_generator(r, GENERATOR)?;
+    let ciphertext_2 = composer.component_add_point(plaintext, S);
 
-    // ASSERT RESULT MAKING THE CIPHERTEXT PUBLIC
-    composer.assert_equal_public_point(ciphertext_1_p, *ciphertext_1);
-    composer.assert_equal_public_point(ciphertext_2_p, *ciphertext_2);
-
-    Ok(())
+    Ok((ciphertext_1, ciphertext_2))
 }

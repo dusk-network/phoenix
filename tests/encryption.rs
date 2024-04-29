@@ -43,14 +43,17 @@ impl ElGamalCircuit {
 
 impl Circuit for ElGamalCircuit {
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
-        elgamal::zk_encrypt(
+        let (ciphertext_1, ciphertext_2) = elgamal::zk_encrypt(
             composer,
             &self.public_key,
             &self.plaintext,
             &self.r,
-            &self.ciphertext_1,
-            &self.ciphertext_2,
         )?;
+
+        // ASSERT RESULT MAKING THE CIPHERTEXT PUBLIC
+        composer.assert_equal_public_point(ciphertext_1, self.ciphertext_1);
+        composer.assert_equal_public_point(ciphertext_2, self.ciphertext_2);
+
         Ok(())
     }
 }
