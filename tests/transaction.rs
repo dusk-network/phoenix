@@ -13,12 +13,12 @@ use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::transaction::Execution;
 use phoenix_core::{Error, Note, PublicKey, SecretKey, Transaction};
-use rand_core::OsRng;
+use rand_core::{CryptoRng, OsRng, RngCore};
 
-#[test]
-fn transfer_parse() -> Result<(), Error> {
-    let mut rng = OsRng;
-
+fn tx_parse<Rng: RngCore + CryptoRng>(
+    mut rng: Rng,
+    exec: Option<Execution>,
+) -> Result<(), Error> {
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
 
@@ -31,44 +31,6 @@ fn transfer_parse() -> Result<(), Error> {
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
     let outputs = vec![note];
     let proof = vec![23, 45, 67];
-    let transaction = Transaction {
-        anchor,
-        nullifiers,
-        outputs,
-        fee,
-        crossover: Some(crossover),
-        proof,
-        exec: None,
-    };
-    let bytes_of_transaction = transaction.to_var_bytes();
-    assert_eq!(
-        transaction,
-        Transaction::from_slice(&bytes_of_transaction).unwrap()
-    );
-    Ok(())
-}
-
-#[test]
-fn call_parse() -> Result<(), Error> {
-    let mut rng = OsRng;
-
-    let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(&sk);
-
-    let value = 25;
-    let blinding_factor = JubJubScalar::random(&mut rng);
-    let note = Note::obfuscated(&mut rng, &pk, value, blinding_factor);
-
-    let (fee, crossover) = note.clone().try_into()?;
-    let anchor = BlsScalar::from(123);
-    let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
-    let outputs = vec![note];
-    let proof = vec![23, 45, 67];
-    let exec = Some(Execution::Call {
-        contract: [0; 32],
-        fn_name: "TestString".to_string(),
-        fn_arg: vec![4, 5, 6],
-    });
     let transaction = Transaction {
         anchor,
         nullifiers,
@@ -84,6 +46,23 @@ fn call_parse() -> Result<(), Error> {
         Transaction::from_slice(&bytes_of_transaction).unwrap()
     );
     Ok(())
+}
+
+#[test]
+fn transfer_parse() -> Result<(), Error> {
+    tx_parse(OsRng, None)
+}
+
+#[test]
+fn call_parse() -> Result<(), Error> {
+    tx_parse(
+        OsRng,
+        Some(Execution::Call {
+            contract: [0; 32],
+            fn_name: "TestString".to_string(),
+            fn_arg: vec![4, 5, 6],
+        }),
+    )
 }
 
 #[test]
@@ -93,33 +72,12 @@ fn deploy_parse() -> Result<(), Error> {
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
 
-    let value = 25;
-    let blinding_factor = JubJubScalar::random(&mut rng);
-    let note = Note::obfuscated(&mut rng, &pk, value, blinding_factor);
-
-    let (fee, crossover) = note.clone().try_into()?;
-    let anchor = BlsScalar::from(123);
-    let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
-    let outputs = vec![note];
-    let proof = vec![23, 45, 67];
-    let exec = Some(Execution::Deploy {
-        owner: Box::new(pk),
-        bytecode: b"some-strange-bytecode.wasm".to_vec(),
-        constructor_args: b"some-strange-ctor".to_vec(),
-    });
-    let transaction = Transaction {
-        anchor,
-        nullifiers,
-        outputs,
-        fee,
-        crossover: Some(crossover),
-        proof,
-        exec,
-    };
-    let bytes_of_transaction = transaction.to_var_bytes();
-    assert_eq!(
-        transaction,
-        Transaction::from_slice(&bytes_of_transaction).unwrap()
-    );
-    Ok(())
+    tx_parse(
+        rng,
+        Some(Execution::Deploy {
+            owner: Box::new(pk),
+            bytecode: b"some-strange-bytecode.wasm".to_vec(),
+            constructor_args: b"some-strange-ctor".to_vec(),
+        }),
+    )
 }
