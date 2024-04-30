@@ -5,15 +5,19 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED};
-use dusk_plonk::prelude::*;
 use ff::Field;
 use rand_core::OsRng;
 
 use phoenix_core::{aes, elgamal, PublicKey, SecretKey};
 
+#[cfg(feature = "zk")]
+use dusk_plonk::prelude::*;
+#[cfg(feature = "zk")]
 static LABEL: &[u8; 12] = b"dusk-network";
+#[cfg(feature = "zk")]
 const CAPACITY: usize = 12; // capacity required for the setup
 
+#[cfg(feature = "zk")]
 #[derive(Default, Debug)]
 pub struct ElGamalCircuit {
     public_key: JubJubAffine,
@@ -23,6 +27,7 @@ pub struct ElGamalCircuit {
     ciphertext_2: JubJubAffine,
 }
 
+#[cfg(feature = "zk")]
 impl ElGamalCircuit {
     pub fn new(
         public_key: &JubJubExtended,
@@ -41,6 +46,7 @@ impl ElGamalCircuit {
     }
 }
 
+#[cfg(feature = "zk")]
 impl Circuit for ElGamalCircuit {
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
         let (ciphertext_1, ciphertext_2) = elgamal::zk_encrypt(
@@ -96,6 +102,7 @@ fn test_elgamal_encrypt_and_decrypt() {
     assert_ne!(message, dec_message_wrong);
 }
 
+#[cfg(feature = "zk")]
 #[test]
 fn test_elgamal_zk_encrypt() {
     let sk = SecretKey::random(&mut OsRng);

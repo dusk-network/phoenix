@@ -10,6 +10,8 @@
 //! Reference: https://link.springer.com/chapter/10.1007/3-540-39568-7_2
 
 use dusk_jubjub::{JubJubExtended, JubJubScalar, GENERATOR};
+
+#[cfg(feature = "zk")]
 use dusk_plonk::prelude::*;
 
 /// Encrypts a JubJubExtended plaintext given a public key and a fresh random
@@ -37,6 +39,7 @@ pub fn decrypt(
 
 /// Encrypt in-circuit a plaintext, returning
 /// a ciphertext (WitnessPoint, WitnessPoint)
+#[cfg(feature = "zk")]
 pub fn zk_encrypt(
     composer: &mut Composer,
     public_key: &JubJubAffine,
