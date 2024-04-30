@@ -192,6 +192,17 @@ impl Note {
         Self::new(rng, NoteType::Obfuscated, pk, value, blinding_factor)
     }
 
+    /// Creates a new empty [`Note`]
+    pub fn empty() -> Self {
+        Self {
+            note_type: NoteType::Transparent,
+            value_commitment: JubJubExtended::default(),
+            stealth_address: StealthAddress::default(),
+            pos: 0,
+            encryption: [0; ENCRYPTION_SIZE],
+        }
+    }
+
     fn decrypt_data(
         &self,
         vk: &ViewKey,
