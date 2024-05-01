@@ -54,6 +54,20 @@ impl From<AesError> for Error {
     }
 }
 
+impl From<DuskBytesError> for Error {
+    fn from(err: DuskBytesError) -> Self {
+        match err {
+            DuskBytesError::InvalidData => Error::InvalidData,
+            DuskBytesError::BadLength { found, expected } => {
+                Error::BadLength(found, expected)
+            }
+            DuskBytesError::InvalidChar { ch, index } => {
+                Error::InvalidChar(ch, index)
+            }
+        }
+    }
+}
+
 impl From<Error> for DuskBytesError {
     fn from(err: Error) -> Self {
         match err {

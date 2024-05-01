@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `empty` method for the `Note` [#165]
+- Add `From<DuskBytesError>` trait implementation for `Error` [#166]
+
 ## [0.27.0] - 2024-04-24
 
 ### Added
@@ -284,6 +289,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#166]: https://github.com/dusk-network/phoenix-core/issues/166
+[#165]: https://github.com/dusk-network/phoenix-core/issues/165
 [#156]: https://github.com/dusk-network/phoenix-core/issues/156
 [#155]: https://github.com/dusk-network/phoenix-core/issues/155
 [#152]: https://github.com/dusk-network/phoenix-core/issues/152
