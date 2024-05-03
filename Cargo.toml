@@ -44,3 +44,8 @@ rkyv-impl = [
 zk = [
     "dusk-plonk",
 ]
+
+[[test]]
+name = "gadgets"
+path = "tests/gadgets.rs"
+required-features = ["zk"]

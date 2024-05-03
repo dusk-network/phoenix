@@ -10,60 +10,6 @@ use rand_core::OsRng;
 
 use phoenix_core::{aes, elgamal, PublicKey, SecretKey};
 
-#[cfg(feature = "zk")]
-use dusk_plonk::prelude::*;
-#[cfg(feature = "zk")]
-static LABEL: &[u8; 12] = b"dusk-network";
-#[cfg(feature = "zk")]
-const CAPACITY: usize = 12; // capacity required for the setup
-
-#[cfg(feature = "zk")]
-#[derive(Default, Debug)]
-pub struct ElGamalCircuit {
-    public_key: JubJubAffine,
-    plaintext: JubJubAffine,
-    r: JubJubScalar,
-    ciphertext_1: JubJubAffine,
-    ciphertext_2: JubJubAffine,
-}
-
-#[cfg(feature = "zk")]
-impl ElGamalCircuit {
-    pub fn new(
-        public_key: &JubJubExtended,
-        plaintext: &JubJubExtended,
-        r: &JubJubScalar,
-        ciphertext_1: &JubJubExtended,
-        ciphertext_2: &JubJubExtended,
-    ) -> Self {
-        Self {
-            public_key: JubJubAffine::from(public_key),
-            plaintext: JubJubAffine::from(plaintext),
-            r: *r,
-            ciphertext_1: JubJubAffine::from(ciphertext_1),
-            ciphertext_2: JubJubAffine::from(ciphertext_2),
-        }
-    }
-}
-
-#[cfg(feature = "zk")]
-impl Circuit for ElGamalCircuit {
-    fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
-        let (ciphertext_1, ciphertext_2) = elgamal::zk_encrypt(
-            composer,
-            &self.public_key,
-            &self.plaintext,
-            &self.r,
-        )?;
-
-        // ASSERT RESULT MAKING THE CIPHERTEXT PUBLIC
-        composer.assert_equal_public_point(ciphertext_1, self.ciphertext_1);
-        composer.assert_equal_public_point(ciphertext_2, self.ciphertext_2);
-
-        Ok(())
-    }
-}
-
 #[test]
 fn test_aes_encrypt_and_decrypt() {
     const PLAINTEXT_SIZE: usize = 20;
@@ -100,31 +46,4 @@ fn test_elgamal_encrypt_and_decrypt() {
     // Assert decryption using an incorrect key
     let dec_message_wrong = elgamal::decrypt(sk.b(), &c1, &c2);
     assert_ne!(message, dec_message_wrong);
-}
-
-#[cfg(feature = "zk")]
-#[test]
-fn test_elgamal_zk_encrypt() {
-    let sk = SecretKey::random(&mut OsRng);
-    let pk = PublicKey::from(&sk);
-
-    let message = GENERATOR_EXTENDED * JubJubScalar::from(1234u64);
-    let r = JubJubScalar::random(&mut OsRng);
-    let (c1, c2) = elgamal::encrypt(pk.A(), &message, &r);
-
-    let pp = PublicParameters::setup(1 << CAPACITY, &mut OsRng).unwrap();
-
-    let (prover, verifier) = Compiler::compile::<ElGamalCircuit>(&pp, LABEL)
-        .expect("failed to compile circuit");
-
-    let (proof, public_inputs) = prover
-        .prove(
-            &mut OsRng,
-            &ElGamalCircuit::new(&pk.A(), &message, &r, &c1, &c2),
-        )
-        .expect("failed to prove");
-
-    verifier
-        .verify(&proof, &public_inputs)
-        .expect("failed to verify proof");
 }
