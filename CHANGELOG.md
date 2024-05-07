@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `empty` method for the `Note` [#165]
 - Add `From<DuskBytesError>` trait implementation for `Error` [#166]
+- Add `ElGamal` encryption module [#162]
+
+### Changed
+
+- Restructure `Encryption` module.
 
 ## [0.27.0] - 2024-04-24
 
@@ -289,6 +294,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#162]: https://github.com/dusk-network/phoenix-core/issues/162
 [#166]: https://github.com/dusk-network/phoenix-core/issues/166
 [#165]: https://github.com/dusk-network/phoenix-core/issues/165
 [#156]: https://github.com/dusk-network/phoenix-core/issues/156
