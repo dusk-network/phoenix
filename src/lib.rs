@@ -23,6 +23,9 @@ pub mod error;
 pub mod fee;
 /// Transparent and Obfuscated Notes
 pub mod note;
+/// Transfer gadgets
+#[cfg(feature = "zk")]
+pub mod transfer;
 
 /// Phoenix Core Keys & Addresses
 mod keys;

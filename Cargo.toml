@@ -16,18 +16,20 @@ dusk-bls12_381 = { version = "0.13", default-features = false }
 bls12_381-bls = { version = "0.3", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false, features = ["zeroize"] }
 dusk-poseidon = { version = "0.33", default-features = false }
-jubjub-schnorr = { version = "0.3", default-features = false }
+poseidon-merkle = { version = "0.5", features = ["rkyv-impl", "zk", "size_32"] }
+jubjub-schnorr = { version = "0.3", default-features = false, features = ["double"] }
 subtle = { version = "^2.2.1", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = "0.10"
 zeroize = { version = "1", default-features = false, features = ["derive"] }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
+rand = "0.8"
 
 [dev-dependencies]
 assert_matches = "1.3"
-rand = "0.8"
 rkyv = { version = "0.7", default-features = false, features = ["size_32"] }
+lazy_static = "1.4"
 
 [features]
 default = []    # "alloc" is suggested as default feature but would be breaking change
@@ -43,9 +45,15 @@ rkyv-impl = [
 ]
 zk = [
     "dusk-plonk",
+    "jubjub-schnorr/alloc",
 ]
 
 [[test]]
-name = "gadgets"
-path = "tests/gadgets.rs"
+name = "encryption_gadgets"
+path = "tests/encryption_gadgets.rs"
+required-features = ["zk"]
+
+[[test]]
+name = "transfer_gadget"
+path = "tests/transfer_gadget.rs"
 required-features = ["zk"]
