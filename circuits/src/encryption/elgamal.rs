@@ -10,12 +10,13 @@
 //! Reference: https://link.springer.com/chapter/10.1007/3-540-39568-7_2
 
 use dusk_jubjub::{JubJubExtended, JubJubScalar, GENERATOR};
-
-#[cfg(feature = "zk")]
 use dusk_plonk::prelude::*;
 
 /// Encrypts a JubJubExtended plaintext given a public key and a fresh random
-/// number 'r', returning a ciphertext (JubJubExtended, JubJubExtended)
+/// number 'r'.
+///
+/// ## Return
+/// Returns a ciphertext (JubJubExtended, JubJubExtended).
 pub fn encrypt(
     public_key: &JubJubExtended,
     plaintext: &JubJubExtended,
@@ -27,8 +28,10 @@ pub fn encrypt(
     (ciphertext_1, ciphertext_2)
 }
 
-/// Decrypts a ciphertext given a secret key,
-/// returning a JubJubExtended plaintext
+/// Decrypts a ciphertext given a secret key.
+///
+/// ## Return
+/// Returns a JubJubExtended plaintext.
 pub fn decrypt(
     secret_key: &JubJubScalar,
     ciphertext_1: &JubJubExtended,
@@ -38,9 +41,10 @@ pub fn decrypt(
     ciphertext_2 - ciphertext_1 * secret_key
 }
 
-/// Encrypt in-circuit a plaintext WitnessPoint, returning
-/// a ciphertext (WitnessPoint, WitnessPoint)
-#[cfg(feature = "zk")]
+/// Encrypt in-circuit a plaintext WitnessPoint.
+///
+/// ## Return
+/// Returns a ciphertext (WitnessPoint, WitnessPoint).
 pub fn encrypt_gadget(
     composer: &mut Composer,
     public_key: WitnessPoint,
@@ -54,9 +58,10 @@ pub fn encrypt_gadget(
     Ok((ciphertext_1, ciphertext_2))
 }
 
-/// Decrypt in-circuit a ciphertext (WitnessPoint, WitnessPoint),
-/// returning a plaintext WitnessPoint
-#[cfg(feature = "zk")]
+/// Decrypt in-circuit a ciphertext (WitnessPoint, WitnessPoint).
+///
+/// ## Return
+/// Returns a plaintext WitnessPoint.
 pub fn decrypt_gadget(
     composer: &mut Composer,
     secret_key: Witness,

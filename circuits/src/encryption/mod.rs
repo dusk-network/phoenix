@@ -4,8 +4,5 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-/// AES symmetric cipher
-pub mod aes;
-
 /// ElGamal asymmetric cipher
 pub mod elgamal;

@@ -1,0 +1,41 @@
+[package]
+name = "phoenix-core"
+version = "0.27.0"
+edition = "2021"
+repository = "https://github.com/dusk-network/phoenix/core"
+description = "Core types and functionalities for Phoenix, an privacy-preserving ZKP-based transaction model"
+license = "MPL-2.0"
+exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
+
+[dependencies]
+rand_core = { version = "0.6", default-features = false }
+dusk-bytes = "0.1"
+dusk-bls12_381 = { version = "0.13", default-features = false }
+bls12_381-bls = { version = "0.3", default-features = false }
+dusk-jubjub = { version = "0.14", default-features = false, features = ["zeroize"] }
+dusk-poseidon = { version = "0.33", default-features = false }
+jubjub-schnorr = { version = "0.3", default-features = false }
+subtle = { version = "^2.2.1", default-features = false }
+ff = { version = "0.13", default-features = false }
+aes-gcm = "0.10"
+zeroize = { version = "1", default-features = false, features = ["derive"] }
+rkyv = { version = "0.7", optional = true, default-features = false }
+bytecheck = { version = "0.6", optional = true, default-features = false }
+
+[dev-dependencies]
+assert_matches = "1.3"
+rand = "0.8"
+rkyv = { version = "0.7", default-features = false, features = ["size_32"] }
+
+[features]
+default = []    # "alloc" is suggested as default feature but would be breaking change
+alloc = []
+rkyv-impl = [
+    "dusk-poseidon/rkyv-impl",
+    "dusk-jubjub/rkyv-impl",
+    "jubjub-schnorr/rkyv-impl",
+    "dusk-bls12_381/rkyv-impl",
+    "bls12_381-bls/rkyv-impl",
+    "rkyv",
+    "bytecheck"
+]

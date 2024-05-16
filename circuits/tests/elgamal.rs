@@ -5,12 +5,31 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_EXTENDED};
+use dusk_plonk::prelude::*;
 use ff::Field;
+use phoenix_circuits::elgamal;
+use phoenix_core::{PublicKey, SecretKey};
 use rand_core::OsRng;
 
-use phoenix_core::{elgamal, PublicKey, SecretKey};
+#[test]
+fn test_elgamal_encrypt_and_decrypt() {
+    let sk = SecretKey::random(&mut OsRng);
+    let pk = PublicKey::from(&sk);
 
-use dusk_plonk::prelude::*;
+    let message = GENERATOR_EXTENDED * JubJubScalar::from(1234u64);
+
+    // Encrypt using a fresh random value 'r'
+    let r = JubJubScalar::random(&mut OsRng);
+    let (c1, c2) = elgamal::encrypt(pk.A(), &message, &r);
+
+    // Assert decryption
+    let dec_message = elgamal::decrypt(sk.a(), &c1, &c2);
+    assert_eq!(message, dec_message);
+
+    // Assert decryption using an incorrect key
+    let dec_message_wrong = elgamal::decrypt(sk.b(), &c1, &c2);
+    assert_ne!(message, dec_message_wrong);
+}
 
 static LABEL: &[u8; 12] = b"dusk-network";
 const CAPACITY: usize = 13; // capacity required for the setup

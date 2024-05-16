@@ -18,14 +18,20 @@ jobs:
     name: Dusk Analyzer
     uses: dusk-network/.github/.github/workflows/dusk-analysis.yml@main
 
-  test_std:
-    name: tests std
+  test_core_std:
+    name: test core std
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: --features alloc
+      test_flags: -p phoenix-core --features alloc
 
-  test_rkyv:
-    name: tests rkyv
+  test_core_rkyv:
+    name: test core rkyv
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: --features rkyv-impl
+      test_flags: -p phoenix-core --features rkyv-impl
+
+  test_circuits:
+    name: test cirucits
+    uses: dusk-network/.github/.github/workflows/run-tests.yml@main
+    with:
+      test_flags: -p phoenix-circuits

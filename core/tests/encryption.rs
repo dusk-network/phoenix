@@ -4,11 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED};
-use ff::Field;
+use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR};
+use phoenix_core::aes;
 use rand_core::OsRng;
-
-use phoenix_core::{aes, elgamal, PublicKey, SecretKey};
 
 #[test]
 fn test_aes_encrypt_and_decrypt() {
@@ -26,24 +24,4 @@ fn test_aes_encrypt_and_decrypt() {
         .expect("Decrypted correctly.");
 
     assert_eq!(&dec_plaintext, plaintext);
-}
-
-#[test]
-fn test_elgamal_encrypt_and_decrypt() {
-    let sk = SecretKey::random(&mut OsRng);
-    let pk = PublicKey::from(&sk);
-
-    let message = GENERATOR_EXTENDED * JubJubScalar::from(1234u64);
-
-    // Encrypt using a fresh random value 'r'
-    let r = JubJubScalar::random(&mut OsRng);
-    let (c1, c2) = elgamal::encrypt(pk.A(), &message, &r);
-
-    // Assert decryption
-    let dec_message = elgamal::decrypt(sk.a(), &c1, &c2);
-    assert_eq!(message, dec_message);
-
-    // Assert decryption using an incorrect key
-    let dec_message_wrong = elgamal::decrypt(sk.b(), &c1, &c2);
-    assert_ne!(message, dec_message_wrong);
 }
