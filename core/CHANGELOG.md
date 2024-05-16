@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Restructure `Encryption` module.
+- Move phoenix-core into a phoenix workspace [#171]
+
+### Removed
+
+- Remove 'encryption::elgamal' module as it has been added to the 'phoenix-circuits' lib in the same workspace [#171]
 
 ## [0.27.0] - 2024-04-24
 
@@ -294,61 +299,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
-[#162]: https://github.com/dusk-network/phoenix-core/issues/162
-[#166]: https://github.com/dusk-network/phoenix-core/issues/166
-[#165]: https://github.com/dusk-network/phoenix-core/issues/165
-[#156]: https://github.com/dusk-network/phoenix-core/issues/156
-[#155]: https://github.com/dusk-network/phoenix-core/issues/155
-[#152]: https://github.com/dusk-network/phoenix-core/issues/152
-[#136]: https://github.com/dusk-network/phoenix-core/issues/136
-[#126]: https://github.com/dusk-network/phoenix-core/issues/126
-[#119]: https://github.com/dusk-network/phoenix-core/issues/119
-[#116]: https://github.com/dusk-network/phoenix-core/issues/116
-[#114]: https://github.com/dusk-network/phoenix-core/issues/114
-[#107]: https://github.com/dusk-network/phoenix-core/issues/107
-[#96]: https://github.com/dusk-network/phoenix-core/issues/96
-[#94]: https://github.com/dusk-network/phoenix-core/issues/94
-[#92]: https://github.com/dusk-network/phoenix-core/issues/92
-[#88]: https://github.com/dusk-network/phoenix-core/issues/88
-[#86]: https://github.com/dusk-network/phoenix-core/issues/86
-[#85]: https://github.com/dusk-network/phoenix-core/issues/85
-[#84]: https://github.com/dusk-network/phoenix-core/issues/84
-[#80]: https://github.com/dusk-network/phoenix-core/issues/80
-[#76]: https://github.com/dusk-network/phoenix-core/issues/76
-[#72]: https://github.com/dusk-network/phoenix-core/issues/72
-[#69]: https://github.com/dusk-network/phoenix-core/issues/69
-[#67]: https://github.com/dusk-network/phoenix-core/issues/67
-[#61]: https://github.com/dusk-network/phoenix-core/issues/61
+[#171]: https://github.com/dusk-network/phoenix/issues/171
+[#166]: https://github.com/dusk-network/phoenix/issues/166
+[#165]: https://github.com/dusk-network/phoenix/issues/165
+[#162]: https://github.com/dusk-network/phoenix/issues/162
+[#156]: https://github.com/dusk-network/phoenix/issues/156
+[#155]: https://github.com/dusk-network/phoenix/issues/155
+[#152]: https://github.com/dusk-network/phoenix/issues/152
+[#136]: https://github.com/dusk-network/phoenix/issues/136
+[#126]: https://github.com/dusk-network/phoenix/issues/126
+[#119]: https://github.com/dusk-network/phoenix/issues/119
+[#116]: https://github.com/dusk-network/phoenix/issues/116
+[#114]: https://github.com/dusk-network/phoenix/issues/114
+[#107]: https://github.com/dusk-network/phoenix/issues/107
+[#96]: https://github.com/dusk-network/phoenix/issues/96
+[#94]: https://github.com/dusk-network/phoenix/issues/94
+[#92]: https://github.com/dusk-network/phoenix/issues/92
+[#88]: https://github.com/dusk-network/phoenix/issues/88
+[#86]: https://github.com/dusk-network/phoenix/issues/86
+[#85]: https://github.com/dusk-network/phoenix/issues/85
+[#84]: https://github.com/dusk-network/phoenix/issues/84
+[#80]: https://github.com/dusk-network/phoenix/issues/80
+[#76]: https://github.com/dusk-network/phoenix/issues/76
+[#72]: https://github.com/dusk-network/phoenix/issues/72
+[#69]: https://github.com/dusk-network/phoenix/issues/69
+[#67]: https://github.com/dusk-network/phoenix/issues/67
+[#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix-core/compare/v0.27.0...HEAD
-[0.27.0]: https://github.com/dusk-network/phoenix-core/compare/v0.26.0...v0.27.0
-[0.26.0]: https://github.com/dusk-network/phoenix-core/compare/v0.25.0...v0.26.0
-[0.25.0]: https://github.com/dusk-network/phoenix-core/compare/v0.24.0...v0.25.0
-[0.24.0]: https://github.com/dusk-network/phoenix-core/compare/v0.23.0...v0.24.0
-[0.23.0]: https://github.com/dusk-network/phoenix-core/compare/v0.22.0...v0.23.0
-[0.22.0]: https://github.com/dusk-network/phoenix-core/compare/v0.21.0...v0.22.0
-[0.21.0]: https://github.com/dusk-network/phoenix-core/compare/v0.19.0...v0.21.0
-[0.19.0]: https://github.com/dusk-network/phoenix-core/compare/v0.18.1...v0.19.0
-[0.18.1]: https://github.com/dusk-network/phoenix-core/compare/v0.18.0...v0.18.1
-[0.18.0]: https://github.com/dusk-network/phoenix-core/compare/v0.17.1...v0.18.0
-[0.17.1]: https://github.com/dusk-network/phoenix-core/compare/v0.17.0...v0.17.1
-[0.17.0]: https://github.com/dusk-network/phoenix-core/compare/v0.12.0...v0.17.0
-[0.12.0]: https://github.com/dusk-network/phoenix-core/compare/v0.11.0...v0.12.0
-[0.11.0]: https://github.com/dusk-network/phoenix-core/compare/v0.10.0...v0.11.0
-[0.10.0]: https://github.com/dusk-network/phoenix-core/compare/v0.9.1...v0.10.0
-[0.9.1]: https://github.com/dusk-network/phoenix-core/compare/v0.9.0...v0.9.1
-[0.9.0]: https://github.com/dusk-network/phoenix-core/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/dusk-network/phoenix-core/compare/v0.7.4...v0.8.0
-[0.7.4]: https://github.com/dusk-network/phoenix-core/compare/v0.7.3...v0.7.4
-[0.7.3]: https://github.com/dusk-network/phoenix-core/compare/v0.7.2...v0.7.3
-[0.7.2]: https://github.com/dusk-network/phoenix-core/compare/v0.7.1...v0.7.2
-[0.7.1]: https://github.com/dusk-network/phoenix-core/compare/v0.7.0...v0.7.1
-[0.7.0]: https://github.com/dusk-network/phoenix-core/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/dusk-network/phoenix-core/compare/v0.5.1...v0.6.0
-[0.5.1]: https://github.com/dusk-network/phoenix-core/compare/v0.5.0...v0.5.1
-[0.5.0]: https://github.com/dusk-network/phoenix-core/compare/v0.3.1...v0.5.0
-[0.3.1]: https://github.com/dusk-network/phoenix-core/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/dusk-network/phoenix-core/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/dusk-network/phoenix-core/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/dusk-network/phoenix-core/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.27.0...HEAD
+[0.27.0]: https://github.com/dusk-network/phoenix/compare/v0.26.0...v0.27.0
+[0.26.0]: https://github.com/dusk-network/phoenix/compare/v0.25.0...v0.26.0
+[0.25.0]: https://github.com/dusk-network/phoenix/compare/v0.24.0...v0.25.0
+[0.24.0]: https://github.com/dusk-network/phoenix/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/dusk-network/phoenix/compare/v0.22.0...v0.23.0
+[0.22.0]: https://github.com/dusk-network/phoenix/compare/v0.21.0...v0.22.0
+[0.21.0]: https://github.com/dusk-network/phoenix/compare/v0.19.0...v0.21.0
+[0.19.0]: https://github.com/dusk-network/phoenix/compare/v0.18.1...v0.19.0
+[0.18.1]: https://github.com/dusk-network/phoenix/compare/v0.18.0...v0.18.1
+[0.18.0]: https://github.com/dusk-network/phoenix/compare/v0.17.1...v0.18.0
+[0.17.1]: https://github.com/dusk-network/phoenix/compare/v0.17.0...v0.17.1
+[0.17.0]: https://github.com/dusk-network/phoenix/compare/v0.12.0...v0.17.0
+[0.12.0]: https://github.com/dusk-network/phoenix/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/dusk-network/phoenix/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/dusk-network/phoenix/compare/v0.9.1...v0.10.0
+[0.9.1]: https://github.com/dusk-network/phoenix/compare/v0.9.0...v0.9.1
+[0.9.0]: https://github.com/dusk-network/phoenix/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/dusk-network/phoenix/compare/v0.7.4...v0.8.0
+[0.7.4]: https://github.com/dusk-network/phoenix/compare/v0.7.3...v0.7.4
+[0.7.3]: https://github.com/dusk-network/phoenix/compare/v0.7.2...v0.7.3
+[0.7.2]: https://github.com/dusk-network/phoenix/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/dusk-network/phoenix/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/dusk-network/phoenix/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/dusk-network/phoenix/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/dusk-network/phoenix/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/dusk-network/phoenix/compare/v0.3.1...v0.5.0
+[0.3.1]: https://github.com/dusk-network/phoenix/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/dusk-network/phoenix/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/dusk-network/phoenix/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/dusk-network/phoenix/releases/tag/v0.1.0

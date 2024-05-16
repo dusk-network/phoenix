@@ -32,8 +32,6 @@ mod encryption;
 
 /// AES symmetric cipher
 pub use encryption::aes;
-/// ElGamal asymmetric cipher
-pub use encryption::elgamal;
 /// Hash function
 pub use keys::hash;
 /// Public (Spend) Key

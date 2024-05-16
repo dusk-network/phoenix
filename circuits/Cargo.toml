@@ -1,0 +1,19 @@
+[package]
+name = "phoenix-circuits"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/dusk-network/phoenix/circuits"
+description = "Circuit definitions for Phoenix, an privacy-preserving ZKP-based transaction model"
+license = "MPL-2.0"
+exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+phoenix-core = { path = "../core" }
+dusk-plonk = { version = "0.19", default-features = false }
+dusk-jubjub = { version = "0.14", default-features = false }
+
+[dev-dependencies]
+ff = { version = "0.13", default-features = false }
+rand_core = { version = "0.6", default-features = false }
