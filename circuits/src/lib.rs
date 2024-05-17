@@ -10,8 +10,10 @@
 #![deny(missing_docs)]
 #![no_std]
 
-/// Encryption algorithm
 mod encryption;
+
+/// Transaction structs, gadget, and circuit
+pub mod transaction;
 
 /// ElGamal asymmetric cipher
 pub use encryption::elgamal;
