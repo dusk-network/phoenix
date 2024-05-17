@@ -302,7 +302,7 @@ impl Note {
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_data(vk)
                 .map(|(value, _)| value)
-                .map_err(|_| Error::InvalidCipher),
+                .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
         }
     }
@@ -319,7 +319,7 @@ impl Note {
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_data(vk)
                 .map(|(_, blinding_factor)| blinding_factor)
-                .map_err(|_| Error::InvalidCipher),
+                .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
         }
     }
