@@ -23,7 +23,7 @@ fn transparent_note() -> Result<(), Error> {
 
     let note = Note::transparent(&mut rng, &pk, value);
 
-    assert_eq!(note.note(), NoteType::Transparent);
+    assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
 
     Ok(())
@@ -43,7 +43,7 @@ fn transparent_stealth_note() -> Result<(), Error> {
 
     let note = Note::transparent_stealth(sa, value);
 
-    assert_eq!(note.note(), NoteType::Transparent);
+    assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
     assert_eq!(sa, *note.stealth_address());
 
@@ -62,7 +62,7 @@ fn obfuscated_note() -> Result<(), Error> {
     let blinding_factor = JubJubScalar::random(&mut rng);
     let note = Note::obfuscated(&mut rng, &pk, value, blinding_factor);
 
-    assert_eq!(note.note(), NoteType::Obfuscated);
+    assert_eq!(note.note_type(), NoteType::Obfuscated);
     assert_eq!(value, note.value(Some(&vk))?);
 
     Ok(())

@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `empty` method for the `Note` [#165]
 - Add `From<DuskBytesError>` trait implementation for `Error` [#166]
 - Add `ElGamal` encryption module [#162]
+- Add impl `Ownable` for `&Note`.
 
 ### Changed
 
 - Restructure `Encryption` module.
 - Move phoenix-core into a phoenix workspace [#171]
+- Rename `note` method to `note_type`.
 
 ### Removed
 

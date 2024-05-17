@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add `phoenix-circuits` as a workspace member of `phoenix` [#171]
 - Add elgamal encryption and decryption gadgets [#171]
+- Add the `transaction` module [#169]
 
 <!-- ISSUES -->
+[#169]: https://github.com/dusk-network/phoenix/issues/169
 [#171]: https://github.com/dusk-network/phoenix/issues/171
 
 <!-- VERSIONS -->

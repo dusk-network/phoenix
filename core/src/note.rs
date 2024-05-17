@@ -264,7 +264,7 @@ impl Note {
     }
 
     /// Return the type of the note
-    pub const fn note(&self) -> NoteType {
+    pub const fn note_type(&self) -> NoteType {
         self.note_type
     }
 
@@ -326,6 +326,12 @@ impl Note {
 }
 
 impl Ownable for Note {
+    fn stealth_address(&self) -> &StealthAddress {
+        &self.stealth_address
+    }
+}
+
+impl Ownable for &Note {
     fn stealth_address(&self) -> &StealthAddress {
         &self.stealth_address
     }
