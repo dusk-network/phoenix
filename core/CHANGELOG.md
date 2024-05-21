@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Remove 'encryption::elgamal' module as it has been added to the 'phoenix-circuits' lib in the same workspace [#171]
+- Remove `Crossover` struct [#175]
+- Remove `fee`module [#175]
+- Remove `transaction/transfer` module [#175]
+- Remove `transaction/stake` module [#175]
+- Remove `convert` module [#175]
+- Remove error types related to the above modules and types [#175]
 
 ## [0.27.0] - 2024-04-24
 
@@ -301,6 +307,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#175]: https://github.com/dusk-network/phoenix/issues/175
 [#171]: https://github.com/dusk-network/phoenix/issues/171
 [#166]: https://github.com/dusk-network/phoenix/issues/166
 [#165]: https://github.com/dusk-network/phoenix/issues/165

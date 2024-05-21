@@ -14,24 +14,10 @@ use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
 pub enum Error {
     /// Invalid u8 as Note Type (expected `0` or `1`, found {0})
     InvalidNoteType(u8),
-    /// Invalid Blinding Factor's value
-    InvalidBlindingFactor,
-    /// Invalid Cipher's value
-    InvalidCipher,
     /// ViewKey required for decrypt data from Obfuscated Note
     MissingViewKey,
-    /// Invalid Note Type for conversion
-    InvalidNoteConversion,
-    /// Invalid Crossover for conversion
-    InvalidCrossoverConversion,
-    /// Invalid Fee for conversion
-    InvalidFeeConversion,
     /// Failure to encrypt / decrypt
-    BadEncryption,
-    /// Invalid Value Commitment
-    InvalidCommitment,
-    /// Invalid Nonce
-    InvalidNonce,
+    InvalidEncryption,
     /// Dusk-bytes InvalidData error
     InvalidData,
     /// Dusk-bytes BadLength error
@@ -49,7 +35,7 @@ impl fmt::Display for Error {
 impl From<AesError> for Error {
     fn from(aes_error: AesError) -> Self {
         match aes_error {
-            AesError => Self::BadEncryption,
+            AesError => Self::InvalidEncryption,
         }
     }
 }
