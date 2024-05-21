@@ -181,14 +181,22 @@ impl TxOutputNote {
 ///    to the sum of the values of all [`TxOutputNote`] + the gas fee + a
 ///    crossover, where a crossover refers to funds being transfered to a
 ///    contract.
+///
+/// The gadget appends the following public input values to the circuit:
+/// - `skeleton_hash`
+/// - `root`
+/// - `[nullifier; I]`
+/// - `[output_value_commitment; 2]`
+/// - `max_fee`
+/// - `crossover`
 pub fn gadget<const H: usize, const A: usize, const I: usize>(
     composer: &mut Composer,
-    tx_input_notes: &[TxInputNote<H, A>; I],
-    tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     skeleton_hash: &BlsScalar,
     root: &BlsScalar,
-    crossover: u64,
+    tx_input_notes: &[TxInputNote<H, A>; I],
+    tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     max_fee: u64,
+    crossover: u64,
 ) -> Result<(), Error> {
     let skeleton_hash_pi = composer.append_public(*skeleton_hash);
     let root_pi = composer.append_public(*root);
@@ -407,12 +415,12 @@ impl<const H: usize, const A: usize, const I: usize> Circuit
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
         gadget::<H, A, I>(
             composer,
-            &self.tx_input_notes,
-            &self.tx_output_notes,
             &self.skeleton_hash,
             &self.root,
-            self.crossover,
+            &self.tx_input_notes,
+            &self.tx_output_notes,
             self.max_fee,
+            self.crossover,
         )?;
         Ok(())
     }
