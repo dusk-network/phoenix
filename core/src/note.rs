@@ -16,7 +16,7 @@ use dusk_jubjub::{
 
 use crate::aes;
 
-use dusk_poseidon::sponge::hash;
+use dusk_poseidon::{Domain, Hash};
 use ff::Field;
 use rand_core::{CryptoRng, RngCore};
 
@@ -238,7 +238,7 @@ impl Note {
 
         let pos = BlsScalar::from(self.pos);
 
-        hash(&[pk_prime[0], pk_prime[1], pos])
+        Hash::digest(Domain::Other, &[pk_prime[0], pk_prime[1], pos])[0]
     }
 
     /// Return the internal representation of scalars to be hashed
@@ -260,7 +260,7 @@ impl Note {
     /// Return a hash represented by `H(note_type, value_commitment,
     /// H(StealthAddress), pos, encrypted_data)
     pub fn hash(&self) -> BlsScalar {
-        hash(&self.hash_inputs())
+        Hash::digest(Domain::Other, &self.hash_inputs())[0]
     }
 
     /// Return the type of the note

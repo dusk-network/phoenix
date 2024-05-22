@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructure `Encryption` module.
 - Move phoenix-core into a phoenix workspace [#171]
 - Rename `note` method to `note_type`.
+- Update `dusk-poseidon` to v0.39 [#179]
+- Update `jubjub-schnorr` to v0.4 [#179]
 
 ### Removed
 
@@ -307,6 +309,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#179]: https://github.com/dusk-network/phoenix/issues/179
 [#175]: https://github.com/dusk-network/phoenix/issues/175
 [#171]: https://github.com/dusk-network/phoenix/issues/171
 [#166]: https://github.com/dusk-network/phoenix/issues/166
