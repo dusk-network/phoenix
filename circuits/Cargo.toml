@@ -3,7 +3,7 @@ name = "phoenix-circuits"
 version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/circuits"
-description = "Circuit definitions for Phoenix, an privacy-preserving ZKP-based transaction model"
+description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
 license = "MPL-2.0"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 
