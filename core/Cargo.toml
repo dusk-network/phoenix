@@ -1,9 +1,9 @@
 [package]
 name = "phoenix-core"
-version = "0.27.0"
+version = "0.28.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/core"
-description = "Core types and functionalities for Phoenix, an privacy-preserving ZKP-based transaction model"
+description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
 license = "MPL-2.0"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 

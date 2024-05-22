@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.0] - 2024-05-22
+
 ### Added
 
 - Add `empty` method for the `Note` [#165]
@@ -339,7 +341,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/dusk-network/phoenix/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/dusk-network/phoenix/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/dusk-network/phoenix/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/dusk-network/phoenix/compare/v0.24.0...v0.25.0
