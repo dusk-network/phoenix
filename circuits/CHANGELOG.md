@@ -16,8 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Change the gadget input to match the order of the circuits public inputs [#177]
+- Update `dusk-poseidon` to v0.39 [#179]
+- Update `jubjub-schnorr` to v0.4 [#179]
+- Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#179]: https://github.com/dusk-network/phoenix/issues/179
 [#177]: https://github.com/dusk-network/phoenix/issues/177
 [#171]: https://github.com/dusk-network/phoenix/issues/171
 [#169]: https://github.com/dusk-network/phoenix/issues/169

@@ -19,12 +19,11 @@ static LABEL: &[u8; 12] = b"dusk-network";
 const CAPACITY: usize = 17; // capacity required for the setup
 
 const HEIGHT: usize = 17;
-const ARITY: usize = 4;
 
 struct TestingParameters {
     sk: SecretKey,
     pp: PublicParameters,
-    tx_input_notes: [TxInputNote<HEIGHT, ARITY>; 4],
+    tx_input_notes: [TxInputNote<HEIGHT>; 4],
     skeleton_hash: BlsScalar,
     root: BlsScalar,
     crossover: u64,
@@ -36,7 +35,7 @@ lazy_static! {
         let pp = PublicParameters::setup(1 << CAPACITY, &mut OsRng).unwrap();
         let sk = SecretKey::random(&mut OsRng);
 
-        let mut tree = Tree::<(), HEIGHT, ARITY>::new();
+        let mut tree = Tree::<(), HEIGHT>::new();
         let skeleton_hash = BlsScalar::from(1234u64);
 
         // create and insert into the tree 4 testing tx input notes
@@ -54,7 +53,7 @@ lazy_static! {
 }
 
 fn create_and_insert_test_note(
-    tree: &mut Tree<(), HEIGHT, ARITY>,
+    tree: &mut Tree<(), HEIGHT>,
     pk: &PublicKey,
     pos: u64,
     value: u64,
@@ -73,11 +72,11 @@ fn create_and_insert_test_note(
 }
 
 fn create_test_tx_input_notes<const I: usize>(
-    tree: &mut Tree<(), HEIGHT, ARITY>,
+    tree: &mut Tree<(), HEIGHT>,
     sk: &SecretKey,
     skeleton_hash: BlsScalar,
     rng: &mut (impl RngCore + CryptoRng),
-) -> [TxInputNote<HEIGHT, ARITY>; I] {
+) -> [TxInputNote<HEIGHT>; I] {
     let pk = PublicKey::from(sk);
 
     let mut notes = Vec::new();
@@ -122,7 +121,7 @@ fn create_test_tx_output_note(
 #[test]
 fn test_transfer_circuit_1_2() {
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, ARITY, 1>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 1>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes = [TP.tx_input_notes[0].clone()];
@@ -155,7 +154,7 @@ fn test_transfer_circuit_1_2() {
 #[test]
 fn test_transfer_circuit_2_2() {
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, ARITY, 2>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 2>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes =
@@ -189,7 +188,7 @@ fn test_transfer_circuit_2_2() {
 #[test]
 fn test_transfer_circuit_3_2() {
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, ARITY, 3>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 3>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes = [
@@ -226,7 +225,7 @@ fn test_transfer_circuit_3_2() {
 #[test]
 fn test_transfer_circuit_4_2() {
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, ARITY, 4>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 4>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
     // create 2 testing tx output notes

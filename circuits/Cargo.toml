@@ -13,9 +13,9 @@ exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 phoenix-core = { path = "../core" }
 dusk-plonk = { version = "0.19", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false }
-poseidon-merkle = { version = "0.5", features = ["rkyv-impl", "zk", "size_32"] }
-dusk-poseidon = { version = "0.33", default-features = false }
-jubjub-schnorr = { version = "0.3", default-features = false, features = ["double", "alloc"] }
+poseidon-merkle = { version = "0.6", features = ["rkyv-impl", "zk", "size_32"] }
+dusk-poseidon = { version = "0.39", features = ["zk"] }
+jubjub-schnorr = { version = "0.4", features = ["zk"] }
 rand_core = { version = "0.6", default-features = false }
 rand = "0.8"
 

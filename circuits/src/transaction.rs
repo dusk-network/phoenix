@@ -8,7 +8,7 @@ use dusk_jubjub::{
     JubJubScalar, GENERATOR, GENERATOR_NUMS, GENERATOR_NUMS_EXTENDED,
 };
 use dusk_plonk::prelude::*;
-use dusk_poseidon::sponge;
+use dusk_poseidon::{Domain, Hash, HashGadget};
 use jubjub_schnorr::{gadgets, SignatureDouble};
 use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
 
@@ -25,8 +25,8 @@ const TX_OUTPUT_NOTES: usize = 2;
 /// Struct representing a note willing to be spent, in a way
 /// suitable for being introduced in the transfer circuit
 #[derive(Debug, Clone)]
-pub struct TxInputNote<const H: usize, const A: usize> {
-    pub(crate) merkle_opening: Opening<(), H, A>,
+pub struct TxInputNote<const H: usize> {
+    pub(crate) merkle_opening: Opening<(), H>,
     pub(crate) note: Note,
     pub(crate) note_pk_p: JubJubAffine,
     pub(crate) value: u64,
@@ -49,15 +49,15 @@ struct WitnessTxInputNote {
     signature_r_p: WitnessPoint,
 }
 
-impl<const H: usize, const A: usize> TxInputNote<H, A> {
+impl<const H: usize> TxInputNote<H> {
     /// Create a tx input note
     pub fn new(
         note: &Note,
-        merkle_opening: poseidon_merkle::Opening<(), H, A>,
+        merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
         skeleteon_hash: BlsScalar,
         rng: &mut (impl RngCore + CryptoRng),
-    ) -> Result<crate::transaction::TxInputNote<H, A>, PhoenixError> {
+    ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
         let note_pk_p =
             JubJubAffine::from(GENERATOR_NUMS_EXTENDED * note_sk.as_ref());
@@ -66,11 +66,10 @@ impl<const H: usize, const A: usize> TxInputNote<H, A> {
         let value = note.value(Some(&vk))?;
         let blinding_factor = note.blinding_factor(Some(&vk))?;
 
-        let nullifier = sponge::hash(&[
-            note_pk_p.get_u(),
-            note_pk_p.get_v(),
-            (*note.pos()).into(),
-        ]);
+        let nullifier = Hash::digest(
+            Domain::Other,
+            &[note_pk_p.get_u(), note_pk_p.get_v(), (*note.pos()).into()],
+        )[0];
 
         let signature = note_sk.sign_double(rng, skeleteon_hash);
 
@@ -189,11 +188,11 @@ impl TxOutputNote {
 /// - `[output_value_commitment; 2]`
 /// - `max_fee`
 /// - `crossover`
-pub fn gadget<const H: usize, const A: usize, const I: usize>(
+pub fn gadget<const H: usize, const I: usize>(
     composer: &mut Composer,
     skeleton_hash: &BlsScalar,
     root: &BlsScalar,
-    tx_input_notes: &[TxInputNote<H, A>; I],
+    tx_input_notes: &[TxInputNote<H>; I],
     tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     max_fee: u64,
     crossover: u64,
@@ -220,14 +219,15 @@ pub fn gadget<const H: usize, const A: usize, const I: usize>(
         )?;
 
         // COMPUTE AND ASSERT THE NULLIFIER
-        let nullifier = sponge::gadget(
+        let nullifier = HashGadget::digest(
             composer,
+            Domain::Other,
             &[
                 *w_tx_input_note.note_pk_p.x(),
                 *w_tx_input_note.note_pk_p.y(),
                 w_tx_input_note.pos,
             ],
-        );
+        )[0];
         composer.assert_equal(nullifier, w_tx_input_note.nullifier);
 
         // PERFORM A RANGE CHECK ([0, 2^64 - 1]) ON THE VALUE OF THE NOTE
@@ -251,8 +251,9 @@ pub fn gadget<const H: usize, const A: usize, const I: usize>(
         let value_commitment = composer.component_add_point(pc_1, pc_2);
 
         // COMPUTE THE NOTE HASH
-        let note_hash = sponge::gadget(
+        let note_hash = HashGadget::digest(
             composer,
+            Domain::Other,
             &[
                 w_tx_input_note.note_type,
                 *value_commitment.x(),
@@ -261,7 +262,7 @@ pub fn gadget<const H: usize, const A: usize, const I: usize>(
                 *w_tx_input_note.note_pk.y(),
                 w_tx_input_note.pos,
             ],
-        );
+        )[0];
 
         // VERIFY THE MERKLE OPENING
         let root =
@@ -323,8 +324,8 @@ pub fn gadget<const H: usize, const A: usize, const I: usize>(
 
 /// Declaration of the transaction circuit calling the [`gadget`].
 #[derive(Debug)]
-pub struct TxCircuit<const H: usize, const A: usize, const I: usize> {
-    tx_input_notes: [TxInputNote<H, A>; I],
+pub struct TxCircuit<const H: usize, const I: usize> {
+    tx_input_notes: [TxInputNote<H>; I],
     tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
     skeleton_hash: BlsScalar,
     root: BlsScalar,
@@ -332,16 +333,14 @@ pub struct TxCircuit<const H: usize, const A: usize, const I: usize> {
     max_fee: u64,
 }
 
-impl<const H: usize, const A: usize, const I: usize> Default
-    for TxCircuit<H, A, I>
-{
+impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
     fn default() -> Self {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let sk = SecretKey::random(&mut rng);
         let vk = ViewKey::from(&sk);
 
-        let mut tree = Tree::<(), H, A>::new();
+        let mut tree = Tree::<(), H>::new();
         let skeleton_hash = BlsScalar::default();
 
         let mut tx_input_notes = Vec::new();
@@ -388,10 +387,10 @@ impl<const H: usize, const A: usize, const I: usize> Default
     }
 }
 
-impl<const H: usize, const A: usize, const I: usize> TxCircuit<H, A, I> {
+impl<const H: usize, const I: usize> TxCircuit<H, I> {
     /// Create a new transfer circuit
     pub fn new(
-        tx_input_notes: [TxInputNote<H, A>; I],
+        tx_input_notes: [TxInputNote<H>; I],
         tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
         skeleton_hash: BlsScalar,
         root: BlsScalar,
@@ -409,11 +408,9 @@ impl<const H: usize, const A: usize, const I: usize> TxCircuit<H, A, I> {
     }
 }
 
-impl<const H: usize, const A: usize, const I: usize> Circuit
-    for TxCircuit<H, A, I>
-{
+impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
-        gadget::<H, A, I>(
+        gadget::<H, I>(
             composer,
             &self.skeleton_hash,
             &self.root,
