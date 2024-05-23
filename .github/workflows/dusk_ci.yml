@@ -12,23 +12,23 @@ jobs:
     uses: dusk-network/.github/.github/workflows/code-analysis.yml@main
     with:
       clippy_default: false
-      clippy_args: --release -- -D warnings
+      clippy_args: --release --features=alloc -- -D warnings
 
   dusk_analyzer:
     name: Dusk Analyzer
     uses: dusk-network/.github/.github/workflows/dusk-analysis.yml@main
 
-  test_core_std:
-    name: test core std
+  test_core:
+    name: test core
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: -p phoenix-core --features alloc
+      test_flags: -p phoenix-core --features=alloc
 
   test_core_rkyv:
-    name: test core rkyv
+    name: test core rkyv compiles
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: -p phoenix-core --features rkyv-impl
+      test_flags: -p phoenix-core --features=rkyv-impl,alloc --no-run
 
   test_circuits:
     name: test cirucits

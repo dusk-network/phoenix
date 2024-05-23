@@ -11,7 +11,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 #[cfg(feature = "rkyv-impl")]
-use rkyv::{Archive, Deserialize};
+use rkyv::{Archive, Deserialize, Serialize};
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fix missing import for `rkyv-impl` feature [#183]
+
 ## [0.28.0] - 2024-05-22
 
 ### Added
@@ -311,6 +315,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#183]: https://github.com/dusk-network/phoenix/issues/183
 [#179]: https://github.com/dusk-network/phoenix/issues/179
 [#175]: https://github.com/dusk-network/phoenix/issues/175
 [#171]: https://github.com/dusk-network/phoenix/issues/171
