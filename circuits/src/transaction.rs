@@ -55,7 +55,7 @@ impl<const H: usize> TxInputNote<H> {
         note: &Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
-        skeleteon_hash: BlsScalar,
+        skeleton_hash: BlsScalar,
         rng: &mut (impl RngCore + CryptoRng),
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
@@ -71,7 +71,7 @@ impl<const H: usize> TxInputNote<H> {
             &[note_pk_p.get_u(), note_pk_p.get_v(), (*note.pos()).into()],
         )[0];
 
-        let signature = note_sk.sign_double(rng, skeleteon_hash);
+        let signature = note_sk.sign_double(rng, skeleton_hash);
 
         Ok(crate::transaction::TxInputNote {
             merkle_opening,
