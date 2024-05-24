@@ -15,5 +15,8 @@ mod encryption;
 /// Transaction structs, gadget, and circuit
 pub mod transaction;
 
+/// Recipient circuit
+pub mod recipient;
+
 /// ElGamal asymmetric cipher
 pub use encryption::elgamal;
