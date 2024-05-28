@@ -23,8 +23,10 @@ pub use error::Error;
 pub use keys::hash;
 pub use keys::public::PublicKey;
 pub use keys::secret::SecretKey;
-pub use keys::stealth::{Ownable, StealthAddress};
+pub use keys::stealth::StealthAddress;
+pub use keys::sync::SyncAddress;
 pub use keys::view::ViewKey;
+pub use keys::Ownable;
 pub use note::{Note, NoteType};
 
 #[cfg(feature = "alloc")]
