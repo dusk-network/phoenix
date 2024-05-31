@@ -53,11 +53,11 @@ struct WitnessTxInputNote {
 impl<const H: usize> TxInputNote<H> {
     /// Create a tx input note
     pub fn new(
+        rng: &mut (impl RngCore + CryptoRng),
         note: &Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
         skeleton_hash: BlsScalar,
-        rng: &mut (impl RngCore + CryptoRng),
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
         let note_pk_p =
@@ -356,11 +356,11 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         for _ in 0..I {
             let merkle_opening = tree.opening(*note.pos()).expect("Tree read.");
             let tx_input_note = TxInputNote::new(
+                &mut rng,
                 &note,
                 merkle_opening,
                 &sk,
                 skeleton_hash,
-                &mut rng,
             )
             .expect("Note created properly.");
 
