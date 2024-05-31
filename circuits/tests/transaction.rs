@@ -26,7 +26,7 @@ struct TestingParameters {
     tx_input_notes: [TxInputNote<HEIGHT>; 4],
     skeleton_hash: BlsScalar,
     root: BlsScalar,
-    crossover: u64,
+    deposit: u64,
     max_fee: u64,
 }
 
@@ -45,10 +45,10 @@ lazy_static! {
         // retrieve the root from the tree after inserting the notes
         let root = tree.root().hash;
 
-        let crossover = 5;
+        let deposit = 5;
         let max_fee = 5;
 
-        TestingParameters { pp, tx_input_notes, skeleton_hash, root, crossover, max_fee }
+        TestingParameters { pp, tx_input_notes, skeleton_hash, root, deposit, max_fee }
     };
 }
 
@@ -137,7 +137,7 @@ fn test_transfer_circuit_1_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -171,7 +171,7 @@ fn test_transfer_circuit_2_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -208,7 +208,7 @@ fn test_transfer_circuit_3_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -239,7 +239,7 @@ fn test_transfer_circuit_4_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
