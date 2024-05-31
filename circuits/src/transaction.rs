@@ -5,7 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{
-    JubJubScalar, GENERATOR, GENERATOR_NUMS, GENERATOR_NUMS_EXTENDED,
+    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED, GENERATOR_NUMS,
+    GENERATOR_NUMS_EXTENDED,
 };
 use dusk_plonk::prelude::*;
 use dusk_poseidon::{Domain, Hash, HashGadget};
@@ -124,9 +125,9 @@ impl<const H: usize> TxInputNote<H> {
 /// suitable for being introduced in the transfer circuit
 #[derive(Debug, Clone)]
 pub struct TxOutputNote {
-    pub(crate) value: u64,
-    pub(crate) value_commitment: JubJubAffine,
-    pub(crate) blinding_factor: JubJubScalar,
+    value: u64,
+    value_commitment: JubJubAffine,
+    blinding_factor: JubJubScalar,
 }
 
 #[derive(Debug, Clone)]
@@ -137,16 +138,18 @@ struct WitnessTxOutputNote {
 }
 
 impl TxOutputNote {
-    /// Create a tx output note
-    pub fn new(
-        note: &Note,
-        vk: &ViewKey,
-    ) -> Result<crate::transaction::TxOutputNote, PhoenixError> {
-        Ok(crate::transaction::TxOutputNote {
-            value: note.value(Some(vk))?,
-            value_commitment: note.value_commitment().into(),
-            blinding_factor: note.blinding_factor(Some(vk))?,
-        })
+    /// Crate a new `TxOutputNote`.
+    pub fn new(value: u64, blinding_factor: JubJubScalar) -> Self {
+        let value_commitment = JubJubScalar::from(value);
+        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
+            + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+        let value_commitment = JubJubAffine::from(value_commitment);
+
+        Self {
+            value,
+            value_commitment,
+            blinding_factor,
+        }
     }
 
     fn append_to_circuit(
@@ -338,7 +341,6 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let sk = SecretKey::random(&mut rng);
-        let vk = ViewKey::from(&sk);
 
         let mut tree = Tree::<(), H>::new();
         let skeleton_hash = BlsScalar::default();
@@ -365,10 +367,12 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
             tx_input_notes.push(tx_input_note);
         }
 
-        let tx_output_note_1 =
-            TxOutputNote::new(&note, &vk).expect("Note created properly.");
-        let tx_output_note_2 =
-            TxOutputNote::new(&note, &vk).expect("Note created properly.");
+        let tx_output_note_1 = TxOutputNote {
+            value: 0,
+            value_commitment: JubJubAffine::default(),
+            blinding_factor: JubJubScalar::default(),
+        };
+        let tx_output_note_2 = tx_output_note_1.clone();
 
         let tx_output_notes = [tx_output_note_1, tx_output_note_2];
 
