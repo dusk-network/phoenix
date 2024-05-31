@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remove `ViewKey` from `TxOutputNote::new()` parameters [#191]
+
 ## [0.1.0] - 2024-05-22
 
 ### Added
@@ -23,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#191]: https://github.com/dusk-network/phoenix/issues/191
 [#179]: https://github.com/dusk-network/phoenix/issues/179
 [#177]: https://github.com/dusk-network/phoenix/issues/177
 [#171]: https://github.com/dusk-network/phoenix/issues/171
