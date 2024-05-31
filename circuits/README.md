@@ -8,4 +8,4 @@ This library contains the implementation of the Phoenix-circuits, to prove, in z
 2. Ownership: the sender holds the note secret key for every note that is about to be spent.
 3. Nullification: the nullifier is calculated correctly.
 4. Minting: the value commitment for the newly minted notes are computed correctly.
-5. Balance integrity: the sum of the values of all spent notes is equal to the sum of the values of all minted notes + the gas fee + a crossover, where a crossover refers to funds being transfered to a contract.
+5. Balance integrity: the sum of the values of all spent notes is equal to the sum of the values of all minted notes + the gas fee + a deposit, where a deposit refers to funds being transfered to a contract.

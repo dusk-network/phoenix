@@ -181,8 +181,7 @@ impl TxOutputNote {
 ///    correctly.
 /// 5. Balance integrity: the sum of the values of all [`TxInputNote`] is equal
 ///    to the sum of the values of all [`TxOutputNote`] + the gas fee + a
-///    crossover, where a crossover refers to funds being transfered to a
-///    contract.
+///    deposit, where a deposit refers to funds being transfered to a contract.
 ///
 /// The gadget appends the following public input values to the circuit:
 /// - `skeleton_hash`
@@ -190,7 +189,7 @@ impl TxOutputNote {
 /// - `[nullifier; I]`
 /// - `[output_value_commitment; 2]`
 /// - `max_fee`
-/// - `crossover`
+/// - `deposit`
 pub fn gadget<const H: usize, const I: usize>(
     composer: &mut Composer,
     skeleton_hash: &BlsScalar,
@@ -198,7 +197,7 @@ pub fn gadget<const H: usize, const I: usize>(
     tx_input_notes: &[TxInputNote<H>; I],
     tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     max_fee: u64,
-    crossover: u64,
+    deposit: u64,
 ) -> Result<(), Error> {
     let skeleton_hash_pi = composer.append_public(*skeleton_hash);
     let root_pi = composer.append_public(*root);
@@ -307,16 +306,16 @@ pub fn gadget<const H: usize, const I: usize>(
     }
 
     let max_fee = composer.append_public(max_fee);
-    let crossover = composer.append_public(crossover);
+    let deposit = composer.append_public(deposit);
 
-    // SUM UP THE CROSSOVER AND THE MAX FEE
+    // SUM UP THE DEPOSIT AND THE MAX FEE
     let constraint = Constraint::new()
         .left(1)
         .a(tx_output_sum)
         .right(1)
         .b(max_fee)
         .fourth(1)
-        .d(crossover);
+        .d(deposit);
     tx_output_sum = composer.gate_add(constraint);
 
     // VERIFY BALANCE
@@ -332,7 +331,7 @@ pub struct TxCircuit<const H: usize, const I: usize> {
     tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
     skeleton_hash: BlsScalar,
     root: BlsScalar,
-    crossover: u64,
+    deposit: u64,
     max_fee: u64,
 }
 
@@ -377,7 +376,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let tx_output_notes = [tx_output_note_1, tx_output_note_2];
 
         let root = BlsScalar::default();
-        let crossover = u64::default();
+        let deposit = u64::default();
         let max_fee = u64::default();
 
         Self {
@@ -385,7 +384,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
             tx_output_notes,
             skeleton_hash,
             root,
-            crossover,
+            deposit,
             max_fee,
         }
     }
@@ -398,7 +397,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
         tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
         skeleton_hash: BlsScalar,
         root: BlsScalar,
-        crossover: u64,
+        deposit: u64,
         max_fee: u64,
     ) -> Self {
         Self {
@@ -406,7 +405,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
             tx_output_notes,
             skeleton_hash,
             root,
-            crossover,
+            deposit,
             max_fee,
         }
     }
@@ -421,7 +420,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             &self.tx_input_notes,
             &self.tx_output_notes,
             self.max_fee,
-            self.crossover,
+            self.deposit,
         )?;
         Ok(())
     }
