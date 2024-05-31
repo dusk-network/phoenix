@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remove `ViewKey` from `TxOutputNote::new()` parameters [#191]
+- Make `rng` the first param in `TxInputNote::new` [#189]
 
 ## [0.1.0] - 2024-05-22
 
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ISSUES -->
 [#191]: https://github.com/dusk-network/phoenix/issues/191
+[#189]: https://github.com/dusk-network/phoenix/issues/189
 [#179]: https://github.com/dusk-network/phoenix/issues/179
 [#177]: https://github.com/dusk-network/phoenix/issues/177
 [#171]: https://github.com/dusk-network/phoenix/issues/171
