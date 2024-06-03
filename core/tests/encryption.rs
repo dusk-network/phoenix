@@ -6,10 +6,13 @@
 
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR};
 use phoenix_core::aes;
-use rand_core::OsRng;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 
 #[test]
 fn test_aes_encrypt_and_decrypt() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
     const PLAINTEXT_SIZE: usize = 20;
     const ENCRYPTION_SIZE: usize = PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
 
@@ -18,7 +21,7 @@ fn test_aes_encrypt_and_decrypt() {
 
     let plaintext = b"00112233445566778899";
     let encryption: [u8; ENCRYPTION_SIZE] =
-        aes::encrypt(&shared_secret_key, plaintext, &mut OsRng)
+        aes::encrypt(&shared_secret_key, plaintext, &mut rng)
             .expect("Encrypted correctly.");
     let dec_plaintext = aes::decrypt(&shared_secret_key, &encryption)
         .expect("Decrypted correctly.");

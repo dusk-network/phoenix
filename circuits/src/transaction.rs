@@ -5,7 +5,8 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{
-    JubJubScalar, GENERATOR, GENERATOR_NUMS, GENERATOR_NUMS_EXTENDED,
+    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED, GENERATOR_NUMS,
+    GENERATOR_NUMS_EXTENDED,
 };
 use dusk_plonk::prelude::*;
 use dusk_poseidon::{Domain, Hash, HashGadget};
@@ -13,7 +14,7 @@ use jubjub_schnorr::{gadgets, SignatureDouble};
 use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
 
 use rand::rngs::StdRng;
-use rand_core::{CryptoRng, RngCore, SeedableRng};
+use rand::{CryptoRng, RngCore, SeedableRng};
 
 extern crate alloc;
 use alloc::vec::Vec;
@@ -54,11 +55,11 @@ struct WitnessTxInputNote {
 impl<const H: usize> TxInputNote<H> {
     /// Create a tx input note
     pub fn new(
+        rng: &mut (impl RngCore + CryptoRng),
         note: &Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
         payload_hash: &BlsScalar,
-        rng: &mut (impl RngCore + CryptoRng),
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
         let note_pk_p =
@@ -126,9 +127,9 @@ impl<const H: usize> TxInputNote<H> {
 /// suitable for being introduced in the transfer circuit
 #[derive(Debug, Clone)]
 pub struct TxOutputNote {
-    pub(crate) value: u64,
-    pub(crate) value_commitment: JubJubAffine,
-    pub(crate) blinding_factor: JubJubScalar,
+    value: u64,
+    value_commitment: JubJubAffine,
+    blinding_factor: JubJubScalar,
 }
 
 #[derive(Debug, Clone)]
@@ -139,16 +140,18 @@ struct WitnessTxOutputNote {
 }
 
 impl TxOutputNote {
-    /// Create a tx output note
-    pub fn new(
-        note: &Note,
-        vk: &ViewKey,
-    ) -> Result<crate::transaction::TxOutputNote, PhoenixError> {
-        Ok(crate::transaction::TxOutputNote {
-            value: note.value(Some(vk))?,
-            value_commitment: note.value_commitment().into(),
-            blinding_factor: note.blinding_factor(Some(vk))?,
-        })
+    /// Crate a new `TxOutputNote`.
+    pub fn new(value: u64, blinding_factor: JubJubScalar) -> Self {
+        let value_commitment = JubJubAffine::from(
+            (GENERATOR_EXTENDED * JubJubScalar::from(value))
+                + (GENERATOR_NUMS_EXTENDED * blinding_factor),
+        );
+
+        Self {
+            value,
+            value_commitment,
+            blinding_factor,
+        }
     }
 
     fn append_to_circuit(
@@ -180,15 +183,14 @@ impl TxOutputNote {
 ///    correctly.
 /// 5. Balance integrity: the sum of the values of all [`TxInputNote`] is equal
 ///    to the sum of the values of all [`TxOutputNote`] + the gas fee + a
-///    crossover, where a crossover refers to funds being transfered to a
-///    contract.
+///    deposit, where a deposit refers to funds being transfered to a contract.
 ///
 /// The gadget appends the following public input values to the circuit:
 /// - `root`
 /// - `[nullifier; I]`
 /// - `[output_value_commitment; 2]`
 /// - `max_fee`
-/// - `crossover`
+/// - `deposit`
 fn nullify_gadget<const H: usize, const I: usize>(
     composer: &mut Composer,
     payload_hash: &Witness,
@@ -196,7 +198,7 @@ fn nullify_gadget<const H: usize, const I: usize>(
     tx_input_notes: &[TxInputNote<H>; I],
     tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     max_fee: u64,
-    crossover: u64,
+    deposit: u64,
 ) -> Result<(), Error> {
     let root_pi = composer.append_public(*root);
 
@@ -304,16 +306,16 @@ fn nullify_gadget<const H: usize, const I: usize>(
     }
 
     let max_fee = composer.append_public(max_fee);
-    let crossover = composer.append_public(crossover);
+    let deposit = composer.append_public(deposit);
 
-    // SUM UP THE CROSSOVER AND THE MAX FEE
+    // SUM UP THE DEPOSIT AND THE MAX FEE
     let constraint = Constraint::new()
         .left(1)
         .a(tx_output_sum)
         .right(1)
         .b(max_fee)
         .fourth(1)
-        .d(crossover);
+        .d(deposit);
     tx_output_sum = composer.gate_add(constraint);
 
     // VERIFY BALANCE
@@ -329,7 +331,7 @@ pub struct TxCircuit<const H: usize, const I: usize> {
     tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
     payload_hash: BlsScalar,
     root: BlsScalar,
-    crossover: u64,
+    deposit: u64,
     max_fee: u64,
     rp: RecipientParameters,
 }
@@ -339,7 +341,6 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let sk = SecretKey::random(&mut rng);
-        let vk = ViewKey::from(&sk);
 
         let mut tree = Tree::<(), H>::new();
         let payload_hash = BlsScalar::default();
@@ -355,26 +356,28 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         for _ in 0..I {
             let merkle_opening = tree.opening(*note.pos()).expect("Tree read.");
             let tx_input_note = TxInputNote::new(
+                &mut rng,
                 &note,
                 merkle_opening,
                 &sk,
                 &payload_hash,
-                &mut rng,
             )
             .expect("Note created properly.");
 
             tx_input_notes.push(tx_input_note);
         }
 
-        let tx_output_note_1 =
-            TxOutputNote::new(&note, &vk).expect("Note created properly.");
-        let tx_output_note_2 =
-            TxOutputNote::new(&note, &vk).expect("Note created properly.");
+        let tx_output_note_1 = TxOutputNote {
+            value: 0,
+            value_commitment: JubJubAffine::default(),
+            blinding_factor: JubJubScalar::default(),
+        };
+        let tx_output_note_2 = tx_output_note_1.clone();
 
         let tx_output_notes = [tx_output_note_1, tx_output_note_2];
 
         let root = BlsScalar::default();
-        let crossover = u64::default();
+        let deposit = u64::default();
         let max_fee = u64::default();
 
         let rp = RecipientParameters::default();
@@ -384,7 +387,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
             tx_output_notes,
             payload_hash,
             root,
-            crossover,
+            deposit,
             max_fee,
             rp,
         }
@@ -398,7 +401,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
         tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
         payload_hash: BlsScalar,
         root: BlsScalar,
-        crossover: u64,
+        deposit: u64,
         max_fee: u64,
         rp: RecipientParameters,
     ) -> Self {
@@ -407,7 +410,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
             tx_output_notes,
             payload_hash,
             root,
-            crossover,
+            deposit,
             max_fee,
             rp,
         }
@@ -427,7 +430,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             &self.tx_input_notes,
             &self.tx_output_notes,
             self.max_fee,
-            self.crossover,
+            self.deposit,
         )?;
 
         // Prove correctess of the recipient encryption

@@ -16,8 +16,7 @@ dusk-jubjub = { version = "0.14", default-features = false }
 poseidon-merkle = { version = "0.6", features = ["rkyv-impl", "zk", "size_32"] }
 dusk-poseidon = { version = "0.39", features = ["zk"] }
 jubjub-schnorr = { version = "0.4", features = ["zk"] }
-rand_core = { version = "0.6", default-features = false }
-rand = "0.8"
+rand = { version = "0.8", default-features = false, features = ["std_rng"] }
 
 [dev-dependencies]
 ff = { version = "0.13", default-features = false }

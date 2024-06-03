@@ -8,12 +8,15 @@ use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{PublicKey, SecretKey, ViewKey};
-use rand_core::OsRng;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use zeroize::Zeroize;
 
 #[test]
 fn sk_from_bytes() {
-    let sk = SecretKey::random(&mut OsRng);
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
     let sk_bytes = sk.to_bytes();
 
     assert_eq!(
@@ -24,7 +27,9 @@ fn sk_from_bytes() {
 
 #[test]
 fn sk_zeroize() {
-    let mut sk = SecretKey::random(&mut OsRng);
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let mut sk = SecretKey::random(&mut rng);
     let sk_zeroized =
         SecretKey::new(JubJubScalar::zero(), JubJubScalar::zero());
 
@@ -37,7 +42,9 @@ fn sk_zeroize() {
 
 #[test]
 fn keys_encoding() {
-    let sk = SecretKey::random(&mut OsRng);
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
     let vk = ViewKey::from(&sk);
     let pk = PublicKey::from(&sk);
 
@@ -49,15 +56,17 @@ fn keys_encoding() {
 fn keys_consistency() {
     use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
 
-    let r = JubJubScalar::random(&mut OsRng);
-    let sk = SecretKey::random(&mut OsRng);
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let r = JubJubScalar::random(&mut rng);
+    let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
     let vk = ViewKey::from(&sk);
     let sa = pk.gen_stealth_address(&r);
 
     assert!(vk.owns(&sa));
 
-    let wrong_sk = SecretKey::random(&mut OsRng);
+    let wrong_sk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(&wrong_sk);
 
     assert_ne!(sk, wrong_sk);

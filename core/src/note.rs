@@ -18,7 +18,7 @@ use crate::aes;
 
 use dusk_poseidon::{Domain, Hash};
 use ff::Field;
-use rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
