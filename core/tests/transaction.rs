@@ -27,14 +27,14 @@ fn transaction_parse() -> Result<(), Error> {
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
     let outputs = [note.clone(), note];
     let tx_max_fee = 0;
-    let crossover = 0;
+    let deposit = 0;
 
     let tx_skeleton = TxSkeleton {
         root,
         nullifiers,
         outputs,
         tx_max_fee,
-        crossover,
+        deposit,
     };
     let bytes_of_transaction = tx_skeleton.to_var_bytes();
     assert_eq!(

@@ -26,7 +26,7 @@ struct TestingParameters {
     tx_input_notes: [TxInputNote<HEIGHT>; 4],
     skeleton_hash: BlsScalar,
     root: BlsScalar,
-    crossover: u64,
+    deposit: u64,
     max_fee: u64,
 }
 
@@ -40,24 +40,24 @@ lazy_static! {
 
         // create and insert into the tree 4 testing tx input notes
         let tx_input_notes =
-            create_test_tx_input_notes::<4>(&mut tree, &sk, skeleton_hash, &mut OsRng);
+            create_test_tx_input_notes::<4>(&mut OsRng, &mut tree, &sk, skeleton_hash);
 
         // retrieve the root from the tree after inserting the notes
         let root = tree.root().hash;
 
-        let crossover = 5;
+        let deposit = 5;
         let max_fee = 5;
 
-        TestingParameters { pp, tx_input_notes, skeleton_hash, root, crossover, max_fee }
+        TestingParameters { pp, tx_input_notes, skeleton_hash, root, deposit, max_fee }
     };
 }
 
 fn create_and_insert_test_note(
+    rng: &mut (impl RngCore + CryptoRng),
     tree: &mut Tree<(), HEIGHT>,
     pk: &PublicKey,
     pos: u64,
     value: u64,
-    rng: &mut (impl RngCore + CryptoRng),
 ) -> Note {
     let mut note = Note::transparent(rng, pk, value);
     note.set_pos(pos);
@@ -72,21 +72,21 @@ fn create_and_insert_test_note(
 }
 
 fn create_test_tx_input_notes<const I: usize>(
+    rng: &mut (impl RngCore + CryptoRng),
     tree: &mut Tree<(), HEIGHT>,
     sk: &SecretKey,
     skeleton_hash: BlsScalar,
-    rng: &mut (impl RngCore + CryptoRng),
 ) -> [TxInputNote<HEIGHT>; I] {
     let pk = PublicKey::from(sk);
 
     let mut notes = Vec::new();
     for i in 0..I {
         notes.push(create_and_insert_test_note(
+            rng,
             tree,
             &pk,
             i.try_into().unwrap(),
             25,
-            rng,
         ));
     }
 
@@ -94,11 +94,11 @@ fn create_test_tx_input_notes<const I: usize>(
     for i in 0..I {
         let merkle_opening = tree.opening(*notes[i].pos()).expect("Tree read.");
         let input_note = TxInputNote::new(
+            rng,
             &notes[i],
             merkle_opening,
             &sk,
             skeleton_hash,
-            rng,
         )
         .expect("Note created properly.");
 
@@ -137,7 +137,7 @@ fn test_transfer_circuit_1_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -171,7 +171,7 @@ fn test_transfer_circuit_2_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -208,7 +208,7 @@ fn test_transfer_circuit_3_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )
@@ -239,7 +239,7 @@ fn test_transfer_circuit_4_2() {
                 tx_output_notes,
                 TP.skeleton_hash,
                 TP.root,
-                TP.crossover,
+                TP.deposit,
                 TP.max_fee,
             ),
         )

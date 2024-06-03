@@ -37,8 +37,8 @@ pub struct TxSkeleton {
     pub outputs: [Note; OUTPUT_NOTES],
     /// Describes the maximum fee to be paid for this transaction.
     pub tx_max_fee: u64,
-    /// A crossover is used to transferring funds to a contract
-    pub crossover: u64,
+    /// A deposit is used to transferring funds to a contract
+    pub deposit: u64,
 }
 
 impl TxSkeleton {
@@ -57,7 +57,7 @@ impl TxSkeleton {
         }
 
         bytes.extend(self.tx_max_fee.to_bytes());
-        bytes.extend(self.crossover.to_bytes());
+        bytes.extend(self.deposit.to_bytes());
 
         bytes
     }
@@ -81,7 +81,7 @@ impl TxSkeleton {
         });
 
         bytes.extend(self.tx_max_fee.to_bytes());
-        bytes.extend(self.crossover.to_bytes());
+        bytes.extend(self.deposit.to_bytes());
 
         bytes
     }
@@ -105,14 +105,14 @@ impl TxSkeleton {
             outputs.try_into().map_err(|_| BytesError::InvalidData)?;
 
         let tx_max_fee = u64::from_reader(&mut buffer)?;
-        let crossover = u64::from_reader(&mut buffer)?;
+        let deposit = u64::from_reader(&mut buffer)?;
 
         Ok(Self {
             root,
             nullifiers,
             outputs,
             tx_max_fee,
-            crossover,
+            deposit,
         })
     }
 
@@ -131,8 +131,8 @@ impl TxSkeleton {
         self.tx_max_fee
     }
 
-    /// Returns the crossover of the transaction.
-    pub fn crossover(&self) -> u64 {
-        self.crossover
+    /// Returns the deposit of the transaction.
+    pub fn deposit(&self) -> u64 {
+        self.deposit
     }
 }
