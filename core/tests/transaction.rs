@@ -10,7 +10,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{Error, Note, PublicKey, SecretKey, TxSkeleton};
-use rand_core::OsRng;
+use rand::rngs::OsRng;
 
 #[test]
 fn transaction_parse() -> Result<(), Error> {

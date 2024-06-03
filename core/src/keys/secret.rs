@@ -14,7 +14,7 @@ use zeroize::Zeroize;
 use rkyv::{Archive, Deserialize, Serialize};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
-use rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 use subtle::{Choice, ConstantTimeEq};
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]

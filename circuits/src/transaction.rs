@@ -14,7 +14,7 @@ use jubjub_schnorr::{gadgets, SignatureDouble};
 use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
 
 use rand::rngs::StdRng;
-use rand_core::{CryptoRng, RngCore, SeedableRng};
+use rand::{CryptoRng, RngCore, SeedableRng};
 
 extern crate alloc;
 use alloc::vec::Vec;

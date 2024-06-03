@@ -9,11 +9,12 @@ use ff::Field;
 use phoenix_core::{
     Error, Note, NoteType, Ownable, PublicKey, SecretKey, ViewKey,
 };
-use rand_core::OsRng;
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 
 #[test]
 fn transparent_note() -> Result<(), Error> {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
@@ -29,7 +30,7 @@ fn transparent_note() -> Result<(), Error> {
 
 #[test]
 fn transparent_stealth_note() -> Result<(), Error> {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
@@ -50,7 +51,7 @@ fn transparent_stealth_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_note() -> Result<(), Error> {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
@@ -68,7 +69,7 @@ fn obfuscated_note() -> Result<(), Error> {
 
 #[test]
 fn obfuscated_deterministic_note() -> Result<(), Error> {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
@@ -88,7 +89,7 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
 
 #[test]
 fn value_commitment_transparent() {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let vk = ViewKey::from(&sk);
@@ -115,7 +116,7 @@ fn value_commitment_transparent() {
 
 #[test]
 fn value_commitment_obfuscated() {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let vk = ViewKey::from(&sk);
@@ -143,7 +144,7 @@ fn value_commitment_obfuscated() {
 
 #[test]
 fn note_keys_consistency() {
-    let mut rng = OsRng;
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let sk = SecretKey::random(&mut rng);
     let pk = PublicKey::from(&sk);
