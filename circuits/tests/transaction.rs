@@ -6,8 +6,9 @@
 
 use rand_core::{CryptoRng, OsRng, RngCore};
 
+use dusk_jubjub::JubJubScalar;
 use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
-use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
+use phoenix_core::{Note, PublicKey, SecretKey};
 
 use dusk_plonk::prelude::*;
 use poseidon_merkle::{Item, Tree};
@@ -21,7 +22,6 @@ const CAPACITY: usize = 17; // capacity required for the setup
 const HEIGHT: usize = 17;
 
 struct TestingParameters {
-    sk: SecretKey,
     pp: PublicParameters,
     tx_input_notes: [TxInputNote<HEIGHT>; 4],
     skeleton_hash: BlsScalar,
@@ -48,7 +48,7 @@ lazy_static! {
         let crossover = 5;
         let max_fee = 5;
 
-        TestingParameters { sk, pp, tx_input_notes, skeleton_hash, root, crossover, max_fee }
+        TestingParameters { pp, tx_input_notes, skeleton_hash, root, crossover, max_fee }
     };
 }
 
@@ -108,14 +108,11 @@ fn create_test_tx_input_notes<const I: usize>(
     input_notes.try_into().unwrap()
 }
 
-fn create_test_tx_output_note(
-    sk: &SecretKey,
-    value: u64,
-    rng: &mut (impl RngCore + CryptoRng),
-) -> TxOutputNote {
-    let note = Note::transparent(rng, &PublicKey::from(sk), value);
-    TxOutputNote::new(&note, &ViewKey::from(&TP.sk))
-        .expect("Note created properly.")
+// we don't care if the test output notes are spendable
+fn create_test_tx_output_note(value: u64) -> TxOutputNote {
+    let blinding_factor = JubJubScalar::from(42u64);
+
+    TxOutputNote::new(value, blinding_factor)
 }
 
 #[test]
@@ -128,8 +125,8 @@ fn test_transfer_circuit_1_2() {
 
     // create 2 testing tx output notes
     let tx_output_notes = [
-        create_test_tx_output_note(&TP.sk, 10, &mut OsRng),
-        create_test_tx_output_note(&TP.sk, 5, &mut OsRng),
+        create_test_tx_output_note(10),
+        create_test_tx_output_note(5),
     ];
 
     let (proof, public_inputs) = prover
@@ -162,8 +159,8 @@ fn test_transfer_circuit_2_2() {
 
     // create 2 testing tx output notes
     let tx_output_notes = [
-        create_test_tx_output_note(&TP.sk, 35, &mut OsRng),
-        create_test_tx_output_note(&TP.sk, 5, &mut OsRng),
+        create_test_tx_output_note(35),
+        create_test_tx_output_note(5),
     ];
 
     let (proof, public_inputs) = prover
@@ -199,8 +196,8 @@ fn test_transfer_circuit_3_2() {
 
     // create 2 testing tx output notes
     let tx_output_notes = [
-        create_test_tx_output_note(&TP.sk, 35, &mut OsRng),
-        create_test_tx_output_note(&TP.sk, 30, &mut OsRng),
+        create_test_tx_output_note(35),
+        create_test_tx_output_note(30),
     ];
 
     let (proof, public_inputs) = prover
@@ -230,8 +227,8 @@ fn test_transfer_circuit_4_2() {
 
     // create 2 testing tx output notes
     let tx_output_notes = [
-        create_test_tx_output_note(&TP.sk, 60, &mut OsRng),
-        create_test_tx_output_note(&TP.sk, 30, &mut OsRng),
+        create_test_tx_output_note(60),
+        create_test_tx_output_note(30),
     ];
 
     let (proof, public_inputs) = prover
