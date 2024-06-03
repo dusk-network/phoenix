@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{
-    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED, GENERATOR_NUMS,
+    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS,
     GENERATOR_NUMS_EXTENDED,
 };
 use dusk_plonk::prelude::*;
@@ -141,12 +141,11 @@ struct WitnessTxOutputNote {
 
 impl TxOutputNote {
     /// Crate a new `TxOutputNote`.
-    pub fn new(value: u64, blinding_factor: JubJubScalar) -> Self {
-        let value_commitment = JubJubAffine::from(
-            (GENERATOR_EXTENDED * JubJubScalar::from(value))
-                + (GENERATOR_NUMS_EXTENDED * blinding_factor),
-        );
-
+    pub fn new(
+        value: u64,
+        value_commitment: JubJubAffine,
+        blinding_factor: JubJubScalar,
+    ) -> Self {
         Self {
             value,
             value_commitment,
@@ -418,6 +417,16 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
 }
 
 impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
+    /// The circuit has the following public inputs:
+    /// - `payload_hash`
+    /// - `root`
+    /// - `[nullifier; I]`
+    /// - `[output_value_commitment; 2]`
+    /// - `max_fee`
+    /// - `deposit`
+    /// - `(npk_1, npk_2)`
+    /// - `(enc_A_npk_1, enc_A_npk_2)`
+    /// - `(enc_B_npk_1, enc_B_npk_2)`
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
         // Make the payload hash a public input of the circuit
         let payload_hash = composer.append_public(self.payload_hash);
@@ -433,7 +442,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             self.deposit,
         )?;
 
-        // Prove correctess of the recipient encryption
+        // Prove correctness of the sender keys encryption
         recipient::gadget(composer, &self.rp, &payload_hash)?;
 
         Ok(())

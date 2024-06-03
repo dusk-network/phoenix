@@ -3,24 +3,26 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
+
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::{CryptoRng, RngCore};
 
-use dusk_jubjub::JubJubScalar;
-use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
-use phoenix_core::{Note, PublicKey, SecretKey};
+use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 
 use dusk_plonk::prelude::*;
 use ff::Field;
 use jubjub_schnorr::SecretKey as SchnorrSecretKey;
+
 use phoenix_circuits::{
     elgamal,
     transaction::{TxCircuit, TxInputNote, TxOutputNote},
     RecipientParameters,
 };
-use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
+use phoenix_core::{Note, PublicKey, SecretKey};
+
 use poseidon_merkle::{Item, Tree};
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -60,49 +62,49 @@ lazy_static! {
         let max_fee = 5;
 
         // Compute the tx output note public keys using
-        // the receiver public key
-        let pk_receiver = PublicKey::from(&sk);
+        // the recipient public key
+        let recipient_pk = PublicKey::from(&sk);
 
         let r = JubJubScalar::random(&mut rng);
-        let sa = pk_receiver.gen_stealth_address(&r);
+        let sa = recipient_pk.gen_stealth_address(&r);
         let note_pk_1 = sa.note_pk();
 
         let r = JubJubScalar::random(&mut rng);
-        let sa = pk_receiver.gen_stealth_address(&r);
+        let sa = recipient_pk.gen_stealth_address(&r);
         let note_pk_2 = sa.note_pk();
 
-        let receiver_npk_vec = [
+        let recipient_npk_vec = [
             JubJubAffine::from(note_pk_1.as_ref()),
             JubJubAffine::from(note_pk_2.as_ref()),
         ];
 
-        // Encrypt the public key of the recipient. We need to encrypt
+        // Encrypt the public key of the sender. We need to encrypt
         // both 'A' and 'B', using both tx output note public keys.
         // We use the same 'sk' just for testing.
-        let recipient_pk = PublicKey::from(&sk);
+        let sender_pk = PublicKey::from(&sk);
 
         #[allow(non_snake_case)]
         let r_A_1 = JubJubScalar::random(&mut rng);
         #[allow(non_snake_case)]
         let (A_enc_1_c1, A_enc_1_c2) =
-            elgamal::encrypt(note_pk_1.as_ref(), &recipient_pk.A(), &r_A_1);
+            elgamal::encrypt(note_pk_1.as_ref(), &sender_pk.A(), &r_A_1);
 
         #[allow(non_snake_case)]
         let r_B_1 = JubJubScalar::random(&mut rng);
         #[allow(non_snake_case)]
         let (B_enc_1_c1, B_enc_1_c2) =
-            elgamal::encrypt(note_pk_1.as_ref(), &recipient_pk.B(), &r_B_1);
+            elgamal::encrypt(note_pk_1.as_ref(), &sender_pk.B(), &r_B_1);
         #[allow(non_snake_case)]
         let r_A_2 = JubJubScalar::random(&mut rng);
         #[allow(non_snake_case)]
         let (A_enc_2_c1, A_enc_2_c2) =
-            elgamal::encrypt(note_pk_2.as_ref(), &recipient_pk.A(), &r_A_2);
+            elgamal::encrypt(note_pk_2.as_ref(), &sender_pk.A(), &r_A_2);
 
         #[allow(non_snake_case)]
         let r_B_2 = JubJubScalar::random(&mut rng);
         #[allow(non_snake_case)]
         let (B_enc_2_c1, B_enc_2_c2) =
-            elgamal::encrypt(note_pk_2.as_ref(), &recipient_pk.B(), &r_B_2);
+            elgamal::encrypt(note_pk_2.as_ref(), &sender_pk.B(), &r_B_2);
 
         #[allow(non_snake_case)]
         let enc_A_vec = [(A_enc_1_c1, A_enc_1_c2), (A_enc_2_c1, A_enc_2_c2)];
@@ -125,9 +127,9 @@ lazy_static! {
 
         let sig_vec = [sig_A, sig_B];
 
-        let rp = RecipientParameters { recipient_pk, receiver_npk_vec, sig_vec, enc_A_vec, enc_B_vec, r_A_vec, r_B_vec };
+        let rp = RecipientParameters { sender_pk, recipient_npk_vec, sig_vec, enc_A_vec, enc_B_vec, r_A_vec, r_B_vec };
 
-        TestingParameters { sk, pp, tx_input_notes, payload_hash, root, crossover, max_fee, rp }
+        TestingParameters { pp, tx_input_notes, payload_hash, root, deposit, max_fee, rp }
     };
 }
 
@@ -191,7 +193,12 @@ fn create_test_tx_input_notes<const I: usize>(
 fn create_test_tx_output_note(value: u64) -> TxOutputNote {
     let blinding_factor = JubJubScalar::from(42u64);
 
-    TxOutputNote::new(value, blinding_factor)
+    let value_commitment = JubJubAffine::from(
+        (GENERATOR_EXTENDED * JubJubScalar::from(value))
+            + (GENERATOR_NUMS_EXTENDED * blinding_factor),
+    );
+
+    TxOutputNote::new(value, value_commitment, blinding_factor)
 }
 
 #[test]

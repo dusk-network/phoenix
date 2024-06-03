@@ -12,7 +12,7 @@ use crate::elgamal;
 use phoenix_core::PublicKey;
 
 use rand::rngs::StdRng;
-use rand_core::SeedableRng;
+use rand::SeedableRng;
 
 use phoenix_core::SecretKey;
 
@@ -21,15 +21,15 @@ const TX_OUTPUT_NOTES: usize = 2;
 /// Parameters needed to prove a recipient in-circuit
 #[derive(Debug, Clone, Copy)]
 pub struct RecipientParameters {
-    /// Public key of the transaction recipient
-    pub recipient_pk: PublicKey,
-    /// Note public keys of each note receiver
-    pub receiver_npk_vec: [JubJubAffine; TX_OUTPUT_NOTES],
+    /// Public key of the transaction sender
+    pub sender_pk: PublicKey,
+    /// Note public keys of each note recipient
+    pub recipient_npk_vec: [JubJubAffine; TX_OUTPUT_NOTES],
     /// Signatures of 'payload_hash' verifiable using 'pk_A' and 'pk_B'
     pub sig_vec: [Signature; TX_OUTPUT_NOTES],
-    /// Asymmetric encryption of 'pk_A' using both receivers 'npk'
+    /// Asymmetric encryption of 'pk_A' using both recipients 'npk'
     pub enc_A_vec: [(JubJubExtended, JubJubExtended); TX_OUTPUT_NOTES],
-    /// Asymmetric encryption of 'pk_B' using both receivers 'npk'
+    /// Asymmetric encryption of 'pk_B' using both recipients 'npk'
     pub enc_B_vec: [(JubJubExtended, JubJubExtended); TX_OUTPUT_NOTES],
     /// Randomness needed to encrypt/decrypt 'pk_A'
     pub r_A_vec: [JubJubScalar; TX_OUTPUT_NOTES],
@@ -42,11 +42,11 @@ impl Default for RecipientParameters {
         let mut rng = StdRng::seed_from_u64(0xbeef);
 
         let sk = SecretKey::random(&mut rng);
-        let recipient_pk = PublicKey::from(&sk);
+        let sender_pk = PublicKey::from(&sk);
 
         Self {
-            recipient_pk,
-            receiver_npk_vec: [
+            sender_pk,
+            recipient_npk_vec: [
                 JubJubAffine::default(),
                 JubJubAffine::default(),
             ],
@@ -68,8 +68,8 @@ pub(crate) fn gadget(
     payload_hash: &Witness,
 ) -> Result<(), Error> {
     // VERIFY A SIGNATURE FOR EACH KEY 'A' AND 'B'
-    let pk_A = composer.append_point(rp.recipient_pk.A());
-    let pk_B = composer.append_point(rp.recipient_pk.B());
+    let pk_A = composer.append_point(rp.sender_pk.A());
+    let pk_B = composer.append_point(rp.sender_pk.B());
 
     let sig_A_u = composer.append_witness(*rp.sig_vec[0].u());
     let sig_A_R = composer.append_point(rp.sig_vec[0].R());
@@ -81,8 +81,8 @@ pub(crate) fn gadget(
     gadgets::verify_signature(composer, sig_B_u, sig_B_R, pk_B, *payload_hash)?;
 
     // ENCRYPT EACH KEY 'A' and 'B' USING EACH OUTPUT 'NPK'
-    let note_pk_1 = composer.append_public_point(rp.receiver_npk_vec[0]);
-    let note_pk_2 = composer.append_public_point(rp.receiver_npk_vec[1]);
+    let note_pk_1 = composer.append_public_point(rp.recipient_npk_vec[0]);
+    let note_pk_2 = composer.append_public_point(rp.recipient_npk_vec[1]);
 
     let r_A_1 = composer.append_witness(rp.r_A_vec[0]);
     let r_A_2 = composer.append_witness(rp.r_A_vec[1]);
