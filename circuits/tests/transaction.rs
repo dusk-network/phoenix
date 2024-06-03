@@ -4,7 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rand_core::{CryptoRng, OsRng, RngCore};
+use rand::rngs::StdRng;
+use rand::SeedableRng;
+use rand::{CryptoRng, RngCore};
 
 use dusk_jubjub::JubJubScalar;
 use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
@@ -32,15 +34,17 @@ struct TestingParameters {
 
 lazy_static! {
     static ref TP: TestingParameters = {
-        let pp = PublicParameters::setup(1 << CAPACITY, &mut OsRng).unwrap();
-        let sk = SecretKey::random(&mut OsRng);
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+        let pp = PublicParameters::setup(1 << CAPACITY, &mut rng).unwrap();
+        let sk = SecretKey::random(&mut rng);
 
         let mut tree = Tree::<(), HEIGHT>::new();
         let skeleton_hash = BlsScalar::from(1234u64);
 
         // create and insert into the tree 4 testing tx input notes
         let tx_input_notes =
-            create_test_tx_input_notes::<4>(&mut OsRng, &mut tree, &sk, skeleton_hash);
+            create_test_tx_input_notes::<4>(&mut rng, &mut tree, &sk, skeleton_hash);
 
         // retrieve the root from the tree after inserting the notes
         let root = tree.root().hash;
@@ -117,6 +121,8 @@ fn create_test_tx_output_note(value: u64) -> TxOutputNote {
 
 #[test]
 fn test_transfer_circuit_1_2() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
     let (prover, verifier) =
         Compiler::compile::<TxCircuit<HEIGHT, 1>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
@@ -131,7 +137,7 @@ fn test_transfer_circuit_1_2() {
 
     let (proof, public_inputs) = prover
         .prove(
-            &mut OsRng,
+            &mut rng,
             &TxCircuit::new(
                 input_notes,
                 tx_output_notes,
@@ -150,6 +156,8 @@ fn test_transfer_circuit_1_2() {
 
 #[test]
 fn test_transfer_circuit_2_2() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
     let (prover, verifier) =
         Compiler::compile::<TxCircuit<HEIGHT, 2>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
@@ -165,7 +173,7 @@ fn test_transfer_circuit_2_2() {
 
     let (proof, public_inputs) = prover
         .prove(
-            &mut OsRng,
+            &mut rng,
             &TxCircuit::new(
                 input_notes,
                 tx_output_notes,
@@ -184,6 +192,8 @@ fn test_transfer_circuit_2_2() {
 
 #[test]
 fn test_transfer_circuit_3_2() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
     let (prover, verifier) =
         Compiler::compile::<TxCircuit<HEIGHT, 3>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
@@ -202,7 +212,7 @@ fn test_transfer_circuit_3_2() {
 
     let (proof, public_inputs) = prover
         .prove(
-            &mut OsRng,
+            &mut rng,
             &TxCircuit::new(
                 input_notes,
                 tx_output_notes,
@@ -221,6 +231,8 @@ fn test_transfer_circuit_3_2() {
 
 #[test]
 fn test_transfer_circuit_4_2() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
     let (prover, verifier) =
         Compiler::compile::<TxCircuit<HEIGHT, 4>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
@@ -233,7 +245,7 @@ fn test_transfer_circuit_4_2() {
 
     let (proof, public_inputs) = prover
         .prove(
-            &mut OsRng,
+            &mut rng,
             &TxCircuit::new(
                 TP.tx_input_notes.clone(),
                 tx_output_notes,
