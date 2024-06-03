@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::JubJubAffine;
-use rand_core::{CryptoRng, RngCore};
+use rand::{CryptoRng, RngCore};
 
 use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit},

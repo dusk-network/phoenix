@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rename `crossover` to `deposit` [#190]
 
+### Removed
+
+- Remove `"getrandom"` feature from `aes-gcm` dependency [#195]
+
 ## [0.28.1] - 2024-05-23
 
 ### Changed
@@ -321,6 +325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#195]: https://github.com/dusk-network/phoenix/issues/195
 [#190]: https://github.com/dusk-network/phoenix/issues/190
 [#183]: https://github.com/dusk-network/phoenix/issues/183
 [#179]: https://github.com/dusk-network/phoenix/issues/179
