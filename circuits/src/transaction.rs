@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use dusk_jubjub::{
-    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_EXTENDED, GENERATOR_NUMS,
+    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS,
     GENERATOR_NUMS_EXTENDED,
 };
 use dusk_plonk::prelude::*;
@@ -20,6 +20,8 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use phoenix_core::{Error as PhoenixError, Note, Ownable, SecretKey, ViewKey};
+
+use crate::{recipient, recipient::RecipientParameters};
 
 const TX_OUTPUT_NOTES: usize = 2;
 
@@ -57,7 +59,7 @@ impl<const H: usize> TxInputNote<H> {
         note: &Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
-        skeleton_hash: BlsScalar,
+        payload_hash: &BlsScalar,
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
         let note_pk_p =
@@ -72,7 +74,7 @@ impl<const H: usize> TxInputNote<H> {
             &[note_pk_p.get_u(), note_pk_p.get_v(), (*note.pos()).into()],
         )[0];
 
-        let signature = note_sk.sign_double(rng, skeleton_hash);
+        let signature = note_sk.sign_double(rng, *payload_hash);
 
         Ok(crate::transaction::TxInputNote {
             merkle_opening,
@@ -139,12 +141,11 @@ struct WitnessTxOutputNote {
 
 impl TxOutputNote {
     /// Crate a new `TxOutputNote`.
-    pub fn new(value: u64, blinding_factor: JubJubScalar) -> Self {
-        let value_commitment = JubJubAffine::from(
-            (GENERATOR_EXTENDED * JubJubScalar::from(value))
-                + (GENERATOR_NUMS_EXTENDED * blinding_factor),
-        );
-
+    pub fn new(
+        value: u64,
+        value_commitment: JubJubAffine,
+        blinding_factor: JubJubScalar,
+    ) -> Self {
         Self {
             value,
             value_commitment,
@@ -184,22 +185,20 @@ impl TxOutputNote {
 ///    deposit, where a deposit refers to funds being transfered to a contract.
 ///
 /// The gadget appends the following public input values to the circuit:
-/// - `skeleton_hash`
 /// - `root`
 /// - `[nullifier; I]`
 /// - `[output_value_commitment; 2]`
 /// - `max_fee`
 /// - `deposit`
-pub fn gadget<const H: usize, const I: usize>(
+fn nullify_gadget<const H: usize, const I: usize>(
     composer: &mut Composer,
-    skeleton_hash: &BlsScalar,
+    payload_hash: &Witness,
     root: &BlsScalar,
     tx_input_notes: &[TxInputNote<H>; I],
     tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
     max_fee: u64,
     deposit: u64,
 ) -> Result<(), Error> {
-    let skeleton_hash_pi = composer.append_public(*skeleton_hash);
     let root_pi = composer.append_public(*root);
 
     let mut tx_input_notes_sum = Composer::ZERO;
@@ -217,7 +216,7 @@ pub fn gadget<const H: usize, const I: usize>(
             w_tx_input_note.signature_r_p,
             w_tx_input_note.note_pk,
             w_tx_input_note.note_pk_p,
-            skeleton_hash_pi,
+            *payload_hash,
         )?;
 
         // COMPUTE AND ASSERT THE NULLIFIER
@@ -329,10 +328,11 @@ pub fn gadget<const H: usize, const I: usize>(
 pub struct TxCircuit<const H: usize, const I: usize> {
     tx_input_notes: [TxInputNote<H>; I],
     tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
-    skeleton_hash: BlsScalar,
+    payload_hash: BlsScalar,
     root: BlsScalar,
     deposit: u64,
     max_fee: u64,
+    rp: RecipientParameters,
 }
 
 impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
@@ -342,7 +342,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let sk = SecretKey::random(&mut rng);
 
         let mut tree = Tree::<(), H>::new();
-        let skeleton_hash = BlsScalar::default();
+        let payload_hash = BlsScalar::default();
 
         let mut tx_input_notes = Vec::new();
         let note = Note::empty();
@@ -359,7 +359,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
                 &note,
                 merkle_opening,
                 &sk,
-                skeleton_hash,
+                &payload_hash,
             )
             .expect("Note created properly.");
 
@@ -379,13 +379,16 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let deposit = u64::default();
         let max_fee = u64::default();
 
+        let rp = RecipientParameters::default();
+
         Self {
             tx_input_notes: tx_input_notes.try_into().unwrap(),
             tx_output_notes,
-            skeleton_hash,
+            payload_hash,
             root,
             deposit,
             max_fee,
+            rp,
         }
     }
 }
@@ -395,33 +398,53 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
     pub fn new(
         tx_input_notes: [TxInputNote<H>; I],
         tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
-        skeleton_hash: BlsScalar,
+        payload_hash: BlsScalar,
         root: BlsScalar,
         deposit: u64,
         max_fee: u64,
+        rp: RecipientParameters,
     ) -> Self {
         Self {
             tx_input_notes,
             tx_output_notes,
-            skeleton_hash,
+            payload_hash,
             root,
             deposit,
             max_fee,
+            rp,
         }
     }
 }
 
 impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
+    /// The circuit has the following public inputs:
+    /// - `payload_hash`
+    /// - `root`
+    /// - `[nullifier; I]`
+    /// - `[output_value_commitment; 2]`
+    /// - `max_fee`
+    /// - `deposit`
+    /// - `(npk_1, npk_2)`
+    /// - `(enc_A_npk_1, enc_A_npk_2)`
+    /// - `(enc_B_npk_1, enc_B_npk_2)`
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
-        gadget::<H, I>(
+        // Make the payload hash a public input of the circuit
+        let payload_hash = composer.append_public(self.payload_hash);
+
+        // Nullify all the tx input notes
+        nullify_gadget::<H, I>(
             composer,
-            &self.skeleton_hash,
+            &payload_hash,
             &self.root,
             &self.tx_input_notes,
             &self.tx_output_notes,
             self.max_fee,
             self.deposit,
         )?;
+
+        // Prove correctness of the sender keys encryption
+        recipient::gadget(composer, &self.rp, &payload_hash)?;
+
         Ok(())
     }
 }
