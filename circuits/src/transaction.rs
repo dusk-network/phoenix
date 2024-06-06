@@ -59,7 +59,7 @@ impl<const H: usize> TxInputNote<H> {
         note: &Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
-        payload_hash: &BlsScalar,
+        payload_hash: BlsScalar,
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
         let note_sk = sk.gen_note_sk(note);
         let note_pk_p =
@@ -74,7 +74,7 @@ impl<const H: usize> TxInputNote<H> {
             &[note_pk_p.get_u(), note_pk_p.get_v(), (*note.pos()).into()],
         )[0];
 
-        let signature = note_sk.sign_double(rng, *payload_hash);
+        let signature = note_sk.sign_double(rng, payload_hash);
 
         Ok(crate::transaction::TxInputNote {
             merkle_opening,
@@ -359,7 +359,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
                 &note,
                 merkle_opening,
                 &sk,
-                &payload_hash,
+                payload_hash,
             )
             .expect("Note created properly.");
 
@@ -443,7 +443,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         )?;
 
         // Prove correctness of the sender keys encryption
-        recipient::gadget(composer, &self.rp, &payload_hash)?;
+        recipient::gadget(composer, &self.rp, payload_hash)?;
 
         Ok(())
     }

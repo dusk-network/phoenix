@@ -65,7 +65,7 @@ impl Default for RecipientParameters {
 pub(crate) fn gadget(
     composer: &mut Composer,
     rp: &RecipientParameters,
-    payload_hash: &Witness,
+    payload_hash: Witness,
 ) -> Result<(), Error> {
     // VERIFY A SIGNATURE FOR EACH KEY 'A' AND 'B'
     let pk_A = composer.append_point(rp.sender_pk.A());
@@ -77,8 +77,8 @@ pub(crate) fn gadget(
     let sig_B_u = composer.append_witness(*rp.sig_vec[1].u());
     let sig_B_R = composer.append_point(rp.sig_vec[1].R());
 
-    gadgets::verify_signature(composer, sig_A_u, sig_A_R, pk_A, *payload_hash)?;
-    gadgets::verify_signature(composer, sig_B_u, sig_B_R, pk_B, *payload_hash)?;
+    gadgets::verify_signature(composer, sig_A_u, sig_A_R, pk_A, payload_hash)?;
+    gadgets::verify_signature(composer, sig_B_u, sig_B_R, pk_B, payload_hash)?;
 
     // ENCRYPT EACH KEY 'A' and 'B' USING EACH OUTPUT 'NPK'
     let note_pk_1 = composer.append_public_point(rp.recipient_npk_vec[0]);

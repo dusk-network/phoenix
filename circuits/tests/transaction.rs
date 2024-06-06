@@ -174,14 +174,9 @@ fn create_test_tx_input_notes<const I: usize>(
     let mut input_notes = Vec::new();
     for i in 0..I {
         let merkle_opening = tree.opening(*notes[i].pos()).expect("Tree read.");
-        let input_note = TxInputNote::new(
-            rng,
-            &notes[i],
-            merkle_opening,
-            &sk,
-            &payload_hash,
-        )
-        .expect("Note created properly.");
+        let input_note =
+            TxInputNote::new(rng, &notes[i], merkle_opening, &sk, payload_hash)
+                .expect("Note created properly.");
 
         input_notes.push(input_note);
     }
