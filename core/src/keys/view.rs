@@ -4,8 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::keys::stealth;
-
 use crate::{keys::hash, SecretKey};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
@@ -65,7 +63,7 @@ impl ViewKey {
     }
 
     /// Checks `note_pk = H(R · a) · G + B`
-    pub fn owns(&self, owner: &impl stealth::Ownable) -> bool {
+    pub fn owns(&self, owner: &impl crate::Ownable) -> bool {
         let sa = owner.stealth_address();
 
         let aR = sa.R() * self.a();
@@ -74,6 +72,14 @@ impl ViewKey {
         let note_pk = aR + self.B();
 
         sa.note_pk().as_ref() == &note_pk
+    }
+
+    /// Checks `k_sync ?= R_sync · a`
+    pub fn owns_unchecked(&self, owner: &impl crate::Ownable) -> bool {
+        let sa = owner.sync_address();
+        let aR = sa.R() * self.a();
+
+        sa.k() == &aR
     }
 }
 

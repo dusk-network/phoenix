@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, SecretKey, StealthAddress, ViewKey};
+use crate::{keys::hash, SecretKey, StealthAddress, SyncAddress, ViewKey};
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 
@@ -57,6 +57,14 @@ impl PublicKey {
         let note_pk = note_pk.into();
 
         StealthAddress { R, note_pk }
+    }
+
+    /// Generates new sync address from a given 'r'
+    pub fn gen_sync_address(&self, r: &JubJubScalar) -> SyncAddress {
+        let R = GENERATOR_EXTENDED * r;
+        let k = self.A * r;
+
+        SyncAddress { R, k }
     }
 }
 

@@ -36,15 +36,18 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let pk = PublicKey::from(&sk);
 
     let r = JubJubScalar::random(&mut rng);
-
     let sa = pk.gen_stealth_address(&r);
+
+    let r = JubJubScalar::random(&mut rng);
+    let sync_address = pk.gen_sync_address(&r);
+
     let value = 25;
 
-    let note = Note::transparent_stealth(sa, value);
+    let note = Note::transparent_stealth(sa, sync_address, value);
 
     assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
-    assert_eq!(sa, *note.stealth_address());
+    assert_eq!(sa, note.stealth_address());
 
     Ok(())
 }
@@ -162,4 +165,7 @@ fn note_keys_consistency() {
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
+
+    assert!(!wrong_vk.owns_unchecked(&note));
+    assert!(vk.owns_unchecked(&note));
 }

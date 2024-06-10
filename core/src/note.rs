@@ -6,7 +6,9 @@
 
 use core::convert::{TryFrom, TryInto};
 
-use crate::{Error, Ownable, PublicKey, SecretKey, StealthAddress, ViewKey};
+use crate::{
+    Error, Ownable, PublicKey, SecretKey, StealthAddress, SyncAddress, ViewKey,
+};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{
@@ -78,6 +80,7 @@ pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubExtended,
     pub(crate) stealth_address: StealthAddress,
+    pub(crate) sync_address: SyncAddress,
     pub(crate) pos: u64,
     pub(crate) encryption: [u8; ENCRYPTION_SIZE],
 }
@@ -101,6 +104,9 @@ impl Note {
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
         let stealth_address = pk.gen_stealth_address(&r);
+
+        let r_sync = JubJubScalar::random(&mut *rng);
+        let sync_address = pk.gen_sync_address(&r_sync);
 
         let value_commitment = JubJubScalar::from(value);
         let value_commitment = (GENERATOR_EXTENDED * value_commitment)
@@ -132,6 +138,7 @@ impl Note {
             note_type,
             value_commitment,
             stealth_address,
+            sync_address,
             pos,
             encryption,
         }
@@ -153,10 +160,11 @@ impl Note {
     /// Creates a new transparent note
     ///
     /// This is equivalent to [`transparent`] but taking only a stealth address,
-    /// and a value. This is done to be able to generate a note
+    /// sync address, and a value. This is done to be able to generate a note
     /// directly for a stealth address, as opposed to a public key.
     pub fn transparent_stealth(
         stealth_address: StealthAddress,
+        sync_address: SyncAddress,
         value: u64,
     ) -> Self {
         let value_commitment = JubJubScalar::from(value);
@@ -172,6 +180,7 @@ impl Note {
             note_type: NoteType::Transparent,
             value_commitment,
             stealth_address,
+            sync_address,
             pos,
             encryption,
         }
@@ -198,6 +207,7 @@ impl Note {
             note_type: NoteType::Transparent,
             value_commitment: JubJubExtended::default(),
             stealth_address: StealthAddress::default(),
+            sync_address: SyncAddress::default(),
             pos: 0,
             encryption: [0; ENCRYPTION_SIZE],
         }
@@ -326,21 +336,29 @@ impl Note {
 }
 
 impl Ownable for Note {
-    fn stealth_address(&self) -> &StealthAddress {
-        &self.stealth_address
+    fn stealth_address(&self) -> StealthAddress {
+        self.stealth_address
+    }
+
+    fn sync_address(&self) -> SyncAddress {
+        self.sync_address
     }
 }
 
 impl Ownable for &Note {
-    fn stealth_address(&self) -> &StealthAddress {
-        &self.stealth_address
+    fn stealth_address(&self) -> StealthAddress {
+        self.stealth_address
+    }
+
+    fn sync_address(&self) -> SyncAddress {
+        self.sync_address
     }
 }
 
-// Serialize into 105 + ENCRYPTION_SIZE bytes, where 105 is the size of all the
+// Serialize into 169 + ENCRYPTION_SIZE bytes, where 169 is the size of all the
 // note elements without the encryption. ENCRYPTION_SIZE = PLAINTEXT_SIZE +
 // ENCRYPTION_EXTRA_SIZE
-impl Serializable<{ 105 + ENCRYPTION_SIZE }> for Note {
+impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
     type Error = BytesError;
 
     /// Converts a Note into a byte representation
@@ -353,8 +371,9 @@ impl Serializable<{ 105 + ENCRYPTION_SIZE }> for Note {
             &JubJubAffine::from(&self.value_commitment).to_bytes(),
         );
         buf[33..97].copy_from_slice(&self.stealth_address.to_bytes());
-        buf[97..105].copy_from_slice(&self.pos.to_le_bytes());
-        buf[105..].copy_from_slice(&self.encryption);
+        buf[97..161].copy_from_slice(&self.sync_address.to_bytes());
+        buf[161..169].copy_from_slice(&self.pos.to_le_bytes());
+        buf[169..].copy_from_slice(&self.encryption);
         buf
     }
 
@@ -369,16 +388,19 @@ impl Serializable<{ 105 + ENCRYPTION_SIZE }> for Note {
             JubJubExtended::from(JubJubAffine::from_slice(&bytes[1..33])?);
         let stealth_address = StealthAddress::from_slice(&bytes[33..97])?;
 
-        one_u64.copy_from_slice(&bytes[97..105]);
+        let sync_address = SyncAddress::from_slice(&bytes[97..161])?;
+
+        one_u64.copy_from_slice(&bytes[161..169]);
         let pos = u64::from_le_bytes(one_u64);
 
         let mut encryption = [0u8; ENCRYPTION_SIZE];
-        encryption.copy_from_slice(&bytes[105..]);
+        encryption.copy_from_slice(&bytes[169..]);
 
         Ok(Note {
             note_type,
             value_commitment,
             stealth_address,
+            sync_address,
             pos,
             encryption,
         })

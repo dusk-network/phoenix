@@ -4,6 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use crate::keys::{sync::SyncAddress, Ownable};
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use jubjub_schnorr::PublicKey as NotePublicKey;
 
@@ -27,13 +28,6 @@ use rkyv::{Archive, Deserialize, Serialize};
 pub struct StealthAddress {
     pub(crate) R: JubJubExtended,
     pub(crate) note_pk: NotePublicKey,
-}
-
-/// The trait `Ownable` is required by any type that wants to prove its
-/// ownership.
-pub trait Ownable {
-    /// Returns the associated `StealthAddress`
-    fn stealth_address(&self) -> &StealthAddress;
 }
 
 impl StealthAddress {
@@ -77,15 +71,32 @@ impl PartialEq for StealthAddress {
     }
 }
 
-impl Ownable for &StealthAddress {
-    fn stealth_address(&self) -> &StealthAddress {
-        self
+impl Ownable for StealthAddress {
+    fn stealth_address(&self) -> StealthAddress {
+        *self
+    }
+
+    fn sync_address(&self) -> SyncAddress {
+        self.into()
     }
 }
 
-impl Ownable for StealthAddress {
-    fn stealth_address(&self) -> &StealthAddress {
-        self
+impl Ownable for &StealthAddress {
+    fn stealth_address(&self) -> StealthAddress {
+        **self
+    }
+
+    fn sync_address(&self) -> SyncAddress {
+        SyncAddress::from(*self)
+    }
+}
+
+impl From<&SyncAddress> for StealthAddress {
+    fn from(sa: &SyncAddress) -> Self {
+        StealthAddress {
+            note_pk: NotePublicKey::from(sa.k()),
+            R: *sa.R(),
+        }
     }
 }
 
