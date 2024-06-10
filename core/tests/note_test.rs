@@ -7,7 +7,7 @@
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
 use ff::Field;
 use phoenix_core::{
-    Error, Note, NoteType, Ownable, PublicKey, SecretKey, ViewKey,
+    Error, Note, NoteType, Ownability, Ownable, PublicKey, SecretKey, ViewKey,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;

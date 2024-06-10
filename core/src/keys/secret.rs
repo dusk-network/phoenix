@@ -4,8 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, Ownable};
-use dusk_jubjub::JubJubScalar;
+use crate::{
+    keys::{hash, owns_unchecked},
+    Ownability, Ownable,
+};
+use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
 use zeroize::Zeroize;
@@ -84,6 +87,24 @@ impl SecretKey {
         let aR = sa.stealth_address().R() * self.a;
 
         NoteSecretKey::from(hash(&aR) + self.b)
+    }
+}
+
+impl Ownability for SecretKey {
+    fn owns(&self, owner: &impl crate::Ownable) -> bool {
+        let sa = owner.stealth_address();
+
+        let aR = sa.R() * self.a();
+        let hash_aR = hash(&aR);
+        let note_sk = hash_aR + self.b();
+
+        let note_pk = GENERATOR_EXTENDED * note_sk;
+
+        sa.note_pk().as_ref() == &note_pk
+    }
+
+    fn owns_unchecked(&self, owner: &impl crate::Ownable) -> bool {
+        owns_unchecked(self.a(), owner)
     }
 }
 

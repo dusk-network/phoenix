@@ -4,7 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, SecretKey};
+use crate::{
+    keys::{hash, owns_unchecked},
+    Ownability, SecretKey,
+};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
@@ -61,25 +64,22 @@ impl ViewKey {
     pub fn B(&self) -> &JubJubExtended {
         &self.B
     }
+}
 
-    /// Checks `note_pk = H(R · a) · G + B`
-    pub fn owns(&self, owner: &impl crate::Ownable) -> bool {
+impl Ownability for ViewKey {
+    fn owns(&self, owner: &impl crate::Ownable) -> bool {
         let sa = owner.stealth_address();
 
         let aR = sa.R() * self.a();
-        let aR = hash(&aR);
-        let aR = GENERATOR_EXTENDED * aR;
-        let note_pk = aR + self.B();
+        let hash_aR = hash(&aR);
+        let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
+        let note_pk = hash_aR_G + self.B();
 
         sa.note_pk().as_ref() == &note_pk
     }
 
-    /// Checks `k_sync ?= R_sync · a`
-    pub fn owns_unchecked(&self, owner: &impl crate::Ownable) -> bool {
-        let sa = owner.sync_address();
-        let aR = sa.R() * self.a();
-
-        sa.k() == &aR
+    fn owns_unchecked(&self, owner: &impl crate::Ownable) -> bool {
+        owns_unchecked(self.a(), owner)
     }
 }
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a light sync method in the `ViewKey` [#199]
+- Add `Ownability` trait [#146]
 
 ### Changed
 
@@ -329,6 +330,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#146]: https://github.com/dusk-network/phoenix/issues/146
 [#199]: https://github.com/dusk-network/phoenix/issues/199
 [#195]: https://github.com/dusk-network/phoenix/issues/195
 [#190]: https://github.com/dusk-network/phoenix/issues/190

@@ -7,7 +7,7 @@
 use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
-use phoenix_core::{PublicKey, SecretKey, ViewKey};
+use phoenix_core::{Ownability, PublicKey, SecretKey, ViewKey};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use zeroize::Zeroize;
@@ -71,6 +71,9 @@ fn keys_consistency() {
     assert!(vk.owns(&sa));
     assert!(vk.owns_unchecked(&sync_address));
 
+    assert!(sk.owns(&sa));
+    assert!(sk.owns_unchecked(&sync_address));
+
     let wrong_sk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(&wrong_sk);
 
@@ -79,6 +82,9 @@ fn keys_consistency() {
 
     assert!(!wrong_vk.owns(&sa));
     assert!(!wrong_vk.owns_unchecked(&sync_address));
+
+    assert!(!wrong_sk.owns(&sa));
+    assert!(!wrong_sk.owns_unchecked(&sync_address));
 
     let note_sk = sk.gen_note_sk(&sa);
     let wrong_note_sk = wrong_sk.gen_note_sk(&sa);

@@ -20,13 +20,12 @@ mod transaction;
 
 pub use encryption::aes;
 pub use error::Error;
-pub use keys::hash;
 pub use keys::public::PublicKey;
 pub use keys::secret::SecretKey;
 pub use keys::stealth::StealthAddress;
 pub use keys::sync::SyncAddress;
 pub use keys::view::ViewKey;
-pub use keys::Ownable;
+pub use keys::{hash, Ownability, Ownable};
 pub use note::{Note, NoteType};
 
 #[cfg(feature = "alloc")]

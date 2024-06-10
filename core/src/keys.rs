@@ -26,3 +26,24 @@ pub trait Ownable {
     /// Returns the associated `StealthAddress`
     fn stealth_address(&self) -> stealth::StealthAddress;
 }
+
+pub(crate) fn owns_unchecked(
+    a: &JubJubScalar,
+    owner: &impl crate::Ownable,
+) -> bool {
+    let sa = owner.sync_address();
+    let aR = sa.R() * a;
+
+    sa.k() == &aR
+}
+
+/// This trait grants the ability to check if a note is owned.
+pub trait Ownability {
+    /// Checks if:
+    /// `note_pk ?= H(R · a) · G + B` for `ViewKey`
+    /// `note_pk ?= (H(R · a) + b) · G` for `SecretKey`
+    fn owns(&self, owner: &impl crate::Ownable) -> bool;
+
+    /// Checks if `k_sync ?= R_sync · a`
+    fn owns_unchecked(&self, owner: &impl crate::Ownable) -> bool;
+}
