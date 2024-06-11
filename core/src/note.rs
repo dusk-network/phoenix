@@ -7,14 +7,12 @@
 use core::convert::{TryFrom, TryInto};
 
 use crate::{
-    Error, Ownable, PublicKey, SecretKey, StealthAddress, SyncAddress, ViewKey,
+    transparent_value_commitment, value_commitment, Error, Ownable, PublicKey,
+    SecretKey, StealthAddress, SyncAddress, ViewKey,
 };
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
-use dusk_jubjub::{
-    dhke, JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
-    GENERATOR_NUMS_EXTENDED,
-};
+use dusk_jubjub::{dhke, JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
 
 use crate::aes;
 
@@ -25,15 +23,14 @@ use rand::{CryptoRng, RngCore};
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
-/// Blinder used for transparent
+/// Blinder used for transparent notes.
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 
 /// Size of the Phoenix notes plaintext: value (8 bytes) + blinder (32 bytes)
 pub(crate) const PLAINTEXT_SIZE: usize = 40;
 
 /// Size of the Phoenix notes encryption
-pub(crate) const ENCRYPTION_SIZE: usize =
-    PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
+pub const ENCRYPTION_SIZE: usize = PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -78,7 +75,7 @@ impl TryFrom<i32> for NoteType {
 )]
 pub struct Note {
     pub(crate) note_type: NoteType,
-    pub(crate) value_commitment: JubJubExtended,
+    pub(crate) value_commitment: JubJubAffine,
     pub(crate) stealth_address: StealthAddress,
     pub(crate) sync_address: SyncAddress,
     pub(crate) pos: u64,
@@ -108,9 +105,7 @@ impl Note {
         let r_sync = JubJubScalar::random(&mut *rng);
         let sync_address = pk.gen_sync_address(&r_sync);
 
-        let value_commitment = JubJubScalar::from(value);
-        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
-            + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+        let value_commitment = value_commitment(value, blinding_factor);
 
         // Output notes have undefined position, equals to u64's MAX value
         let pos = u64::MAX;
@@ -167,9 +162,7 @@ impl Note {
         sync_address: SyncAddress,
         value: u64,
     ) -> Self {
-        let value_commitment = JubJubScalar::from(value);
-        let value_commitment = (GENERATOR_EXTENDED * value_commitment)
-            + (GENERATOR_NUMS_EXTENDED * TRANSPARENT_BLINDER);
+        let value_commitment = transparent_value_commitment(value);
 
         let pos = u64::MAX;
 
@@ -205,7 +198,7 @@ impl Note {
     pub fn empty() -> Self {
         Self {
             note_type: NoteType::Transparent,
-            value_commitment: JubJubExtended::default(),
+            value_commitment: JubJubAffine::default(),
             stealth_address: StealthAddress::default(),
             sync_address: SyncAddress::default(),
             pos: 0,
@@ -253,14 +246,13 @@ impl Note {
 
     /// Return the internal representation of scalars to be hashed
     pub fn hash_inputs(&self) -> [BlsScalar; 6] {
-        let value_commitment = self.value_commitment().to_hash_inputs();
         let note_pk =
             self.stealth_address().note_pk().as_ref().to_hash_inputs();
 
         [
             BlsScalar::from(self.note_type as u64),
-            value_commitment[0],
-            value_commitment[1],
+            self.value_commitment.get_u(),
+            self.value_commitment.get_v(),
             note_pk[0],
             note_pk[1],
             BlsScalar::from(self.pos),
@@ -290,7 +282,7 @@ impl Note {
     }
 
     /// Return the value commitment `H(value, blinding_factor)`
-    pub const fn value_commitment(&self) -> &JubJubExtended {
+    pub const fn value_commitment(&self) -> &JubJubAffine {
         &self.value_commitment
     }
 
@@ -367,9 +359,7 @@ impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
 
         buf[0] = self.note_type as u8;
 
-        buf[1..33].copy_from_slice(
-            &JubJubAffine::from(&self.value_commitment).to_bytes(),
-        );
+        buf[1..33].copy_from_slice(&self.value_commitment.to_bytes());
         buf[33..97].copy_from_slice(&self.stealth_address.to_bytes());
         buf[97..161].copy_from_slice(&self.sync_address.to_bytes());
         buf[161..169].copy_from_slice(&self.pos.to_le_bytes());
@@ -384,8 +374,7 @@ impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
 
         let note_type =
             bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
-        let value_commitment =
-            JubJubExtended::from(JubJubAffine::from_slice(&bytes[1..33])?);
+        let value_commitment = JubJubAffine::from_slice(&bytes[1..33])?;
         let stealth_address = StealthAddress::from_slice(&bytes[33..97])?;
 
         let sync_address = SyncAddress::from_slice(&bytes[97..161])?;

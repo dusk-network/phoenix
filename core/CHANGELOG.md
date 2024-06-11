@@ -10,10 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add a light sync method in the `ViewKey` [#199]
+- Add function `value_commitment` [#201]
+- Add function `transparent_value_commitment` [#201]
 
 ### Changed
 
 - Rename `crossover` to `deposit` [#190]
+- Turn the value-commitment an `JubJubAffine` point [#201]
+- Expose `NOTE_ENCRYPTION_SIZE` [#201]
+- Make `alloc` a `default` feature [#201]
 
 ### Removed
 
@@ -329,6 +334,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#201]: https://github.com/dusk-network/phoenix/issues/201
 [#199]: https://github.com/dusk-network/phoenix/issues/199
 [#195]: https://github.com/dusk-network/phoenix/issues/195
 [#190]: https://github.com/dusk-network/phoenix/issues/190

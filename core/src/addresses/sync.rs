@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::keys::{stealth::StealthAddress, Ownable};
+use crate::{Ownable, StealthAddress};
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use jubjub_schnorr::PublicKey as NotePublicKey;
 

@@ -4,10 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED};
+use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{
-    Error, Note, NoteType, Ownable, PublicKey, SecretKey, ViewKey,
+    value_commitment, Error, Note, NoteType, Ownable, PublicKey, SecretKey,
+    ViewKey,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -103,18 +104,16 @@ fn value_commitment_transparent() {
 
     let value = note
         .value(Some(&vk))
-        .expect("Value not returned with the correct view key");
-    let value = JubJubScalar::from(value);
+        .expect("The note should be owned by the provided vk");
 
     let blinding_factor = note
         .blinding_factor(Some(&vk))
-        .expect("Blinding factor not returned with the correct view key");
+        .expect("The note should be owned by the provided vk");
 
     let commitment = note.value_commitment();
-    let commitment_p = (GENERATOR_EXTENDED * value)
-        + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+    let commitment_p = value_commitment(value, blinding_factor);
 
-    assert_eq!(commitment, &commitment_p);
+    assert_eq!(commitment, &commitment_p.into());
 }
 
 #[test]
@@ -131,18 +130,16 @@ fn value_commitment_obfuscated() {
 
     let value = note
         .value(Some(&vk))
-        .expect("Value not returned with the correct view key");
-    let value = JubJubScalar::from(value);
+        .expect("The note should be owned by the provided vk");
 
     let blinding_factor = note
         .blinding_factor(Some(&vk))
-        .expect("Blinding factor not returned with the correct view key");
+        .expect("The note should be owned by the provided vk");
 
     let commitment = note.value_commitment();
-    let commitment_p = (GENERATOR_EXTENDED * value)
-        + (GENERATOR_NUMS_EXTENDED * blinding_factor);
+    let commitment_p = value_commitment(value, blinding_factor);
 
-    assert_eq!(commitment, &commitment_p);
+    assert_eq!(commitment, &commitment_p.into());
 }
 
 #[test]
