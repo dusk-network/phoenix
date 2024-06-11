@@ -140,7 +140,7 @@ struct WitnessTxOutputNote {
 }
 
 impl TxOutputNote {
-    /// Crate a new `TxOutputNote`.
+    /// Create a new `TxOutputNote`.
     pub fn new(
         value: u64,
         value_commitment: JubJubAffine,
@@ -337,9 +337,8 @@ pub struct TxCircuit<const H: usize, const I: usize> {
 
 impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
     fn default() -> Self {
-        let mut rng = StdRng::seed_from_u64(0xbeef);
-
-        let sk = SecretKey::random(&mut rng);
+        let sk =
+            SecretKey::new(JubJubScalar::default(), JubJubScalar::default());
 
         let mut tree = Tree::<(), H>::new();
         let payload_hash = BlsScalar::default();
@@ -355,7 +354,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         for _ in 0..I {
             let merkle_opening = tree.opening(*note.pos()).expect("Tree read.");
             let tx_input_note = TxInputNote::new(
-                &mut rng,
+                &mut StdRng::seed_from_u64(0xb001),
                 &note,
                 merkle_opening,
                 &sk,
