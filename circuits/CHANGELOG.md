@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add Recipient gadget [#197]
+- Add `RecipientParameter::new` constructor [#201]
 
 ### Changed
 
@@ -36,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#201]: https://github.com/dusk-network/phoenix/issues/201
 [#197]: https://github.com/dusk-network/phoenix/issues/197
 [#188]: https://github.com/dusk-network/phoenix/issues/188
 [#191]: https://github.com/dusk-network/phoenix/issues/191
