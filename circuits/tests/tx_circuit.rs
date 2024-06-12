@@ -14,8 +14,7 @@ use ff::Field;
 use poseidon_merkle::{Item, Tree};
 
 use phoenix_circuits::{
-    transaction::{TxCircuit, TxInputNote, TxOutputNote},
-    RecipientParameters,
+    RecipientParameters, TxCircuit, TxInputNote, TxOutputNote,
 };
 use phoenix_core::{value_commitment, Note, PublicKey, SecretKey};
 
@@ -131,7 +130,7 @@ fn create_test_tx_input_notes<const I: usize>(
 }
 
 #[test]
-fn test_transfer_circuit_1_2() {
+fn test_tx_circuit_1_2() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
@@ -173,7 +172,7 @@ fn test_transfer_circuit_1_2() {
 }
 
 #[test]
-fn test_transfer_circuit_2_2() {
+fn test_tx_circuit_2_2() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
@@ -216,7 +215,7 @@ fn test_transfer_circuit_2_2() {
 }
 
 #[test]
-fn test_transfer_circuit_3_2() {
+fn test_tx_circuit_3_2() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
@@ -262,7 +261,7 @@ fn test_transfer_circuit_3_2() {
 }
 
 #[test]
-fn test_transfer_circuit_4_2() {
+fn test_tx_circuit_4_2() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =

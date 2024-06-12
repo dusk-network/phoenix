@@ -4,174 +4,27 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{
-    JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS,
-    GENERATOR_NUMS_EXTENDED,
-};
+use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS};
 use dusk_plonk::prelude::*;
-use dusk_poseidon::{Domain, Hash, HashGadget};
-use jubjub_schnorr::{gadgets, SignatureDouble};
-use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
+use dusk_poseidon::{Domain, HashGadget};
+use jubjub_schnorr::gadgets;
+use poseidon_merkle::{zk::opening_gadget, Item, Tree};
 
 use rand::rngs::StdRng;
-use rand::{CryptoRng, RngCore, SeedableRng};
+use rand::SeedableRng;
 
 extern crate alloc;
 use alloc::vec::Vec;
 
-use phoenix_core::{Error as PhoenixError, Note, Ownable, SecretKey, ViewKey};
+use phoenix_core::{Note, SecretKey, OUTPUT_NOTES};
 
-use crate::{recipient, recipient::RecipientParameters};
+use crate::{recipient::gadget as recipient_gadget, RecipientParameters};
 
-const TX_OUTPUT_NOTES: usize = 2;
-
-/// Struct representing a note willing to be spent, in a way
-/// suitable for being introduced in the transfer circuit
-#[derive(Debug, Clone)]
-pub struct TxInputNote<const H: usize> {
-    pub(crate) merkle_opening: Opening<(), H>,
-    pub(crate) note: Note,
-    pub(crate) note_pk_p: JubJubAffine,
-    pub(crate) value: u64,
-    pub(crate) blinding_factor: JubJubScalar,
-    pub(crate) nullifier: BlsScalar,
-    pub(crate) signature: SignatureDouble,
-}
-
-#[derive(Debug, Clone)]
-struct WitnessTxInputNote {
-    note_pk: WitnessPoint,
-    note_pk_p: WitnessPoint,
-    note_type: Witness,
-    pos: Witness,
-    value: Witness,
-    blinding_factor: Witness,
-    nullifier: Witness,
-    signature_u: Witness,
-    signature_r: WitnessPoint,
-    signature_r_p: WitnessPoint,
-}
-
-impl<const H: usize> TxInputNote<H> {
-    /// Create a tx input note
-    pub fn new(
-        rng: &mut (impl RngCore + CryptoRng),
-        note: &Note,
-        merkle_opening: poseidon_merkle::Opening<(), H>,
-        sk: &SecretKey,
-        payload_hash: BlsScalar,
-    ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
-        let note_sk = sk.gen_note_sk(note);
-        let note_pk_p =
-            JubJubAffine::from(GENERATOR_NUMS_EXTENDED * note_sk.as_ref());
-
-        let vk = ViewKey::from(sk);
-        let value = note.value(Some(&vk))?;
-        let blinding_factor = note.blinding_factor(Some(&vk))?;
-
-        let nullifier = Hash::digest(
-            Domain::Other,
-            &[note_pk_p.get_u(), note_pk_p.get_v(), (*note.pos()).into()],
-        )[0];
-
-        let signature = note_sk.sign_double(rng, payload_hash);
-
-        Ok(crate::transaction::TxInputNote {
-            merkle_opening,
-            note: note.clone(),
-            note_pk_p,
-            value,
-            blinding_factor,
-            nullifier,
-            signature,
-        })
-    }
-
-    fn append_to_circuit(&self, composer: &mut Composer) -> WitnessTxInputNote {
-        let nullifier = composer.append_public(self.nullifier);
-
-        let note_pk = composer
-            .append_point(*self.note.stealth_address().note_pk().as_ref());
-        let note_pk_p = composer.append_point(self.note_pk_p);
-
-        let note_type = composer
-            .append_witness(BlsScalar::from(self.note.note_type() as u64));
-        let pos = composer.append_witness(BlsScalar::from(*self.note.pos()));
-
-        let value = composer.append_witness(self.value);
-        let blinding_factor = composer.append_witness(self.blinding_factor);
-
-        let signature_u = composer.append_witness(*self.signature.u());
-        let signature_r = composer.append_point(self.signature.R());
-        let signature_r_p = composer.append_point(self.signature.R_prime());
-
-        WitnessTxInputNote {
-            note_pk,
-            note_pk_p,
-
-            note_type,
-            pos,
-            value,
-            blinding_factor,
-
-            nullifier,
-
-            signature_u,
-            signature_r,
-            signature_r_p,
-        }
-    }
-}
-
-/// Struct representing a note willing to be created, in a way
-/// suitable for being introduced in the transfer circuit
-#[derive(Debug, Clone)]
-pub struct TxOutputNote {
-    value: u64,
-    value_commitment: JubJubAffine,
-    blinding_factor: JubJubScalar,
-}
-
-#[derive(Debug, Clone)]
-struct WitnessTxOutputNote {
-    value: Witness,
-    value_commitment: WitnessPoint,
-    blinding_factor: Witness,
-}
-
-impl TxOutputNote {
-    /// Create a new `TxOutputNote`.
-    pub fn new(
-        value: u64,
-        value_commitment: JubJubAffine,
-        blinding_factor: JubJubScalar,
-    ) -> Self {
-        Self {
-            value,
-            value_commitment,
-            blinding_factor,
-        }
-    }
-
-    fn append_to_circuit(
-        &self,
-        composer: &mut Composer,
-    ) -> WitnessTxOutputNote {
-        let value = composer.append_witness(self.value);
-        let value_commitment =
-            composer.append_public_point(self.value_commitment);
-        let blinding_factor = composer.append_witness(self.blinding_factor);
-
-        WitnessTxOutputNote {
-            value,
-            value_commitment,
-            blinding_factor,
-        }
-    }
-}
+pub(crate) mod notes;
+use notes::{TxInputNote, TxOutputNote};
 
 /// Transaction gadget proving the following properties in ZK for a generic
-/// `I` [`TxInputNote`] and [`TX_OUTPUT_NOTES`] (2) [`TxOutputNote`]:
+/// `I` [`TxInputNote`] and [`OUTPUT_NOTES`] (2) [`TxOutputNote`]:
 ///
 /// 1. Membership: every [`TxInputNote`] is included in the Merkle tree of
 ///    notes.
@@ -195,7 +48,7 @@ fn nullify_gadget<const H: usize, const I: usize>(
     payload_hash: &Witness,
     root: &BlsScalar,
     tx_input_notes: &[TxInputNote<H>; I],
-    tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
+    tx_output_notes: &[TxOutputNote; OUTPUT_NOTES],
     max_fee: u64,
     deposit: u64,
 ) -> Result<(), Error> {
@@ -327,7 +180,7 @@ fn nullify_gadget<const H: usize, const I: usize>(
 #[derive(Debug)]
 pub struct TxCircuit<const H: usize, const I: usize> {
     tx_input_notes: [TxInputNote<H>; I],
-    tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
+    tx_output_notes: [TxOutputNote; OUTPUT_NOTES],
     payload_hash: BlsScalar,
     root: BlsScalar,
     deposit: u64,
@@ -396,7 +249,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
     /// Create a new transfer circuit
     pub fn new(
         tx_input_notes: [TxInputNote<H>; I],
-        tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
+        tx_output_notes: [TxOutputNote; OUTPUT_NOTES],
         payload_hash: BlsScalar,
         root: BlsScalar,
         deposit: u64,
@@ -442,7 +295,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         )?;
 
         // Prove correctness of the sender keys encryption
-        recipient::gadget(composer, &self.rp, payload_hash)?;
+        recipient_gadget(composer, &self.rp, payload_hash)?;
 
         Ok(())
     }

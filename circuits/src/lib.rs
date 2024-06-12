@@ -12,12 +12,16 @@
 
 mod encryption;
 mod recipient;
-
-/// Transaction structs, and circuit
-pub mod transaction;
+mod tx_circuit;
 
 /// Recipient Parameters
 pub use recipient::RecipientParameters;
 
 /// ElGamal asymmetric cipher
 pub use encryption::elgamal;
+
+/// The circuit used for a phoenix-transaction
+pub use tx_circuit::TxCircuit;
+
+// TODO prob remove re-export
+pub use tx_circuit::notes::{TxInputNote, TxOutputNote};
