@@ -34,6 +34,9 @@ pub use note::{Note, NoteType, ENCRYPTION_SIZE as NOTE_ENCRYPTION_SIZE};
 /// Transaction Skeleton used by the phoenix transaction model
 pub use transaction::TxSkeleton;
 
+/// The amount of output-notes in a phoenix-transaction
+pub const OUTPUT_NOTES: usize = 2;
+
 use dusk_jubjub::{
     JubJubAffine, JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED,
 };
