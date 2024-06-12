@@ -45,12 +45,12 @@ impl<const H: usize> TxInputNote<H> {
     /// Create a tx input note
     pub fn new(
         rng: &mut (impl RngCore + CryptoRng),
-        note: &Note,
+        note: Note,
         merkle_opening: poseidon_merkle::Opening<(), H>,
         sk: &SecretKey,
         payload_hash: BlsScalar,
     ) -> Result<Self, PhoenixError> {
-        let note_sk = sk.gen_note_sk(note);
+        let note_sk = sk.gen_note_sk(&note);
         let note_pk_p =
             JubJubAffine::from(GENERATOR_NUMS_EXTENDED * note_sk.as_ref());
 
@@ -67,7 +67,7 @@ impl<const H: usize> TxInputNote<H> {
 
         Ok(Self {
             merkle_opening,
-            note: note.clone(),
+            note,
             note_pk_p,
             value,
             blinding_factor,

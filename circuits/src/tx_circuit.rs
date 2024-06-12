@@ -8,15 +8,17 @@ use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS};
 use dusk_plonk::prelude::*;
 use dusk_poseidon::{Domain, HashGadget};
 use jubjub_schnorr::gadgets;
-use poseidon_merkle::{zk::opening_gadget, Item, Tree};
+use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
 
 use rand::rngs::StdRng;
-use rand::SeedableRng;
+use rand::{CryptoRng, RngCore, SeedableRng};
 
 extern crate alloc;
 use alloc::vec::Vec;
 
-use phoenix_core::{Note, SecretKey, OUTPUT_NOTES};
+use phoenix_core::{
+    Error as PhoenixError, Note, Ownable, SecretKey, TxSkeleton, OUTPUT_NOTES,
+};
 
 use crate::{recipient::gadget as recipient_gadget, RecipientParameters};
 
@@ -197,18 +199,19 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let payload_hash = BlsScalar::default();
 
         let mut tx_input_notes = Vec::new();
-        let note = Note::empty();
+        let empty_note = Note::empty();
         let item = Item {
-            hash: note.hash(),
+            hash: empty_note.hash(),
             data: (),
         };
-        tree.insert(*note.pos(), item);
+        tree.insert(*empty_note.pos(), item);
 
         for _ in 0..I {
+            let note = empty_note.clone();
             let merkle_opening = tree.opening(*note.pos()).expect("Tree read.");
             let tx_input_note = TxInputNote::new(
                 &mut StdRng::seed_from_u64(0xb001),
-                &note,
+                note,
                 merkle_opening,
                 &sk,
                 payload_hash,
@@ -248,15 +251,55 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
 impl<const H: usize, const I: usize> TxCircuit<H, I> {
     /// Create a new transfer circuit
     pub fn new(
-        tx_input_notes: [TxInputNote<H>; I],
-        tx_output_notes: [TxOutputNote; OUTPUT_NOTES],
+        rng: &mut (impl RngCore + CryptoRng),
+        sender_sk: &SecretKey,
+        inputs: [(Note, Opening<(), H>); I],
+        outputs: [(&Note, u64, JubJubScalar); OUTPUT_NOTES],
+        tx_skeleton: &TxSkeleton,
         payload_hash: BlsScalar,
-        root: BlsScalar,
-        deposit: u64,
-        max_fee: u64,
-        rp: RecipientParameters,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, PhoenixError> {
+        let mut tx_input_notes = Vec::with_capacity(I);
+        for input in inputs.into_iter() {
+            let (note, opening) = input;
+            tx_input_notes.push(TxInputNote::new(
+                rng,
+                note,
+                opening,
+                sender_sk,
+                payload_hash,
+            )?);
+        }
+        let tx_input_notes: [TxInputNote<H>; I] = tx_input_notes
+            .try_into()
+            .expect("the vector should be the correct length");
+
+        let mut tx_output_notes = Vec::with_capacity(OUTPUT_NOTES);
+        for output in outputs.iter() {
+            let (note, value, blinder) = output;
+            tx_output_notes.push(TxOutputNote::new(
+                *value,
+                *note.value_commitment(),
+                *blinder,
+            ));
+        }
+        let tx_output_notes: [TxOutputNote; OUTPUT_NOTES] = tx_output_notes
+            .try_into()
+            .expect("the vector should be the correct length");
+
+        let root = tx_skeleton.root;
+        let deposit = tx_skeleton.deposit;
+        let max_fee = tx_skeleton.tx_max_fee;
+        let output_npk = [
+            JubJubAffine::from(
+                outputs[0].0.stealth_address().note_pk().as_ref(),
+            ),
+            JubJubAffine::from(
+                outputs[1].0.stealth_address().note_pk().as_ref(),
+            ),
+        ];
+        let rp =
+            RecipientParameters::new(rng, sender_sk, output_npk, payload_hash);
+        Ok(Self {
             tx_input_notes,
             tx_output_notes,
             payload_hash,
@@ -264,7 +307,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
             deposit,
             max_fee,
             rp,
-        }
+        })
     }
 }
 
