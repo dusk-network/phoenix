@@ -7,15 +7,24 @@
 #![allow(non_snake_case)]
 
 use dusk_bls12_381::BlsScalar;
+use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::{SecretKey as SchnorrSecretKey, Signature};
 use rand::{CryptoRng, RngCore};
 
+#[cfg(feature = "rkyv-impl")]
+use rkyv::{Archive, Deserialize, Serialize};
+
 use crate::{encryption::elgamal, PublicKey, SecretKey, OUTPUT_NOTES};
 
 /// Parameters needed to prove a recipient in-circuit
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct RecipientParameters {
     /// Public key of the transaction sender
     pub sender_pk: PublicKey,
@@ -50,6 +59,105 @@ impl Default for RecipientParameters {
             r_A: [JubJubScalar::default(); OUTPUT_NOTES],
             r_B: [JubJubScalar::default(); OUTPUT_NOTES],
         }
+    }
+}
+
+const PARAMS_SIZE: usize = PublicKey::SIZE
+    + JubJubAffine::SIZE * OUTPUT_NOTES
+    + Signature::SIZE * OUTPUT_NOTES
+    + JubJubAffine::SIZE * 2 * OUTPUT_NOTES
+    + JubJubAffine::SIZE * 2 * OUTPUT_NOTES
+    + JubJubScalar::SIZE * OUTPUT_NOTES
+    + JubJubScalar::SIZE * OUTPUT_NOTES;
+
+impl Serializable<PARAMS_SIZE> for RecipientParameters {
+    type Error = dusk_bytes::Error;
+
+    fn from_bytes(buf: &[u8; PARAMS_SIZE]) -> Result<Self, Self::Error>
+    where
+        Self: Sized,
+    {
+        let mut reader = &buf[..];
+
+        let sender_pk = PublicKey::from_reader(&mut reader)?;
+
+        let output_npk_0 = JubJubAffine::from_reader(&mut reader)?;
+        let output_npk_1 = JubJubAffine::from_reader(&mut reader)?;
+
+        let sig_0 = Signature::from_reader(&mut reader)?;
+        let sig_1 = Signature::from_reader(&mut reader)?;
+
+        let enc_A_0_0 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_A_1_0 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_A_0_1 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_A_1_1 = JubJubAffine::from_reader(&mut reader)?;
+
+        let enc_B_0_0 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_B_1_0 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_B_0_1 = JubJubAffine::from_reader(&mut reader)?;
+        let enc_B_1_1 = JubJubAffine::from_reader(&mut reader)?;
+
+        let r_A_0 = JubJubScalar::from_reader(&mut reader)?;
+        let r_A_1 = JubJubScalar::from_reader(&mut reader)?;
+
+        let r_B_0 = JubJubScalar::from_reader(&mut reader)?;
+        let r_B_1 = JubJubScalar::from_reader(&mut reader)?;
+
+        Ok(Self {
+            sender_pk,
+            output_npk: [output_npk_0, output_npk_1],
+            sig: [sig_0, sig_1],
+            enc_A: [
+                (enc_A_0_0.into(), enc_A_1_0.into()),
+                (enc_A_0_1.into(), enc_A_1_1.into()),
+            ],
+            enc_B: [
+                (enc_B_0_0.into(), enc_B_1_0.into()),
+                (enc_B_0_1.into(), enc_B_1_1.into()),
+            ],
+            r_A: [r_A_0, r_A_1],
+            r_B: [r_B_0, r_B_1],
+        })
+    }
+
+    fn to_bytes(&self) -> [u8; PARAMS_SIZE] {
+        let mut bytes = [0u8; PARAMS_SIZE];
+
+        bytes[0..64].copy_from_slice(&self.sender_pk.to_bytes());
+
+        bytes[64..96].copy_from_slice(&self.output_npk[0].to_bytes());
+        bytes[96..128].copy_from_slice(&self.output_npk[1].to_bytes());
+
+        bytes[128..192].copy_from_slice(&self.sig[0].to_bytes());
+        bytes[192..256].copy_from_slice(&self.sig[1].to_bytes());
+
+        let enc_A_0_0 = JubJubAffine::from(self.enc_A[0].0);
+        let enc_A_1_0 = JubJubAffine::from(self.enc_A[0].1);
+        let enc_A_0_1 = JubJubAffine::from(self.enc_A[1].0);
+        let enc_A_1_1 = JubJubAffine::from(self.enc_A[1].1);
+
+        bytes[256..288].copy_from_slice(&enc_A_0_0.to_bytes());
+        bytes[288..320].copy_from_slice(&enc_A_1_0.to_bytes());
+        bytes[320..352].copy_from_slice(&enc_A_0_1.to_bytes());
+        bytes[352..384].copy_from_slice(&enc_A_1_1.to_bytes());
+
+        let enc_B_0_0 = JubJubAffine::from(self.enc_B[0].0);
+        let enc_B_1_0 = JubJubAffine::from(self.enc_B[0].1);
+        let enc_B_0_1 = JubJubAffine::from(self.enc_B[1].0);
+        let enc_B_1_1 = JubJubAffine::from(self.enc_B[1].1);
+
+        bytes[384..416].copy_from_slice(&enc_B_0_0.to_bytes());
+        bytes[416..448].copy_from_slice(&enc_B_1_0.to_bytes());
+        bytes[448..480].copy_from_slice(&enc_B_0_1.to_bytes());
+        bytes[480..512].copy_from_slice(&enc_B_1_1.to_bytes());
+
+        bytes[512..544].copy_from_slice(&self.r_A[0].to_bytes());
+        bytes[544..576].copy_from_slice(&self.r_A[1].to_bytes());
+
+        bytes[576..608].copy_from_slice(&self.r_B[0].to_bytes());
+        bytes[608..640].copy_from_slice(&self.r_B[1].to_bytes());
+
+        bytes
     }
 }
 
