@@ -9,37 +9,8 @@
 //!
 //! Reference: https://link.springer.com/chapter/10.1007/3-540-39568-7_2
 
-use dusk_jubjub::{JubJubExtended, JubJubScalar, GENERATOR};
+use dusk_jubjub::{JubJubScalar, GENERATOR};
 use dusk_plonk::prelude::*;
-
-/// Encrypts a JubJubExtended plaintext given a public key and a fresh random
-/// number 'r'.
-///
-/// ## Return
-/// Returns a ciphertext (JubJubExtended, JubJubExtended).
-pub fn encrypt(
-    public_key: &JubJubExtended,
-    plaintext: &JubJubExtended,
-    r: &JubJubScalar,
-) -> (JubJubExtended, JubJubExtended) {
-    let ciphertext_1 = GENERATOR * r;
-    let ciphertext_2 = plaintext + public_key * r;
-
-    (ciphertext_1, ciphertext_2)
-}
-
-/// Decrypts a ciphertext given a secret key.
-///
-/// ## Return
-/// Returns a JubJubExtended plaintext.
-pub fn decrypt(
-    secret_key: &JubJubScalar,
-    ciphertext_1: &JubJubExtended,
-    ciphertext_2: &JubJubExtended,
-) -> JubJubExtended {
-    // return the plaintext
-    ciphertext_2 - ciphertext_1 * secret_key
-}
 
 /// Encrypt in-circuit a plaintext WitnessPoint.
 ///

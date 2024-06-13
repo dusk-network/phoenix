@@ -13,11 +13,10 @@ use dusk_plonk::prelude::*;
 use ff::Field;
 use poseidon_merkle::{Item, Tree};
 
-use phoenix_circuits::{
-    transaction::{TxCircuit, TxInputNote, TxOutputNote},
-    RecipientParameters,
+use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
+use phoenix_core::{
+    value_commitment, Note, PublicKey, RecipientParameters, SecretKey,
 };
-use phoenix_core::{value_commitment, Note, PublicKey, SecretKey};
 
 #[macro_use]
 extern crate lazy_static;

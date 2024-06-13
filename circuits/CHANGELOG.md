@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `skeleton_hash` to `payload_hash` [#188]
 - Make `TxCircuit` to use the Recipient gadget
 
+### Removed
+
+- Remove `RecipientParameters`
+- Remove `elgamal::encrypt` and `elgamal::decrypt`
+
 ## [0.1.0] - 2024-05-22
 
 ### Added
