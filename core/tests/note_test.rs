@@ -7,8 +7,7 @@
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{
-    value_commitment, Error, Note, NoteType, Ownable, PublicKey, SecretKey,
-    ViewKey,
+    value_commitment, Error, Note, NoteType, PublicKey, SecretKey, ViewKey,
 };
 use rand::rngs::StdRng;
 use rand::SeedableRng;
@@ -48,7 +47,7 @@ fn transparent_stealth_note() -> Result<(), Error> {
 
     assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
-    assert_eq!(sa, note.stealth_address());
+    assert_eq!(sa, *note.stealth_address());
 
     Ok(())
 }

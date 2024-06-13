@@ -4,7 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, Ownable};
+use crate::{keys::hash, StealthAddress};
+
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
@@ -80,8 +81,8 @@ impl SecretKey {
 
     /// Generates a [`NoteSecretKey`] using the `R` of the given
     /// [`StealthAddress`]. With the formula: `note_sk = H(a · R) + b`
-    pub fn gen_note_sk(&self, sa: impl Ownable) -> NoteSecretKey {
-        let aR = sa.stealth_address().R() * self.a;
+    pub fn gen_note_sk(&self, sa: &StealthAddress) -> NoteSecretKey {
+        let aR = sa.R() * self.a;
 
         NoteSecretKey::from(hash(&aR) + self.b)
     }

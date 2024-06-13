@@ -19,7 +19,7 @@ use rand::{CryptoRng, RngCore, SeedableRng};
 extern crate alloc;
 use alloc::vec::Vec;
 
-use phoenix_core::{Error as PhoenixError, Note, Ownable, SecretKey, ViewKey};
+use phoenix_core::{Error as PhoenixError, Note, SecretKey, ViewKey};
 
 use crate::{recipient, recipient::RecipientParameters};
 
@@ -61,7 +61,7 @@ impl<const H: usize> TxInputNote<H> {
         sk: &SecretKey,
         payload_hash: BlsScalar,
     ) -> Result<crate::transaction::TxInputNote<H>, PhoenixError> {
-        let note_sk = sk.gen_note_sk(note);
+        let note_sk = sk.gen_note_sk(note.stealth_address());
         let note_pk_p =
             JubJubAffine::from(GENERATOR_NUMS_EXTENDED * note_sk.as_ref());
 

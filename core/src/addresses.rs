@@ -6,18 +6,3 @@
 
 pub mod stealth;
 pub mod sync;
-
-// /// Hashes a JubJub's ExtendedPoint into a JubJub's Scalar using the JubJub's
-// /// hash to scalar function
-// pub fn hash(p: &JubJubExtended) -> JubJubScalar {
-//     JubJubScalar::hash_to_scalar(&JubJubAffine::from(p).to_bytes())
-// }
-
-/// The trait `Ownable` is required by any type that wants to prove its
-/// ownership.
-pub trait Ownable {
-    /// Returns the associated `SyncAddress`
-    fn sync_address(&self) -> sync::SyncAddress;
-    /// Returns the associated `StealthAddress`
-    fn stealth_address(&self) -> stealth::StealthAddress;
-}
