@@ -21,7 +21,6 @@ mod transaction;
 
 pub use addresses::stealth::StealthAddress;
 pub use addresses::sync::SyncAddress;
-pub use addresses::Ownable;
 pub use encryption::aes;
 pub use error::Error;
 pub use keys::hash;

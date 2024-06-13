@@ -7,7 +7,7 @@
 use core::convert::{TryFrom, TryInto};
 
 use crate::{
-    transparent_value_commitment, value_commitment, Error, Ownable, PublicKey,
+    transparent_value_commitment, value_commitment, Error, PublicKey,
     SecretKey, StealthAddress, SyncAddress, ViewKey,
 };
 use dusk_bls12_381::BlsScalar;
@@ -235,7 +235,7 @@ impl Note {
     ///
     /// This nullifier is represeted as `H(note_sk · G', pos)`
     pub fn gen_nullifier(&self, sk: &SecretKey) -> BlsScalar {
-        let note_sk = sk.gen_note_sk(self.stealth_address);
+        let note_sk = sk.gen_note_sk(&self.stealth_address);
         let pk_prime = GENERATOR_NUMS_EXTENDED * note_sk.as_ref();
         let pk_prime = pk_prime.to_hash_inputs();
 
@@ -273,6 +273,16 @@ impl Note {
     /// Return the position of the note on the tree.
     pub const fn pos(&self) -> &u64 {
         &self.pos
+    }
+
+    /// Returns the the stealth address associated with the note.
+    pub const fn stealth_address(&self) -> &StealthAddress {
+        &self.stealth_address
+    }
+
+    /// Returns the sync address associated with the note.
+    pub const fn sync_address(&self) -> &SyncAddress {
+        &self.sync_address
     }
 
     /// Set the position of the note on the tree.
@@ -324,26 +334,6 @@ impl Note {
                 .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
         }
-    }
-}
-
-impl Ownable for Note {
-    fn stealth_address(&self) -> StealthAddress {
-        self.stealth_address
-    }
-
-    fn sync_address(&self) -> SyncAddress {
-        self.sync_address
-    }
-}
-
-impl Ownable for &Note {
-    fn stealth_address(&self) -> StealthAddress {
-        self.stealth_address
-    }
-
-    fn sync_address(&self) -> SyncAddress {
-        self.sync_address
     }
 }
 
