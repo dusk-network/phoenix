@@ -9,15 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `stealth_address` and `sync_address` functions directly to note
+- Add `stealth_address` and `sync_address` functions directly to note [#208]
 - Add a light sync method in the `ViewKey` [#199]
 - Add function `value_commitment` [#201]
 - Add function `transparent_value_commitment` [#201]
 
 ### Changed
 
-- Change `owns` and `owns_unchecked` to take `&Note`
-- Change `gen_note_sk` to take `&StealthAddress`
+- Change `owns` and `owns_unchecked` to take `&Note` [#208]
+- Change `gen_note_sk` to take `&StealthAddress` [#208]
 - Rename `crossover` to `deposit` [#190]
 - Turn the value-commitment an `JubJubAffine` point [#201]
 - Expose `NOTE_ENCRYPTION_SIZE` [#201]
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Remove `Ownable` trait
+- Remove `Ownable` trait [#208]
 - Remove `"getrandom"` feature from `aes-gcm` dependency [#195]
 
 ## [0.28.1] - 2024-05-23
@@ -338,6 +338,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#208]: https://github.com/dusk-network/phoenix/issues/208
 [#201]: https://github.com/dusk-network/phoenix/issues/201
 [#199]: https://github.com/dusk-network/phoenix/issues/199
 [#195]: https://github.com/dusk-network/phoenix/issues/195
