@@ -15,19 +15,24 @@ mod encryption;
 mod error;
 mod keys;
 mod note;
+mod recipient;
 
 #[cfg(feature = "alloc")]
 mod transaction;
 
+/// The number of output notes in a transaction
+pub const OUTPUT_NOTES: usize = 2;
+
 pub use addresses::stealth::StealthAddress;
 pub use addresses::sync::SyncAddress;
-pub use encryption::aes;
+pub use encryption::{aes, elgamal};
 pub use error::Error;
 pub use keys::hash;
 pub use keys::public::PublicKey;
 pub use keys::secret::SecretKey;
 pub use keys::view::ViewKey;
 pub use note::{Note, NoteType, ENCRYPTION_SIZE as NOTE_ENCRYPTION_SIZE};
+pub use recipient::RecipientParameters;
 
 #[cfg(feature = "alloc")]
 /// Transaction Skeleton used by the phoenix transaction model

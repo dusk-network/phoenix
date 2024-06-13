@@ -16,8 +16,5 @@ mod recipient;
 /// Transaction structs, and circuit
 pub mod transaction;
 
-/// Recipient Parameters
-pub use recipient::RecipientParameters;
-
 /// ElGamal asymmetric cipher
 pub use encryption::elgamal;

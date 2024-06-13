@@ -13,11 +13,10 @@ use dusk_plonk::prelude::*;
 use ff::Field;
 use poseidon_merkle::{Item, Tree};
 
-use phoenix_circuits::{
-    transaction::{TxCircuit, TxInputNote, TxOutputNote},
-    RecipientParameters,
+use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
+use phoenix_core::{
+    value_commitment, Note, PublicKey, RecipientParameters, SecretKey,
 };
-use phoenix_core::{value_commitment, Note, PublicKey, SecretKey};
 
 #[macro_use]
 extern crate lazy_static;
@@ -151,10 +150,6 @@ fn test_transfer_circuit_1_2() {
         TxOutputNote::new(value1, commitment1, blinder1),
         TxOutputNote::new(value2, commitment2, blinder2),
     ];
-    // let tx_output_notes = [
-    //     TxOutputNote::new(10, JubJubScalar::random(&mut rng)),
-    //     TxOutputNote::new(5, JubJubScalar::random(&mut rng)),
-    // ];
 
     let (proof, public_inputs) = prover
         .prove(

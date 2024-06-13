@@ -7,8 +7,8 @@
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_EXTENDED};
 use dusk_plonk::prelude::*;
 use ff::Field;
-use phoenix_circuits::elgamal;
-use phoenix_core::{PublicKey, SecretKey};
+use phoenix_circuits::elgamal::{decrypt_gadget, encrypt_gadget};
+use phoenix_core::{elgamal, PublicKey, SecretKey};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
@@ -77,19 +77,15 @@ impl Circuit for ElGamalCircuit {
 
         // ENCRYPT
         let (ciphertext_1, ciphertext_2) =
-            elgamal::encrypt_gadget(composer, public_key, plaintext, r)?;
+            encrypt_gadget(composer, public_key, plaintext, r)?;
 
         // ASSERT RESULT MAKING THE CIPHERTEXT PUBLIC
         composer.assert_equal_public_point(ciphertext_1, self.ciphertext_1);
         composer.assert_equal_public_point(ciphertext_2, self.ciphertext_2);
 
         // DECRYPT
-        let dec_plaintext = elgamal::decrypt_gadget(
-            composer,
-            secret_key,
-            ciphertext_1,
-            ciphertext_2,
-        );
+        let dec_plaintext =
+            decrypt_gadget(composer, secret_key, ciphertext_1, ciphertext_2);
 
         // ASSERT RESULTING PLAINTEXT
         composer.assert_equal_point(dec_plaintext, plaintext);

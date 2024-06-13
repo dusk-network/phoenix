@@ -19,9 +19,11 @@ use rand::{CryptoRng, RngCore, SeedableRng};
 extern crate alloc;
 use alloc::vec::Vec;
 
-use phoenix_core::{Error as PhoenixError, Note, SecretKey, ViewKey};
+use phoenix_core::{
+    Error as PhoenixError, Note, RecipientParameters, SecretKey, ViewKey,
+};
 
-use crate::{recipient, recipient::RecipientParameters};
+use crate::recipient;
 
 const TX_OUTPUT_NOTES: usize = 2;
 
