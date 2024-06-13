@@ -16,9 +16,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 
-use crate::Note;
-
-pub const OUTPUT_NOTES: usize = 2;
+use crate::{Note, OUTPUT_NOTES};
 
 /// A phoenix transaction, referred to as tx-skeleton in the specs.
 #[derive(Debug, Clone, PartialEq, Eq)]

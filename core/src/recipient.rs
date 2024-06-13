@@ -12,9 +12,7 @@ use ff::Field;
 use jubjub_schnorr::{SecretKey as SchnorrSecretKey, Signature};
 use rand::{CryptoRng, RngCore};
 
-use crate::{
-    encryption::elgamal, transaction::OUTPUT_NOTES, PublicKey, SecretKey,
-};
+use crate::{encryption::elgamal, PublicKey, SecretKey, OUTPUT_NOTES};
 
 /// Parameters needed to prove a recipient in-circuit
 #[derive(Debug, Clone, Copy)]

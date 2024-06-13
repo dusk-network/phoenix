@@ -20,6 +20,9 @@ mod recipient;
 #[cfg(feature = "alloc")]
 mod transaction;
 
+/// The number of output notes in a transaction
+pub const OUTPUT_NOTES: usize = 2;
+
 pub use addresses::stealth::StealthAddress;
 pub use addresses::sync::SyncAddress;
 pub use encryption::{aes, elgamal};
