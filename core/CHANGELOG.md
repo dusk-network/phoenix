@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Change `RecipientParams::enc_X` fields to contains `JubJubAffine` instead of `JubJubExtended`
 - Include `recipient_params` field in `TxSkeleton`
 - Move `OUTPUT_NOTES` to crate root
 - Change `owns` and `owns_unchecked` to take `&Note` [#208]
