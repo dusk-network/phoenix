@@ -16,10 +16,10 @@ use rkyv::{Archive, Deserialize, Serialize};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 
-use crate::{Note, OUTPUT_NOTES};
+use crate::{Note, RecipientParameters, OUTPUT_NOTES};
 
 /// A phoenix transaction, referred to as tx-skeleton in the specs.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -37,6 +37,8 @@ pub struct TxSkeleton {
     pub tx_max_fee: u64,
     /// A deposit is used to transferring funds to a contract
     pub deposit: u64,
+    /// Parameters needed to prove a recipient in-circuit
+    pub recipient_params: RecipientParameters,
 }
 
 impl TxSkeleton {
@@ -56,6 +58,7 @@ impl TxSkeleton {
 
         bytes.extend(self.tx_max_fee.to_bytes());
         bytes.extend(self.deposit.to_bytes());
+        bytes.extend(self.recipient_params.to_bytes());
 
         bytes
     }
@@ -80,6 +83,7 @@ impl TxSkeleton {
 
         bytes.extend(self.tx_max_fee.to_bytes());
         bytes.extend(self.deposit.to_bytes());
+        bytes.extend(self.recipient_params.to_bytes());
 
         bytes
     }
@@ -104,6 +108,7 @@ impl TxSkeleton {
 
         let tx_max_fee = u64::from_reader(&mut buffer)?;
         let deposit = u64::from_reader(&mut buffer)?;
+        let recipient_params = RecipientParameters::from_reader(&mut buffer)?;
 
         Ok(Self {
             root,
@@ -111,6 +116,7 @@ impl TxSkeleton {
             outputs,
             tx_max_fee,
             deposit,
+            recipient_params,
         })
     }
 

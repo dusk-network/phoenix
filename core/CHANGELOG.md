@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Implement `rkyv` traits for `RecipientParameters`
+- Implement `dusk_bytes::Serializable` for `RecipientParameters`
 - Add `RecipientParameters`
 - Add `elgamal::encrypt` and `elgamal::decrypt`
 - Add `stealth_address` and `sync_address` functions directly to note [#208]
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Include `recipient_params` field in `TxSkeleton`
 - Move `OUTPUT_NOTES` to crate root
 - Change `owns` and `owns_unchecked` to take `&Note` [#208]
 - Change `gen_note_sk` to take `&StealthAddress` [#208]

@@ -7,9 +7,11 @@
 #![cfg(feature = "alloc")]
 
 use dusk_bls12_381::BlsScalar;
-use dusk_jubjub::JubJubScalar;
+use dusk_jubjub::{JubJubScalar, GENERATOR};
 use ff::Field;
-use phoenix_core::{Error, Note, PublicKey, SecretKey, TxSkeleton};
+use phoenix_core::{
+    Error, Note, PublicKey, RecipientParameters, SecretKey, TxSkeleton,
+};
 use rand::rngs::OsRng;
 
 #[test]
@@ -29,12 +31,22 @@ fn transaction_parse() -> Result<(), Error> {
     let tx_max_fee = 0;
     let deposit = 0;
 
+    let output_npks = [
+        (GENERATOR * JubJubScalar::random(&mut rng)).into(),
+        (GENERATOR * JubJubScalar::random(&mut rng)).into(),
+    ];
+    let hash = BlsScalar::random(&mut rng);
+
+    let recipient_params =
+        RecipientParameters::new(&mut rng, &sk, output_npks, hash);
+
     let tx_skeleton = TxSkeleton {
         root,
         nullifiers,
         outputs,
         tx_max_fee,
         deposit,
+        recipient_params,
     };
     let bytes_of_transaction = tx_skeleton.to_var_bytes();
     assert_eq!(
