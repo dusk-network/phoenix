@@ -8,7 +8,7 @@
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
+use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::{SecretKey as SchnorrSecretKey, Signature};
 use rand::{CryptoRng, RngCore};
@@ -33,9 +33,9 @@ pub struct RecipientParameters {
     /// Signatures of 'payload_hash' verifiable using 'pk_A' and 'pk_B'
     pub sig: [Signature; OUTPUT_NOTES],
     /// Asymmetric encryption of 'pk_A' using both recipients 'npk'
-    pub enc_A: [(JubJubExtended, JubJubExtended); OUTPUT_NOTES],
+    pub enc_A: [(JubJubAffine, JubJubAffine); OUTPUT_NOTES],
     /// Asymmetric encryption of 'pk_B' using both recipients 'npk'
-    pub enc_B: [(JubJubExtended, JubJubExtended); OUTPUT_NOTES],
+    pub enc_B: [(JubJubAffine, JubJubAffine); OUTPUT_NOTES],
     /// Randomness needed to encrypt/decrypt 'pk_A'
     pub r_A: [JubJubScalar; OUTPUT_NOTES],
     /// Randomness needed to encrypt/decrypt 'pk_B'
@@ -52,9 +52,9 @@ impl Default for RecipientParameters {
             sender_pk,
             output_npk: [JubJubAffine::default(), JubJubAffine::default()],
             sig: [Signature::default(), Signature::default()],
-            enc_A: [(JubJubExtended::default(), JubJubExtended::default());
+            enc_A: [(JubJubAffine::default(), JubJubAffine::default());
                 OUTPUT_NOTES],
-            enc_B: [(JubJubExtended::default(), JubJubExtended::default());
+            enc_B: [(JubJubAffine::default(), JubJubAffine::default());
                 OUTPUT_NOTES],
             r_A: [JubJubScalar::default(); OUTPUT_NOTES],
             r_B: [JubJubScalar::default(); OUTPUT_NOTES],
@@ -107,14 +107,8 @@ impl Serializable<PARAMS_SIZE> for RecipientParameters {
             sender_pk,
             output_npk: [output_npk_0, output_npk_1],
             sig: [sig_0, sig_1],
-            enc_A: [
-                (enc_A_0_0.into(), enc_A_1_0.into()),
-                (enc_A_0_1.into(), enc_A_1_1.into()),
-            ],
-            enc_B: [
-                (enc_B_0_0.into(), enc_B_1_0.into()),
-                (enc_B_0_1.into(), enc_B_1_1.into()),
-            ],
+            enc_A: [(enc_A_0_0, enc_A_1_0), (enc_A_0_1, enc_A_1_1)],
+            enc_B: [(enc_B_0_0, enc_B_1_0), (enc_B_0_1, enc_B_1_1)],
             r_A: [r_A_0, r_A_1],
             r_B: [r_B_0, r_B_1],
         })
@@ -131,25 +125,15 @@ impl Serializable<PARAMS_SIZE> for RecipientParameters {
         bytes[128..192].copy_from_slice(&self.sig[0].to_bytes());
         bytes[192..256].copy_from_slice(&self.sig[1].to_bytes());
 
-        let enc_A_0_0 = JubJubAffine::from(self.enc_A[0].0);
-        let enc_A_1_0 = JubJubAffine::from(self.enc_A[0].1);
-        let enc_A_0_1 = JubJubAffine::from(self.enc_A[1].0);
-        let enc_A_1_1 = JubJubAffine::from(self.enc_A[1].1);
+        bytes[256..288].copy_from_slice(&self.enc_A[0].0.to_bytes());
+        bytes[288..320].copy_from_slice(&self.enc_A[0].1.to_bytes());
+        bytes[320..352].copy_from_slice(&self.enc_A[1].0.to_bytes());
+        bytes[352..384].copy_from_slice(&self.enc_A[1].1.to_bytes());
 
-        bytes[256..288].copy_from_slice(&enc_A_0_0.to_bytes());
-        bytes[288..320].copy_from_slice(&enc_A_1_0.to_bytes());
-        bytes[320..352].copy_from_slice(&enc_A_0_1.to_bytes());
-        bytes[352..384].copy_from_slice(&enc_A_1_1.to_bytes());
-
-        let enc_B_0_0 = JubJubAffine::from(self.enc_B[0].0);
-        let enc_B_1_0 = JubJubAffine::from(self.enc_B[0].1);
-        let enc_B_0_1 = JubJubAffine::from(self.enc_B[1].0);
-        let enc_B_1_1 = JubJubAffine::from(self.enc_B[1].1);
-
-        bytes[384..416].copy_from_slice(&enc_B_0_0.to_bytes());
-        bytes[416..448].copy_from_slice(&enc_B_1_0.to_bytes());
-        bytes[448..480].copy_from_slice(&enc_B_0_1.to_bytes());
-        bytes[480..512].copy_from_slice(&enc_B_1_1.to_bytes());
+        bytes[384..416].copy_from_slice(&self.enc_B[0].0.to_bytes());
+        bytes[416..448].copy_from_slice(&self.enc_B[0].1.to_bytes());
+        bytes[448..480].copy_from_slice(&self.enc_B[1].0.to_bytes());
+        bytes[480..512].copy_from_slice(&self.enc_B[1].1.to_bytes());
 
         bytes[512..544].copy_from_slice(&self.r_A[0].to_bytes());
         bytes[544..576].copy_from_slice(&self.r_A[1].to_bytes());
@@ -205,8 +189,14 @@ impl RecipientParameters {
             &r_B[1],
         );
 
-        let enc_A = [(A_enc_1_c1, A_enc_1_c2), (A_enc_2_c1, A_enc_2_c2)];
-        let enc_B = [(B_enc_1_c1, B_enc_1_c2), (B_enc_2_c1, B_enc_2_c2)];
+        let enc_A = [
+            (A_enc_1_c1.into(), A_enc_1_c2.into()),
+            (A_enc_2_c1.into(), A_enc_2_c2.into()),
+        ];
+        let enc_B = [
+            (B_enc_1_c1.into(), B_enc_1_c2.into()),
+            (B_enc_2_c1.into(), B_enc_2_c2.into()),
+        ];
 
         // Sign the payload hash using both 'a' and 'b'
         let schnorr_sk_a = SchnorrSecretKey::from(sender_sk.a());
