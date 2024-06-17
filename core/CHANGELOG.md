@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a light sync method in the `ViewKey` [#199]
 - Add function `value_commitment` [#201]
 - Add function `transparent_value_commitment` [#201]
+- Add `owns()` and `owns_unchecked()` to `Secretkey` [#146]
 
 ### Changed
 
@@ -345,6 +346,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#146]: https://github.com/dusk-network/phoenix/issues/146
 [#208]: https://github.com/dusk-network/phoenix/issues/208
 [#201]: https://github.com/dusk-network/phoenix/issues/201
 [#199]: https://github.com/dusk-network/phoenix/issues/199

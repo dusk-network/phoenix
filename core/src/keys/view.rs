@@ -67,9 +67,9 @@ impl ViewKey {
         let sa = note.stealth_address();
 
         let aR = sa.R() * self.a();
-        let aR = hash(&aR);
-        let aR = GENERATOR_EXTENDED * aR;
-        let note_pk = aR + self.B();
+        let hash_aR = hash(&aR);
+        let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
+        let note_pk = hash_aR_G + self.B();
 
         sa.note_pk().as_ref() == &note_pk
     }
