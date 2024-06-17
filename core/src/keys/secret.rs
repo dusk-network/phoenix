@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, StealthAddress};
+use crate::{keys::hash, Note, StealthAddress};
 
-use dusk_jubjub::JubJubScalar;
+use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
 use zeroize::Zeroize;
@@ -85,6 +85,27 @@ impl SecretKey {
         let aR = sa.R() * self.a;
 
         NoteSecretKey::from(hash(&aR) + self.b)
+    }
+
+    /// Checks if `note_pk ?= (H(R · a) + b) · G`
+    pub fn owns(&self, note: &Note) -> bool {
+        let sa = note.stealth_address();
+
+        let aR = sa.R() * self.a();
+        let hash_aR = hash(&aR);
+        let note_sk = hash_aR + self.b();
+
+        let note_pk = GENERATOR_EXTENDED * note_sk;
+
+        sa.note_pk().as_ref() == &note_pk
+    }
+
+    /// Checks if `k_sync ?= R_sync · a`
+    pub fn owns_unchecked(&self, note: &Note) -> bool {
+        let sa = note.sync_address();
+        let aR = sa.R() * self.a();
+
+        sa.k() == &aR
     }
 }
 
