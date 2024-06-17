@@ -10,10 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add Recipient gadget [#197]
-- Add `RecipientParameter::new` constructor [#201]
 
 ### Changed
 
+- Rename `recipient` module to `sender_enc` [#214]
+- Rename `blinding_factor` to `value_blinder` [#214]
+- Add `sender_enc` field to `TxOutputNote` [#214]
+- Add `note_pk` field to `TxOutputNote` [#214]
+- Add `sender_pk`, `signatures`, `output_npk` and `sender_blinder` fields to `TxCircuit` [#214]
 - Remove `ViewKey` from `TxOutputNote::new()` parameters [#191]
 - Make `rng` the first param in `TxInputNote::new` [#189]
 - Rename `crossover` to `deposit` [#190]
@@ -23,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Remove `RecipientParameters`
+- Remove `WitnessTxOutputNote` struct [#214]
+- Remove `RecipientParameters` struct [#214]
 - Remove `elgamal::encrypt` and `elgamal::decrypt`
 
 ## [0.1.0] - 2024-05-22
@@ -42,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#214]: https://github.com/dusk-network/phoenix/issues/214
 [#201]: https://github.com/dusk-network/phoenix/issues/201
 [#197]: https://github.com/dusk-network/phoenix/issues/197
 [#188]: https://github.com/dusk-network/phoenix/issues/188

@@ -11,7 +11,7 @@
 #![no_std]
 
 mod encryption;
-mod recipient;
+mod sender_enc;
 
 /// Transaction structs, and circuit
 pub mod transaction;
