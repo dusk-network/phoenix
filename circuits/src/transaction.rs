@@ -10,7 +10,7 @@ use dusk_jubjub::{
 };
 use dusk_plonk::prelude::*;
 use dusk_poseidon::{Domain, Hash, HashGadget};
-use jubjub_schnorr::{gadgets, SignatureDouble};
+use jubjub_schnorr::{gadgets, Signature as SchnorrSignature, SignatureDouble};
 use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
 
 use rand::rngs::StdRng;
@@ -20,12 +20,10 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 use phoenix_core::{
-    Error as PhoenixError, Note, RecipientParameters, SecretKey, ViewKey,
+    Error as PhoenixError, Note, PublicKey, SecretKey, ViewKey, OUTPUT_NOTES,
 };
 
-use crate::recipient;
-
-const TX_OUTPUT_NOTES: usize = 2;
+use crate::sender_enc;
 
 /// Struct representing a note willing to be spent, in a way
 /// suitable for being introduced in the transfer circuit
@@ -35,7 +33,7 @@ pub struct TxInputNote<const H: usize> {
     pub(crate) note: Note,
     pub(crate) note_pk_p: JubJubAffine,
     pub(crate) value: u64,
-    pub(crate) blinding_factor: JubJubScalar,
+    pub(crate) value_blinder: JubJubScalar,
     pub(crate) nullifier: BlsScalar,
     pub(crate) signature: SignatureDouble,
 }
@@ -47,7 +45,7 @@ struct WitnessTxInputNote {
     note_type: Witness,
     pos: Witness,
     value: Witness,
-    blinding_factor: Witness,
+    value_blinder: Witness,
     nullifier: Witness,
     signature_u: Witness,
     signature_r: WitnessPoint,
@@ -69,7 +67,7 @@ impl<const H: usize> TxInputNote<H> {
 
         let vk = ViewKey::from(sk);
         let value = note.value(Some(&vk))?;
-        let blinding_factor = note.blinding_factor(Some(&vk))?;
+        let value_blinder = note.value_blinder(Some(&vk))?;
 
         let nullifier = Hash::digest(
             Domain::Other,
@@ -83,7 +81,7 @@ impl<const H: usize> TxInputNote<H> {
             note: note.clone(),
             note_pk_p,
             value,
-            blinding_factor,
+            value_blinder,
             nullifier,
             signature,
         })
@@ -101,7 +99,7 @@ impl<const H: usize> TxInputNote<H> {
         let pos = composer.append_witness(BlsScalar::from(*self.note.pos()));
 
         let value = composer.append_witness(self.value);
-        let blinding_factor = composer.append_witness(self.blinding_factor);
+        let value_blinder = composer.append_witness(self.value_blinder);
 
         let signature_u = composer.append_witness(*self.signature.u());
         let signature_r = composer.append_point(self.signature.R());
@@ -114,7 +112,7 @@ impl<const H: usize> TxInputNote<H> {
             note_type,
             pos,
             value,
-            blinding_factor,
+            value_blinder,
 
             nullifier,
 
@@ -131,14 +129,9 @@ impl<const H: usize> TxInputNote<H> {
 pub struct TxOutputNote {
     value: u64,
     value_commitment: JubJubAffine,
-    blinding_factor: JubJubScalar,
-}
-
-#[derive(Debug, Clone)]
-struct WitnessTxOutputNote {
-    value: Witness,
-    value_commitment: WitnessPoint,
-    blinding_factor: Witness,
+    value_blinder: JubJubScalar,
+    note_pk: JubJubAffine,
+    sender_enc: [(JubJubAffine, JubJubAffine); 2],
 }
 
 impl TxOutputNote {
@@ -146,34 +139,22 @@ impl TxOutputNote {
     pub fn new(
         value: u64,
         value_commitment: JubJubAffine,
-        blinding_factor: JubJubScalar,
+        value_blinder: JubJubScalar,
+        note_pk: JubJubAffine,
+        sender_enc: [(JubJubAffine, JubJubAffine); 2],
     ) -> Self {
         Self {
             value,
             value_commitment,
-            blinding_factor,
-        }
-    }
-
-    fn append_to_circuit(
-        &self,
-        composer: &mut Composer,
-    ) -> WitnessTxOutputNote {
-        let value = composer.append_witness(self.value);
-        let value_commitment =
-            composer.append_public_point(self.value_commitment);
-        let blinding_factor = composer.append_witness(self.blinding_factor);
-
-        WitnessTxOutputNote {
-            value,
-            value_commitment,
-            blinding_factor,
+            value_blinder,
+            note_pk,
+            sender_enc,
         }
     }
 }
 
 /// Transaction gadget proving the following properties in ZK for a generic
-/// `I` [`TxInputNote`] and [`TX_OUTPUT_NOTES`] (2) [`TxOutputNote`]:
+/// `I` [`TxInputNote`] and [`OUTPUT_NOTES`] (2) [`TxOutputNote`]:
 ///
 /// 1. Membership: every [`TxInputNote`] is included in the Merkle tree of
 ///    notes.
@@ -197,7 +178,7 @@ fn nullify_gadget<const H: usize, const I: usize>(
     payload_hash: &Witness,
     root: &BlsScalar,
     tx_input_notes: &[TxInputNote<H>; I],
-    tx_output_notes: &[TxOutputNote; TX_OUTPUT_NOTES],
+    tx_output_notes: &[TxOutputNote; OUTPUT_NOTES],
     max_fee: u64,
     deposit: u64,
 ) -> Result<(), Error> {
@@ -248,7 +229,7 @@ fn nullify_gadget<const H: usize, const I: usize>(
         let pc_1 = composer
             .component_mul_generator(w_tx_input_note.value, GENERATOR)?;
         let pc_2 = composer.component_mul_generator(
-            w_tx_input_note.blinding_factor,
+            w_tx_input_note.value_blinder,
             GENERATOR_NUMS,
         )?;
         let value_commitment = composer.component_add_point(pc_1, pc_2);
@@ -278,31 +259,30 @@ fn nullify_gadget<const H: usize, const I: usize>(
     // COMMIT TO ALL TX OUTPUT NOTES
     for tx_output_note in tx_output_notes {
         // APPEND THE WITNESSES TO THE CIRCUIT
-        let w_tx_output_note = tx_output_note.append_to_circuit(composer);
+        let value = composer.append_witness(tx_output_note.value);
+        let expected_value_commitment =
+            composer.append_public_point(tx_output_note.value_commitment);
+        let value_blinder =
+            composer.append_witness(tx_output_note.value_blinder);
 
         // PERFORM A RANGE CHECK ([0, 2^64 - 1]) ON THE VALUE OF THE NOTE
-        composer.component_range::<32>(w_tx_output_note.value);
+        composer.component_range::<32>(value);
 
         // SUM UP ALL THE TX OUTPUT NOTE VALUES
-        let constraint = Constraint::new()
-            .left(1)
-            .a(tx_output_sum)
-            .right(1)
-            .b(w_tx_output_note.value);
+        let constraint =
+            Constraint::new().left(1).a(tx_output_sum).right(1).b(value);
         tx_output_sum = composer.gate_add(constraint);
 
         // COMMIT TO THE VALUE OF THE NOTE
-        let pc_1 = composer
-            .component_mul_generator(w_tx_output_note.value, GENERATOR)?;
-        let pc_2 = composer.component_mul_generator(
-            w_tx_output_note.blinding_factor,
-            GENERATOR_NUMS,
-        )?;
-        let value_commitment = composer.component_add_point(pc_1, pc_2);
+        let pc_1 = composer.component_mul_generator(value, GENERATOR)?;
+        let pc_2 =
+            composer.component_mul_generator(value_blinder, GENERATOR_NUMS)?;
+        let computed_value_commitment =
+            composer.component_add_point(pc_1, pc_2);
 
         composer.assert_equal_point(
-            w_tx_output_note.value_commitment,
-            value_commitment,
+            expected_value_commitment,
+            computed_value_commitment,
         );
     }
 
@@ -329,12 +309,14 @@ fn nullify_gadget<const H: usize, const I: usize>(
 #[derive(Debug)]
 pub struct TxCircuit<const H: usize, const I: usize> {
     tx_input_notes: [TxInputNote<H>; I],
-    tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
+    tx_output_notes: [TxOutputNote; OUTPUT_NOTES],
     payload_hash: BlsScalar,
     root: BlsScalar,
     deposit: u64,
     max_fee: u64,
-    rp: RecipientParameters,
+    sender_pk: PublicKey,
+    signatures: (SchnorrSignature, SchnorrSignature),
+    sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
 }
 
 impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
@@ -370,7 +352,9 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let tx_output_note_1 = TxOutputNote {
             value: 0,
             value_commitment: JubJubAffine::default(),
-            blinding_factor: JubJubScalar::default(),
+            value_blinder: JubJubScalar::default(),
+            note_pk: JubJubAffine::default(),
+            sender_enc: [(JubJubAffine::default(), JubJubAffine::default()); 2],
         };
         let tx_output_note_2 = tx_output_note_1.clone();
 
@@ -380,7 +364,10 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let deposit = u64::default();
         let max_fee = u64::default();
 
-        let rp = RecipientParameters::default();
+        let signatures =
+            (SchnorrSignature::default(), SchnorrSignature::default());
+        let sender_blinder =
+            [(JubJubScalar::default(), JubJubScalar::default()); OUTPUT_NOTES];
 
         Self {
             tx_input_notes: tx_input_notes.try_into().unwrap(),
@@ -389,7 +376,9 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
             root,
             deposit,
             max_fee,
-            rp,
+            sender_pk: PublicKey::from(&sk),
+            signatures,
+            sender_blinder,
         }
     }
 }
@@ -398,12 +387,14 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
     /// Create a new transfer circuit
     pub fn new(
         tx_input_notes: [TxInputNote<H>; I],
-        tx_output_notes: [TxOutputNote; TX_OUTPUT_NOTES],
+        tx_output_notes: [TxOutputNote; OUTPUT_NOTES],
         payload_hash: BlsScalar,
         root: BlsScalar,
         deposit: u64,
         max_fee: u64,
-        rp: RecipientParameters,
+        sender_pk: PublicKey,
+        signatures: (SchnorrSignature, SchnorrSignature),
+        sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
     ) -> Self {
         Self {
             tx_input_notes,
@@ -412,7 +403,9 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
             root,
             deposit,
             max_fee,
-            rp,
+            sender_pk,
+            signatures,
+            sender_blinder,
         }
     }
 }
@@ -425,9 +418,9 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     /// - `[output_value_commitment; 2]`
     /// - `max_fee`
     /// - `deposit`
-    /// - `(npk_1, npk_2)`
-    /// - `(enc_A_npk_1, enc_A_npk_2)`
-    /// - `(enc_B_npk_1, enc_B_npk_2)`
+    /// - `(npk_0, npk_1)`
+    /// - `(enc_A_npk_0, enc_B_npk_0)`
+    /// - `(enc_A_npk_1, enc_B_npk_1)`
     fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
         // Make the payload hash a public input of the circuit
         let payload_hash = composer.append_public(self.payload_hash);
@@ -444,7 +437,19 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         )?;
 
         // Prove correctness of the sender keys encryption
-        recipient::gadget(composer, &self.rp, payload_hash)?;
+        sender_enc::gadget(
+            composer,
+            self.sender_pk,
+            self.signatures,
+            [
+                self.tx_output_notes[0].note_pk,
+                self.tx_output_notes[1].note_pk,
+            ],
+            self.sender_blinder,
+            self.tx_output_notes[0].sender_enc,
+            self.tx_output_notes[1].sender_enc,
+            payload_hash,
+        )?;
 
         Ok(())
     }

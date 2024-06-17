@@ -12,28 +12,6 @@ use phoenix_core::{elgamal, PublicKey, SecretKey};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
-#[test]
-fn test_elgamal_encrypt_and_decrypt() {
-    let mut rng = StdRng::seed_from_u64(0xc0b);
-
-    let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(&sk);
-
-    let message = GENERATOR_EXTENDED * JubJubScalar::from(1234u64);
-
-    // Encrypt using a fresh random value 'r'
-    let r = JubJubScalar::random(&mut rng);
-    let (c1, c2) = elgamal::encrypt(pk.A(), &message, &r);
-
-    // Assert decryption
-    let dec_message = elgamal::decrypt(sk.a(), &c1, &c2);
-    assert_eq!(message, dec_message);
-
-    // Assert decryption using an incorrect key
-    let dec_message_wrong = elgamal::decrypt(sk.b(), &c1, &c2);
-    assert_ne!(message, dec_message_wrong);
-}
-
 static LABEL: &[u8; 12] = b"dusk-network";
 const CAPACITY: usize = 13; // capacity required for the setup
 
@@ -113,7 +91,14 @@ fn test_elgamal_gadgets() {
     let (proof, public_inputs) = prover
         .prove(
             &mut rng,
-            &ElGamalCircuit::new(&pk.A(), &sk.a(), &message, &r, &c1, &c2),
+            &ElGamalCircuit::new(
+                &pk.A(),
+                &sk.a(),
+                &message,
+                &r,
+                &c1.into(),
+                &c2.into(),
+            ),
         )
         .expect("failed to prove");
 
