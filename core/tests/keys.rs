@@ -66,7 +66,11 @@ fn keys_consistency() {
     let pk = PublicKey::from(&sk);
     let vk = ViewKey::from(&sk);
 
-    let note = Note::transparent(&mut rng, &pk, NOTE_VALUE);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let note = Note::transparent(&mut rng, &pk, NOTE_VALUE, sender_blinder);
 
     assert!(vk.owns(&note));
     assert!(vk.owns_unchecked(&note));

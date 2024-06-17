@@ -7,8 +7,8 @@
 use core::convert::{TryFrom, TryInto};
 
 use crate::{
-    transparent_value_commitment, value_commitment, Error, PublicKey,
-    SecretKey, StealthAddress, SyncAddress, ViewKey,
+    encryption::elgamal, transparent_value_commitment, value_commitment, Error,
+    PublicKey, SecretKey, StealthAddress, SyncAddress, ViewKey,
 };
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
@@ -29,8 +29,8 @@ pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 /// Size of the Phoenix notes plaintext: value (8 bytes) + blinder (32 bytes)
 pub(crate) const PLAINTEXT_SIZE: usize = 40;
 
-/// Size of the Phoenix notes encryption
-pub const ENCRYPTION_SIZE: usize = PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
+/// Size of the Phoenix notes value_enc
+pub const VALUE_ENC_SIZE: usize = PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -79,7 +79,9 @@ pub struct Note {
     pub(crate) stealth_address: StealthAddress,
     pub(crate) sync_address: SyncAddress,
     pub(crate) pos: u64,
-    pub(crate) encryption: [u8; ENCRYPTION_SIZE],
+    pub(crate) value_enc: [u8; VALUE_ENC_SIZE],
+    // the elgamal encryption of the sender_pk encrypted using the output_npk
+    pub(crate) sender_enc: [(JubJubAffine, JubJubAffine); 2],
 }
 
 impl PartialEq for Note {
@@ -97,7 +99,8 @@ impl Note {
         note_type: NoteType,
         pk: &PublicKey,
         value: u64,
-        blinding_factor: JubJubScalar,
+        value_blinder: JubJubScalar,
+        sender_blinder: [JubJubScalar; 2],
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
         let stealth_address = pk.gen_stealth_address(&r);
@@ -105,29 +108,45 @@ impl Note {
         let r_sync = JubJubScalar::random(&mut *rng);
         let sync_address = pk.gen_sync_address(&r_sync);
 
-        let value_commitment = value_commitment(value, blinding_factor);
+        let value_commitment = value_commitment(value, value_blinder);
 
         // Output notes have undefined position, equals to u64's MAX value
         let pos = u64::MAX;
 
-        let encryption = match note_type {
+        let value_enc = match note_type {
             NoteType::Transparent => {
-                let mut encryption = [0u8; ENCRYPTION_SIZE];
-                encryption[..u64::SIZE].copy_from_slice(&value.to_bytes());
+                let mut value_enc = [0u8; VALUE_ENC_SIZE];
+                value_enc[..u64::SIZE].copy_from_slice(&value.to_bytes());
 
-                encryption
+                value_enc
             }
             NoteType::Obfuscated => {
                 let shared_secret = dhke(&r, pk.A());
-                let blinding_factor = BlsScalar::from(blinding_factor);
+                let value_blinder = BlsScalar::from(value_blinder);
 
                 let mut plaintext = value.to_bytes().to_vec();
-                plaintext.append(&mut blinding_factor.to_bytes().to_vec());
+                plaintext.append(&mut value_blinder.to_bytes().to_vec());
 
                 aes::encrypt(&shared_secret, &plaintext, rng)
                     .expect("Encrypted correctly.")
             }
         };
+
+        let sender_enc_A = elgamal::encrypt(
+            pk.A(),
+            stealth_address.note_pk.as_ref(),
+            &sender_blinder[0],
+        );
+
+        let sender_enc_B = elgamal::encrypt(
+            pk.B(),
+            stealth_address.note_pk.as_ref(),
+            &sender_blinder[1],
+        );
+        let sender_enc_A: (JubJubAffine, JubJubAffine) =
+            (sender_enc_A.0.into(), sender_enc_A.1.into());
+        let sender_enc_B: (JubJubAffine, JubJubAffine) =
+            (sender_enc_B.0.into(), sender_enc_B.1.into());
 
         Note {
             note_type,
@@ -135,7 +154,8 @@ impl Note {
             stealth_address,
             sync_address,
             pos,
-            encryption,
+            value_enc,
+            sender_enc: [sender_enc_A, sender_enc_B],
         }
     }
 
@@ -148,8 +168,16 @@ impl Note {
         rng: &mut R,
         pk: &PublicKey,
         value: u64,
+        sender_blinder: [JubJubScalar; 2],
     ) -> Self {
-        Self::new(rng, NoteType::Transparent, pk, value, TRANSPARENT_BLINDER)
+        Self::new(
+            rng,
+            NoteType::Transparent,
+            pk,
+            value,
+            TRANSPARENT_BLINDER,
+            sender_blinder,
+        )
     }
 
     /// Creates a new transparent note
@@ -161,13 +189,14 @@ impl Note {
         stealth_address: StealthAddress,
         sync_address: SyncAddress,
         value: u64,
+        sender_enc: [(JubJubAffine, JubJubAffine); 2],
     ) -> Self {
         let value_commitment = transparent_value_commitment(value);
 
         let pos = u64::MAX;
 
-        let mut encryption = [0u8; ENCRYPTION_SIZE];
-        encryption[..u64::SIZE].copy_from_slice(&value.to_bytes());
+        let mut value_enc = [0u8; VALUE_ENC_SIZE];
+        value_enc[..u64::SIZE].copy_from_slice(&value.to_bytes());
 
         Note {
             note_type: NoteType::Transparent,
@@ -175,23 +204,32 @@ impl Note {
             stealth_address,
             sync_address,
             pos,
-            encryption,
+            value_enc,
+            sender_enc,
         }
     }
 
     /// Creates a new obfuscated note
     ///
     /// The provided blinding factor will be used to calculate the value
-    /// commitment of the note. The tuple (value, blinding_factor), known by
+    /// commitment of the note. The tuple (value, value_blinder), known by
     /// the caller of this function, must be later used to prove the
     /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
         pk: &PublicKey,
         value: u64,
-        blinding_factor: JubJubScalar,
+        value_blinder: JubJubScalar,
+        sender_blinder: [JubJubScalar; 2],
     ) -> Self {
-        Self::new(rng, NoteType::Obfuscated, pk, value, blinding_factor)
+        Self::new(
+            rng,
+            NoteType::Obfuscated,
+            pk,
+            value,
+            value_blinder,
+            sender_blinder,
+        )
     }
 
     /// Creates a new empty [`Note`]
@@ -202,7 +240,8 @@ impl Note {
             stealth_address: StealthAddress::default(),
             sync_address: SyncAddress::default(),
             pos: 0,
-            encryption: [0; ENCRYPTION_SIZE],
+            value_enc: [0; VALUE_ENC_SIZE],
+            sender_enc: [(JubJubAffine::default(), JubJubAffine::default()); 2],
         }
     }
 
@@ -214,21 +253,21 @@ impl Note {
         let shared_secret = dhke(vk.a(), R);
 
         let dec_plaintext: [u8; PLAINTEXT_SIZE] =
-            aes::decrypt(&shared_secret, &self.encryption)?;
+            aes::decrypt(&shared_secret, &self.value_enc)?;
 
         let value = u64::from_slice(&dec_plaintext[..u64::SIZE])?;
 
         // Converts the BLS Scalar into a JubJub Scalar.
         // If the `vk` is wrong it might fails since the resulting BLS Scalar
         // might not fit into a JubJub Scalar.
-        let blinding_factor =
+        let value_blinder =
             match JubJubScalar::from_slice(&dec_plaintext[u64::SIZE..])?.into()
             {
                 Some(scalar) => scalar,
                 None => return Err(BytesError::InvalidData),
             };
 
-        Ok((value, blinding_factor))
+        Ok((value, value_blinder))
     }
 
     /// Create a unique nullifier for the note
@@ -291,14 +330,14 @@ impl Note {
         self.pos = pos;
     }
 
-    /// Return the value commitment `H(value, blinding_factor)`
+    /// Return the value commitment `H(value, value_blinder)`
     pub const fn value_commitment(&self) -> &JubJubAffine {
         &self.value_commitment
     }
 
     /// Returns the cipher of the encrypted data
-    pub const fn encryption(&self) -> &[u8; ENCRYPTION_SIZE] {
-        &self.encryption
+    pub const fn value_enc(&self) -> &[u8; VALUE_ENC_SIZE] {
+        &self.value_enc
     }
 
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
@@ -308,7 +347,7 @@ impl Note {
         match (self.note_type, vk) {
             (NoteType::Transparent, _) => {
                 let value =
-                    u64::from_slice(&self.encryption[..u64::SIZE]).unwrap();
+                    u64::from_slice(&self.value_enc[..u64::SIZE]).unwrap();
                 Ok(value)
             }
             (NoteType::Obfuscated, Some(vk)) => self
@@ -322,7 +361,7 @@ impl Note {
     /// Decrypt the blinding factor with the provided [`ViewKey`]
     ///
     /// If the decrypt fails, a random value is returned
-    pub fn blinding_factor(
+    pub fn value_blinder(
         &self,
         vk: Option<&ViewKey>,
     ) -> Result<JubJubScalar, Error> {
@@ -330,17 +369,22 @@ impl Note {
             (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_data(vk)
-                .map(|(_, blinding_factor)| blinding_factor)
+                .map(|(_, value_blinder)| value_blinder)
                 .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
         }
     }
 }
 
-// Serialize into 169 + ENCRYPTION_SIZE bytes, where 169 is the size of all the
-// note elements without the encryption. ENCRYPTION_SIZE = PLAINTEXT_SIZE +
-// ENCRYPTION_EXTRA_SIZE
-impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
+const SIZE: usize = 1
+    + JubJubAffine::SIZE
+    + StealthAddress::SIZE
+    + SyncAddress::SIZE
+    + u64::SIZE
+    + VALUE_ENC_SIZE
+    + 4 * JubJubAffine::SIZE;
+
+impl Serializable<SIZE> for Note {
     type Error = BytesError;
 
     /// Converts a Note into a byte representation
@@ -349,31 +393,56 @@ impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
 
         buf[0] = self.note_type as u8;
 
-        buf[1..33].copy_from_slice(&self.value_commitment.to_bytes());
-        buf[33..97].copy_from_slice(&self.stealth_address.to_bytes());
-        buf[97..161].copy_from_slice(&self.sync_address.to_bytes());
-        buf[161..169].copy_from_slice(&self.pos.to_le_bytes());
-        buf[169..].copy_from_slice(&self.encryption);
+        let mut start = 1;
+        buf[start..start + JubJubAffine::SIZE]
+            .copy_from_slice(&self.value_commitment.to_bytes());
+        start += JubJubAffine::SIZE;
+        buf[start..start + StealthAddress::SIZE]
+            .copy_from_slice(&self.stealth_address.to_bytes());
+        start += StealthAddress::SIZE;
+        buf[start..start + SyncAddress::SIZE]
+            .copy_from_slice(&self.sync_address.to_bytes());
+        start += SyncAddress::SIZE;
+        buf[start..start + u64::SIZE].copy_from_slice(&self.pos.to_le_bytes());
+        start += u64::SIZE;
+        buf[start..start + VALUE_ENC_SIZE].copy_from_slice(&self.value_enc);
+        start += VALUE_ENC_SIZE;
+        buf[start..start + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[0].0.to_bytes());
+        start += JubJubAffine::SIZE;
+        buf[start..start + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[0].1.to_bytes());
+        start += JubJubAffine::SIZE;
+        buf[start..start + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[1].0.to_bytes());
+        start += JubJubAffine::SIZE;
+        buf[start..start + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[1].1.to_bytes());
+
         buf
     }
 
     /// Attempts to convert a byte representation of a note into a `Note`,
     /// failing if the input is invalid
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
-        let mut one_u64 = [0u8; 8];
-
         let note_type =
             bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
-        let value_commitment = JubJubAffine::from_slice(&bytes[1..33])?;
-        let stealth_address = StealthAddress::from_slice(&bytes[33..97])?;
 
-        let sync_address = SyncAddress::from_slice(&bytes[97..161])?;
+        let mut buf = &bytes[1..];
+        let value_commitment = JubJubAffine::from_reader(&mut buf)?;
+        let stealth_address = StealthAddress::from_reader(&mut buf)?;
+        let sync_address = SyncAddress::from_reader(&mut buf)?;
+        let pos = u64::from_reader(&mut buf)?;
 
-        one_u64.copy_from_slice(&bytes[161..169]);
-        let pos = u64::from_le_bytes(one_u64);
+        let mut value_enc = [0u8; VALUE_ENC_SIZE];
+        value_enc.copy_from_slice(&buf[..VALUE_ENC_SIZE]);
 
-        let mut encryption = [0u8; ENCRYPTION_SIZE];
-        encryption.copy_from_slice(&bytes[169..]);
+        buf = &buf[VALUE_ENC_SIZE..];
+
+        let sender_enc_A_0 = JubJubAffine::from_reader(&mut buf)?;
+        let sender_enc_A_1 = JubJubAffine::from_reader(&mut buf)?;
+        let sender_enc_B_0 = JubJubAffine::from_reader(&mut buf)?;
+        let sender_enc_B_1 = JubJubAffine::from_reader(&mut buf)?;
 
         Ok(Note {
             note_type,
@@ -381,7 +450,11 @@ impl Serializable<{ 169 + ENCRYPTION_SIZE }> for Note {
             stealth_address,
             sync_address,
             pos,
-            encryption,
+            value_enc,
+            sender_enc: [
+                (sender_enc_A_0, sender_enc_A_1),
+                (sender_enc_B_0, sender_enc_B_1),
+            ],
         })
     }
 }

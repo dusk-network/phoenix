@@ -16,7 +16,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 
-use crate::{Note, RecipientParameters, OUTPUT_NOTES};
+use crate::{Note, OUTPUT_NOTES};
 
 /// A phoenix transaction, referred to as tx-skeleton in the specs.
 #[derive(Debug, Clone, PartialEq)]
@@ -34,11 +34,9 @@ pub struct TxSkeleton {
     /// The new output notes of this transaction.
     pub outputs: [Note; OUTPUT_NOTES],
     /// Describes the maximum fee to be paid for this transaction.
-    pub tx_max_fee: u64,
+    pub max_fee: u64,
     /// A deposit is used to transferring funds to a contract
     pub deposit: u64,
-    /// Parameters needed to prove a recipient in-circuit
-    pub recipient_params: RecipientParameters,
 }
 
 impl TxSkeleton {
@@ -56,9 +54,8 @@ impl TxSkeleton {
             bytes.extend(note.to_bytes());
         }
 
-        bytes.extend(self.tx_max_fee.to_bytes());
+        bytes.extend(self.max_fee.to_bytes());
         bytes.extend(self.deposit.to_bytes());
-        bytes.extend(self.recipient_params.to_bytes());
 
         bytes
     }
@@ -81,9 +78,8 @@ impl TxSkeleton {
             bytes.extend(note.to_bytes());
         });
 
-        bytes.extend(self.tx_max_fee.to_bytes());
+        bytes.extend(self.max_fee.to_bytes());
         bytes.extend(self.deposit.to_bytes());
-        bytes.extend(self.recipient_params.to_bytes());
 
         bytes
     }
@@ -106,17 +102,15 @@ impl TxSkeleton {
         let outputs: [Note; OUTPUT_NOTES] =
             outputs.try_into().map_err(|_| BytesError::InvalidData)?;
 
-        let tx_max_fee = u64::from_reader(&mut buffer)?;
+        let max_fee = u64::from_reader(&mut buffer)?;
         let deposit = u64::from_reader(&mut buffer)?;
-        let recipient_params = RecipientParameters::from_reader(&mut buffer)?;
 
         Ok(Self {
             root,
             nullifiers,
             outputs,
-            tx_max_fee,
+            max_fee,
             deposit,
-            recipient_params,
         })
     }
 
@@ -131,8 +125,8 @@ impl TxSkeleton {
     }
 
     /// Returns the maximum fee of the transaction.
-    pub fn tx_max_fee(&self) -> u64 {
-        self.tx_max_fee
+    pub fn max_fee(&self) -> u64 {
+        self.max_fee
     }
 
     /// Returns the deposit of the transaction.

@@ -7,11 +7,9 @@
 #![cfg(feature = "alloc")]
 
 use dusk_bls12_381::BlsScalar;
-use dusk_jubjub::{JubJubScalar, GENERATOR};
+use dusk_jubjub::JubJubScalar;
 use ff::Field;
-use phoenix_core::{
-    Error, Note, PublicKey, RecipientParameters, SecretKey, TxSkeleton,
-};
+use phoenix_core::{Error, Note, PublicKey, SecretKey, TxSkeleton};
 use rand::rngs::OsRng;
 
 #[test]
@@ -22,31 +20,26 @@ fn transaction_parse() -> Result<(), Error> {
     let pk = PublicKey::from(&sk);
 
     let value = 25;
-    let blinding_factor = JubJubScalar::random(&mut rng);
-    let note = Note::obfuscated(&mut rng, &pk, value, blinding_factor);
+    let value_blinder = JubJubScalar::random(&mut rng);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let note =
+        Note::obfuscated(&mut rng, &pk, value, value_blinder, sender_blinder);
 
     let root = BlsScalar::from(123);
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
     let outputs = [note.clone(), note];
-    let tx_max_fee = 0;
+    let max_fee = 0;
     let deposit = 0;
-
-    let output_npks = [
-        (GENERATOR * JubJubScalar::random(&mut rng)).into(),
-        (GENERATOR * JubJubScalar::random(&mut rng)).into(),
-    ];
-    let hash = BlsScalar::random(&mut rng);
-
-    let recipient_params =
-        RecipientParameters::new(&mut rng, &sk, output_npks, hash);
 
     let tx_skeleton = TxSkeleton {
         root,
         nullifiers,
         outputs,
-        tx_max_fee,
+        max_fee,
         deposit,
-        recipient_params,
     };
     let bytes_of_transaction = tx_skeleton.to_var_bytes();
     assert_eq!(

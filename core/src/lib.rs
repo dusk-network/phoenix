@@ -15,7 +15,6 @@ mod encryption;
 mod error;
 mod keys;
 mod note;
-mod recipient;
 
 #[cfg(feature = "alloc")]
 mod transaction;
@@ -31,8 +30,7 @@ pub use keys::hash;
 pub use keys::public::PublicKey;
 pub use keys::secret::SecretKey;
 pub use keys::view::ViewKey;
-pub use note::{Note, NoteType, ENCRYPTION_SIZE as NOTE_ENCRYPTION_SIZE};
-pub use recipient::RecipientParameters;
+pub use note::{Note, NoteType, VALUE_ENC_SIZE as NOTE_VAL_ENC_SIZE};
 
 #[cfg(feature = "alloc")]
 /// Transaction Skeleton used by the phoenix transaction model

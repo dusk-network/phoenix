@@ -9,9 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Implement `rkyv` traits for `RecipientParameters`
-- Implement `dusk_bytes::Serializable` for `RecipientParameters`
-- Add `RecipientParameters`
 - Add `elgamal::encrypt` and `elgamal::decrypt`
 - Add `stealth_address` and `sync_address` functions directly to note [#208]
 - Add a light sync method in the `ViewKey` [#199]
@@ -21,8 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Change `RecipientParams::enc_X` fields to contains `JubJubAffine` instead of `JubJubExtended`
-- Include `recipient_params` field in `TxSkeleton`
+- Rename `tx_max_fee` to `max_fee` [#214]
+- Add `sender_enc` field to the `Note` [#214]
+- Add `sender_blinder` parameter for `Note` contructors [#214]
+- Rename `encryption_blinder` to `value_blinder` [#214]
+- Rename `NOTE_ENCRYPTION_SIZE` to `NOTE_VALUE_ENC_SIZE` [#214]
 - Move `OUTPUT_NOTES` to crate root
 - Change `owns` and `owns_unchecked` to take `&Note` [#208]
 - Change `gen_note_sk` to take `&StealthAddress` [#208]
@@ -346,7 +346,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
-[#146]: https://github.com/dusk-network/phoenix/issues/146
+[#214]: https://github.com/dusk-network/phoenix/issues/214
 [#208]: https://github.com/dusk-network/phoenix/issues/208
 [#201]: https://github.com/dusk-network/phoenix/issues/201
 [#199]: https://github.com/dusk-network/phoenix/issues/199
@@ -362,6 +362,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#156]: https://github.com/dusk-network/phoenix/issues/156
 [#155]: https://github.com/dusk-network/phoenix/issues/155
 [#152]: https://github.com/dusk-network/phoenix/issues/152
+[#146]: https://github.com/dusk-network/phoenix/issues/146
 [#136]: https://github.com/dusk-network/phoenix/issues/136
 [#126]: https://github.com/dusk-network/phoenix/issues/126
 [#119]: https://github.com/dusk-network/phoenix/issues/119
