@@ -44,10 +44,10 @@ fn test_elgamal_encrypt_and_decrypt() {
     let (c1, c2) = elgamal::encrypt(pk.A(), &message, &blinder);
 
     // Assert decryption
-    let dec_message = elgamal::decrypt(sk.a(), &c1, &c2);
+    let dec_message = elgamal::decrypt(sk.a(), &(c1, c2));
     assert_eq!(message, dec_message);
 
     // Assert decryption using an incorrect key
-    let dec_message_wrong = elgamal::decrypt(sk.b(), &c1, &c2);
+    let dec_message_wrong = elgamal::decrypt(sk.b(), &(c1, c2));
     assert_ne!(message, dec_message_wrong);
 }

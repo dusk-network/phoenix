@@ -28,7 +28,9 @@ pub use keys::hash;
 pub use keys::public::PublicKey;
 pub use keys::secret::SecretKey;
 pub use keys::view::ViewKey;
-pub use note::{Note, NoteType, VALUE_ENC_SIZE as NOTE_VAL_ENC_SIZE};
+pub use note::{
+    encrypt_sender, Note, NoteType, VALUE_ENC_SIZE as NOTE_VAL_ENC_SIZE,
+};
 pub use stealth_address::StealthAddress;
 
 #[cfg(feature = "alloc")]

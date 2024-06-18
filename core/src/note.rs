@@ -6,19 +6,18 @@
 
 use core::convert::{TryFrom, TryInto};
 
-use crate::{
-    encryption::elgamal, transparent_value_commitment, value_commitment, Error,
-    PublicKey, SecretKey, StealthAddress, ViewKey,
-};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
-
-use crate::aes;
-
 use dusk_poseidon::{Domain, Hash};
 use ff::Field;
+use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
 use rand::{CryptoRng, RngCore};
+
+use crate::{
+    aes, elgamal, transparent_value_commitment, value_commitment, Error,
+    PublicKey, SecretKey, StealthAddress, ViewKey,
+};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
@@ -79,7 +78,6 @@ pub struct Note {
     pub(crate) stealth_address: StealthAddress,
     pub(crate) pos: u64,
     pub(crate) value_enc: [u8; VALUE_ENC_SIZE],
-    // the elgamal encryption of the sender_pk encrypted using the output_npk
     pub(crate) sender_enc: [(JubJubAffine, JubJubAffine); 2],
 }
 
@@ -96,13 +94,14 @@ impl Note {
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
-        pk: &PublicKey,
+        sender_pk: &PublicKey,
+        receiver_pk: &PublicKey,
         value: u64,
         value_blinder: JubJubScalar,
         sender_blinder: [JubJubScalar; 2],
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
-        let stealth_address = pk.gen_stealth_address(&r);
+        let stealth_address = receiver_pk.gen_stealth_address(&r);
 
         let value_commitment = value_commitment(value, value_blinder);
 
@@ -117,7 +116,7 @@ impl Note {
                 value_enc
             }
             NoteType::Obfuscated => {
-                let shared_secret = dhke(&r, pk.A());
+                let shared_secret = dhke(&r, receiver_pk.A());
                 let value_blinder = BlsScalar::from(value_blinder);
 
                 let mut plaintext = value.to_bytes().to_vec();
@@ -128,29 +127,17 @@ impl Note {
             }
         };
 
-        let sender_enc_A = elgamal::encrypt(
-            pk.A(),
-            stealth_address.note_pk.as_ref(),
-            &sender_blinder[0],
-        );
-
-        let sender_enc_B = elgamal::encrypt(
-            pk.B(),
-            stealth_address.note_pk.as_ref(),
-            &sender_blinder[1],
-        );
-        let sender_enc_A: (JubJubAffine, JubJubAffine) =
-            (sender_enc_A.0.into(), sender_enc_A.1.into());
-        let sender_enc_B: (JubJubAffine, JubJubAffine) =
-            (sender_enc_B.0.into(), sender_enc_B.1.into());
-
         Note {
             note_type,
             value_commitment,
             stealth_address,
             pos,
             value_enc,
-            sender_enc: [sender_enc_A, sender_enc_B],
+            sender_enc: encrypt_sender(
+                stealth_address.note_pk(),
+                sender_pk,
+                &sender_blinder,
+            ),
         }
     }
 
@@ -161,14 +148,16 @@ impl Note {
     /// notes, so this can be trivially treated as a constant.
     pub fn transparent<R: RngCore + CryptoRng>(
         rng: &mut R,
-        pk: &PublicKey,
+        sender_pk: &PublicKey,
+        receiver_pk: &PublicKey,
         value: u64,
         sender_blinder: [JubJubScalar; 2],
     ) -> Self {
         Self::new(
             rng,
             NoteType::Transparent,
-            pk,
+            sender_pk,
+            receiver_pk,
             value,
             TRANSPARENT_BLINDER,
             sender_blinder,
@@ -210,7 +199,8 @@ impl Note {
     /// knowledge of the value commitment of this note.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
-        pk: &PublicKey,
+        sender_pk: &PublicKey,
+        receiver_pk: &PublicKey,
         value: u64,
         value_blinder: JubJubScalar,
         sender_blinder: [JubJubScalar; 2],
@@ -218,7 +208,8 @@ impl Note {
         Self::new(
             rng,
             NoteType::Obfuscated,
-            pk,
+            sender_pk,
+            receiver_pk,
             value,
             value_blinder,
             sender_blinder,
@@ -237,7 +228,7 @@ impl Note {
         }
     }
 
-    fn decrypt_data(
+    fn decrypt_value(
         &self,
         vk: &ViewKey,
     ) -> Result<(u64, JubJubScalar), BytesError> {
@@ -327,6 +318,13 @@ impl Note {
         &self.value_enc
     }
 
+    /// Returns elgamal encryption of the sender's [`PublicKey`] encrypted using
+    /// the [`StealthAddress::note_pk`] so only the receiver of the [`Note`]
+    /// can decrypt.
+    pub const fn sender_enc(&self) -> &[(JubJubAffine, JubJubAffine); 2] {
+        &self.sender_enc
+    }
+
     /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
     /// succeeds for transparent notes, might fails or return random values for
     /// obfuscated notes if the provided view key is wrong.
@@ -338,7 +336,7 @@ impl Note {
                 Ok(value)
             }
             (NoteType::Obfuscated, Some(vk)) => self
-                .decrypt_data(vk)
+                .decrypt_value(vk)
                 .map(|(value, _)| value)
                 .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
@@ -355,12 +353,56 @@ impl Note {
         match (self.note_type, vk) {
             (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
             (NoteType::Obfuscated, Some(vk)) => self
-                .decrypt_data(vk)
+                .decrypt_value(vk)
                 .map(|(_, value_blinder)| value_blinder)
                 .map_err(|_| Error::InvalidEncryption),
             _ => Err(Error::MissingViewKey),
         }
     }
+
+    /// Decrypts the [`PublicKey`] of the sender of the [`Note`], using the
+    /// [`NoteSecretKey`] generated by the receiver's [`SecretKey`] and the
+    /// [`StealthAddress`] of the [`Note`].
+    ///
+    /// Note: Decryption with an incorrect [`NoteSecretKey`] will still yield a
+    /// [`PublicKey`], but it will a random one that has nothing to do with the
+    /// sender's [`PublicKey`].
+    pub fn decrypt_sender(&self, note_sk: &NoteSecretKey) -> PublicKey {
+        let sender_enc_A = self.sender_enc()[0];
+        let sender_enc_B = self.sender_enc()[1];
+
+        let decrypt_A = elgamal::decrypt(
+            note_sk.as_ref(),
+            &(sender_enc_A.0.into(), sender_enc_A.1.into()),
+        );
+        let decrypt_B = elgamal::decrypt(
+            note_sk.as_ref(),
+            &(sender_enc_B.0.into(), sender_enc_B.1.into()),
+        );
+
+        PublicKey::new(decrypt_A, decrypt_B)
+    }
+}
+
+/// Encrypt the sender [`PublicKey`] in a way that only the receiver of the note
+/// can decrypt.
+pub fn encrypt_sender(
+    note_pk: &NotePublicKey,
+    sender_pk: &PublicKey,
+    blinder: &[JubJubScalar; 2],
+) -> [(JubJubAffine, JubJubAffine); 2] {
+    let sender_enc_A =
+        elgamal::encrypt(note_pk.as_ref(), sender_pk.A(), &blinder[0]);
+
+    let sender_enc_B =
+        elgamal::encrypt(note_pk.as_ref(), sender_pk.B(), &blinder[1]);
+
+    let sender_enc_A: (JubJubAffine, JubJubAffine) =
+        (sender_enc_A.0.into(), sender_enc_A.1.into());
+    let sender_enc_B: (JubJubAffine, JubJubAffine) =
+        (sender_enc_B.0.into(), sender_enc_B.1.into());
+
+    [sender_enc_A, sender_enc_B]
 }
 
 const SIZE: usize = 1

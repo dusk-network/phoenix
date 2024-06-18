@@ -16,8 +16,8 @@ use rand::rngs::OsRng;
 fn transaction_parse() -> Result<(), Error> {
     let mut rng = OsRng;
 
-    let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(&sk);
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
 
     let value = 25;
     let value_blinder = JubJubScalar::random(&mut rng);
@@ -25,8 +25,14 @@ fn transaction_parse() -> Result<(), Error> {
         JubJubScalar::random(&mut rng),
         JubJubScalar::random(&mut rng),
     ];
-    let note =
-        Note::obfuscated(&mut rng, &pk, value, value_blinder, sender_blinder);
+    let note = Note::obfuscated(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        value,
+        value_blinder,
+        sender_blinder,
+    );
 
     let root = BlsScalar::from(123);
     let nullifiers = vec![BlsScalar::from(456), BlsScalar::from(789)];
