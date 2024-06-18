@@ -26,6 +26,7 @@ bytecheck = { version = "0.6", optional = true, default-features = false }
 assert_matches = "1.3"
 rand = "0.8"
 rkyv = { version = "0.7", default-features = false, features = ["size_32"] }
+criterion = "0.5"
 
 [features]
 default = ["alloc"]
@@ -38,3 +39,7 @@ rkyv-impl = [
     "rkyv",
     "bytecheck"
 ]
+
+[[bench]]
+name = "sync"
+harness = false
