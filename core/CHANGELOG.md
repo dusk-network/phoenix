@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `encrypt_sender` function to encrypt the sender with the npk [#214]
+- Add `decrypt_sender` method to the `Note` [#214]
 - Add `elgamal::encrypt` and `elgamal::decrypt`
 - Add `stealth_address` function directly to note [#208]
 - Add function `value_commitment` [#201]
@@ -20,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `tx_max_fee` to `max_fee` [#214]
 - Add `sender_enc` field to the `Note` [#214]
 - Add `sender_blinder` parameter for `Note` contructors [#214]
+- Add `sender_pk` parameter for `Note` contructors [#214]
+- Add `sender_enc` parameter for `Note::transparent_stealth` [#214]
 - Rename `encryption_blinder` to `value_blinder` [#214]
 - Rename `NOTE_ENCRYPTION_SIZE` to `NOTE_VALUE_ENC_SIZE` [#214]
 - Move `OUTPUT_NOTES` to crate root

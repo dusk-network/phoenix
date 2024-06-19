@@ -33,9 +33,11 @@ pub fn encrypt(
 /// Returns a JubJubExtended plaintext.
 pub fn decrypt(
     secret_key: &JubJubScalar,
-    ciphertext_1: &JubJubExtended,
-    ciphertext_2: &JubJubExtended,
+    ciphertext: &(JubJubExtended, JubJubExtended),
 ) -> JubJubExtended {
+    let ciphertext_1 = ciphertext.0;
+    let ciphertext_2 = ciphertext.1;
+
     // return the plaintext
     ciphertext_2 - ciphertext_1 * secret_key
 }

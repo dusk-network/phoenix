@@ -62,31 +62,38 @@ fn keys_consistency() {
 
     let r = JubJubScalar::random(&mut rng);
 
-    let sk = SecretKey::random(&mut rng);
-    let pk = PublicKey::from(&sk);
-    let vk = ViewKey::from(&sk);
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_sk = SecretKey::random(&mut rng);
+    let receiver_pk = PublicKey::from(&receiver_sk);
+    let receiver_vk = ViewKey::from(&receiver_sk);
 
     let sender_blinder = [
         JubJubScalar::random(&mut rng),
         JubJubScalar::random(&mut rng),
     ];
-    let note = Note::transparent(&mut rng, &pk, NOTE_VALUE, sender_blinder);
+    let note = Note::transparent(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        NOTE_VALUE,
+        sender_blinder,
+    );
 
-    assert!(vk.owns(&note));
-    assert!(sk.owns(&note));
+    assert!(receiver_vk.owns(&note));
+    assert!(receiver_sk.owns(&note));
 
     let wrong_sk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(&wrong_sk);
 
-    assert_ne!(sk, wrong_sk);
-    assert_ne!(vk, wrong_vk);
+    assert_ne!(receiver_sk, wrong_sk);
+    assert_ne!(receiver_vk, wrong_vk);
 
     assert!(!wrong_vk.owns(&note));
     assert!(!wrong_sk.owns(&note));
 
-    let sa = pk.gen_stealth_address(&r);
+    let sa = receiver_pk.gen_stealth_address(&r);
 
-    let note_sk = sk.gen_note_sk(&sa);
+    let note_sk = receiver_sk.gen_note_sk(&sa);
     let wrong_note_sk = wrong_sk.gen_note_sk(&sa);
 
     assert_eq!(

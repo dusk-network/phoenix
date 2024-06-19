@@ -316,7 +316,7 @@ pub struct TxCircuit<const H: usize, const I: usize> {
     max_fee: u64,
     sender_pk: PublicKey,
     signatures: (SchnorrSignature, SchnorrSignature),
-    sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
+    sender_blinder: [[JubJubScalar; 2]; OUTPUT_NOTES],
 }
 
 impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
@@ -367,7 +367,7 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
         let signatures =
             (SchnorrSignature::default(), SchnorrSignature::default());
         let sender_blinder =
-            [(JubJubScalar::default(), JubJubScalar::default()); OUTPUT_NOTES];
+            [[JubJubScalar::default(), JubJubScalar::default()]; OUTPUT_NOTES];
 
         Self {
             tx_input_notes: tx_input_notes.try_into().unwrap(),
@@ -394,7 +394,7 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
         max_fee: u64,
         sender_pk: PublicKey,
         signatures: (SchnorrSignature, SchnorrSignature),
-        sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
+        sender_blinder: [[JubJubScalar; 2]; OUTPUT_NOTES],
     ) -> Self {
         Self {
             tx_input_notes,
