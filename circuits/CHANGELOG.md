@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-06-19
+
 ### Added
 
 - Add Recipient gadget [#197]
@@ -61,4 +63,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- VERSIONS -->
 [Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.1.0...HEAD
+[0.2.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.1.0...circuits_v0.2.0
 [0.1.0]: https://github.com/dusk-network/phoenix/releases/tag/circuits_v0.1.0
