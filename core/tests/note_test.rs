@@ -44,9 +44,6 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let r = JubJubScalar::random(&mut rng);
     let stealth = pk.gen_stealth_address(&r);
 
-    let r = JubJubScalar::random(&mut rng);
-    let sync_address = pk.gen_sync_address(&r);
-
     let value = 25;
 
     let sender_blinder = [
@@ -69,12 +66,8 @@ fn transparent_stealth_note() -> Result<(), Error> {
     let sender_enc_b: (JubJubAffine, JubJubAffine) =
         (sender_enc_b.0.into(), sender_enc_b.1.into());
 
-    let note = Note::transparent_stealth(
-        stealth,
-        sync_address,
-        value,
-        [sender_enc_a, sender_enc_b],
-    );
+    let note =
+        Note::transparent_stealth(stealth, value, [sender_enc_a, sender_enc_b]);
 
     assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(value, note.value(None)?);
@@ -224,7 +217,4 @@ fn note_keys_consistency() {
 
     assert!(!wrong_vk.owns(&note));
     assert!(vk.owns(&note));
-
-    assert!(!wrong_vk.owns_unchecked(&note));
-    assert!(vk.owns_unchecked(&note));
 }

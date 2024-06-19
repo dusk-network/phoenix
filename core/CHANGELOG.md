@@ -10,8 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add `elgamal::encrypt` and `elgamal::decrypt`
-- Add `stealth_address` and `sync_address` functions directly to note [#208]
-- Add a light sync method in the `ViewKey` [#199]
+- Add `stealth_address` function directly to note [#208]
 - Add function `value_commitment` [#201]
 - Add function `transparent_value_commitment` [#201]
 - Add `owns()` and `owns_unchecked()` to `Secretkey` [#146]

@@ -81,31 +81,23 @@ impl SecretKey {
 
     /// Generates a [`NoteSecretKey`] using the `R` of the given
     /// [`StealthAddress`]. With the formula: `note_sk = H(a · R) + b`
-    pub fn gen_note_sk(&self, sa: &StealthAddress) -> NoteSecretKey {
-        let aR = sa.R() * self.a;
+    pub fn gen_note_sk(&self, stealth: &StealthAddress) -> NoteSecretKey {
+        let aR = stealth.R() * self.a;
 
         NoteSecretKey::from(hash(&aR) + self.b)
     }
 
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
     pub fn owns(&self, note: &Note) -> bool {
-        let sa = note.stealth_address();
+        let stealth = note.stealth_address();
 
-        let aR = sa.R() * self.a();
+        let aR = stealth.R() * self.a();
         let hash_aR = hash(&aR);
         let note_sk = hash_aR + self.b();
 
         let note_pk = GENERATOR_EXTENDED * note_sk;
 
-        sa.note_pk().as_ref() == &note_pk
-    }
-
-    /// Checks if `k_sync ?= R_sync · a`
-    pub fn owns_unchecked(&self, note: &Note) -> bool {
-        let sa = note.sync_address();
-        let aR = sa.R() * self.a();
-
-        sa.k() == &aR
+        stealth.note_pk().as_ref() == &note_pk
     }
 }
 

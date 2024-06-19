@@ -64,22 +64,14 @@ impl ViewKey {
 
     /// Checks `note_pk = H(R · a) · G + B`
     pub fn owns(&self, note: &Note) -> bool {
-        let sa = note.stealth_address();
+        let stealth = note.stealth_address();
 
-        let aR = sa.R() * self.a();
+        let aR = stealth.R() * self.a();
         let hash_aR = hash(&aR);
         let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
         let note_pk = hash_aR_G + self.B();
 
-        sa.note_pk().as_ref() == &note_pk
-    }
-
-    /// Checks `k_sync ?= R_sync · a`
-    pub fn owns_unchecked(&self, note: &Note) -> bool {
-        let sa = note.sync_address();
-        let aR = sa.R() * self.a();
-
-        sa.k() == &aR
+        stealth.note_pk().as_ref() == &note_pk
     }
 }
 
