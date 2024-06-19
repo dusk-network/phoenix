@@ -73,9 +73,7 @@ fn keys_consistency() {
     let note = Note::transparent(&mut rng, &pk, NOTE_VALUE, sender_blinder);
 
     assert!(vk.owns(&note));
-    assert!(vk.owns_unchecked(&note));
     assert!(sk.owns(&note));
-    assert!(sk.owns_unchecked(&note));
 
     let wrong_sk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(&wrong_sk);
@@ -84,9 +82,7 @@ fn keys_consistency() {
     assert_ne!(vk, wrong_vk);
 
     assert!(!wrong_vk.owns(&note));
-    assert!(!wrong_vk.owns_unchecked(&note));
     assert!(!wrong_sk.owns(&note));
-    assert!(!wrong_sk.owns_unchecked(&note));
 
     let sa = pk.gen_stealth_address(&r);
 

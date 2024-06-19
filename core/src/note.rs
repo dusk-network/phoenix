@@ -8,7 +8,7 @@ use core::convert::{TryFrom, TryInto};
 
 use crate::{
     encryption::elgamal, transparent_value_commitment, value_commitment, Error,
-    PublicKey, SecretKey, StealthAddress, SyncAddress, ViewKey,
+    PublicKey, SecretKey, StealthAddress, ViewKey,
 };
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
@@ -77,7 +77,6 @@ pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubAffine,
     pub(crate) stealth_address: StealthAddress,
-    pub(crate) sync_address: SyncAddress,
     pub(crate) pos: u64,
     pub(crate) value_enc: [u8; VALUE_ENC_SIZE],
     // the elgamal encryption of the sender_pk encrypted using the output_npk
@@ -104,9 +103,6 @@ impl Note {
     ) -> Self {
         let r = JubJubScalar::random(&mut *rng);
         let stealth_address = pk.gen_stealth_address(&r);
-
-        let r_sync = JubJubScalar::random(&mut *rng);
-        let sync_address = pk.gen_sync_address(&r_sync);
 
         let value_commitment = value_commitment(value, value_blinder);
 
@@ -152,7 +148,6 @@ impl Note {
             note_type,
             value_commitment,
             stealth_address,
-            sync_address,
             pos,
             value_enc,
             sender_enc: [sender_enc_A, sender_enc_B],
@@ -182,12 +177,11 @@ impl Note {
 
     /// Creates a new transparent note
     ///
-    /// This is equivalent to [`transparent`] but taking only a stealth address,
-    /// sync address, and a value. This is done to be able to generate a note
+    /// This is equivalent to [`transparent`] but taking only a stealth address
+    /// and a value. This is done to be able to generate a note
     /// directly for a stealth address, as opposed to a public key.
     pub fn transparent_stealth(
         stealth_address: StealthAddress,
-        sync_address: SyncAddress,
         value: u64,
         sender_enc: [(JubJubAffine, JubJubAffine); 2],
     ) -> Self {
@@ -202,7 +196,6 @@ impl Note {
             note_type: NoteType::Transparent,
             value_commitment,
             stealth_address,
-            sync_address,
             pos,
             value_enc,
             sender_enc,
@@ -238,7 +231,6 @@ impl Note {
             note_type: NoteType::Transparent,
             value_commitment: JubJubAffine::default(),
             stealth_address: StealthAddress::default(),
-            sync_address: SyncAddress::default(),
             pos: 0,
             value_enc: [0; VALUE_ENC_SIZE],
             sender_enc: [(JubJubAffine::default(), JubJubAffine::default()); 2],
@@ -319,11 +311,6 @@ impl Note {
         &self.stealth_address
     }
 
-    /// Returns the sync address associated with the note.
-    pub const fn sync_address(&self) -> &SyncAddress {
-        &self.sync_address
-    }
-
     /// Set the position of the note on the tree.
     /// This, naturally, won't reflect immediatelly on the data storage
     pub fn set_pos(&mut self, pos: u64) {
@@ -379,7 +366,6 @@ impl Note {
 const SIZE: usize = 1
     + JubJubAffine::SIZE
     + StealthAddress::SIZE
-    + SyncAddress::SIZE
     + u64::SIZE
     + VALUE_ENC_SIZE
     + 4 * JubJubAffine::SIZE;
@@ -400,9 +386,6 @@ impl Serializable<SIZE> for Note {
         buf[start..start + StealthAddress::SIZE]
             .copy_from_slice(&self.stealth_address.to_bytes());
         start += StealthAddress::SIZE;
-        buf[start..start + SyncAddress::SIZE]
-            .copy_from_slice(&self.sync_address.to_bytes());
-        start += SyncAddress::SIZE;
         buf[start..start + u64::SIZE].copy_from_slice(&self.pos.to_le_bytes());
         start += u64::SIZE;
         buf[start..start + VALUE_ENC_SIZE].copy_from_slice(&self.value_enc);
@@ -431,7 +414,6 @@ impl Serializable<SIZE> for Note {
         let mut buf = &bytes[1..];
         let value_commitment = JubJubAffine::from_reader(&mut buf)?;
         let stealth_address = StealthAddress::from_reader(&mut buf)?;
-        let sync_address = SyncAddress::from_reader(&mut buf)?;
         let pos = u64::from_reader(&mut buf)?;
 
         let mut value_enc = [0u8; VALUE_ENC_SIZE];
@@ -448,7 +430,6 @@ impl Serializable<SIZE> for Note {
             note_type,
             value_commitment,
             stealth_address,
-            sync_address,
             pos,
             value_enc,
             sender_enc: [

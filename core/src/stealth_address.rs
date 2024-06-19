@@ -4,7 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::SyncAddress;
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use jubjub_schnorr::PublicKey as NotePublicKey;
 
@@ -68,15 +67,6 @@ impl ConstantTimeEq for StealthAddress {
 impl PartialEq for StealthAddress {
     fn eq(&self, other: &Self) -> bool {
         self.ct_eq(other).into()
-    }
-}
-
-impl From<&SyncAddress> for StealthAddress {
-    fn from(sa: &SyncAddress) -> Self {
-        StealthAddress {
-            note_pk: NotePublicKey::from(sa.k()),
-            R: *sa.R(),
-        }
     }
 }
 
