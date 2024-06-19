@@ -19,7 +19,7 @@ pub(crate) fn gadget(
     sender_pk: PublicKey,
     signatures: (SchnorrSignature, SchnorrSignature),
     output_npk: [JubJubAffine; OUTPUT_NOTES],
-    sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
+    sender_blinder: [[JubJubScalar; 2]; OUTPUT_NOTES],
     // [enc_A, enc_B] for note 0
     sender_enc_out0: [(JubJubAffine, JubJubAffine); 2],
     // [enc_A, enc_B] for note 1
@@ -55,11 +55,11 @@ pub(crate) fn gadget(
     let note_pk_0 = composer.append_public_point(output_npk[0]);
     let note_pk_1 = composer.append_public_point(output_npk[1]);
 
-    let blinder_A_0 = composer.append_witness(sender_blinder[0].0);
-    let blinder_B_0 = composer.append_witness(sender_blinder[0].1);
+    let blinder_A_0 = composer.append_witness(sender_blinder[0][0]);
+    let blinder_B_0 = composer.append_witness(sender_blinder[0][1]);
 
-    let blinder_A_1 = composer.append_witness(sender_blinder[1].0);
-    let blinder_B_1 = composer.append_witness(sender_blinder[1].1);
+    let blinder_A_1 = composer.append_witness(sender_blinder[1][0]);
+    let blinder_B_1 = composer.append_witness(sender_blinder[1][1]);
 
     // assert that the sender encryption of the first note is correct
     // appends the values of sender_enc_out0 as public input

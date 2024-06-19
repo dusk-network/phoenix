@@ -38,7 +38,7 @@ struct TestingParameters {
     sender_pk: PublicKey,
     output_npk: [JubJubAffine; OUTPUT_NOTES],
     signatures: (SchnorrSignature, SchnorrSignature),
-    sender_blinder: [(JubJubScalar, JubJubScalar); OUTPUT_NOTES],
+    sender_blinder: [[JubJubScalar; 2]; OUTPUT_NOTES],
 }
 
 lazy_static! {
@@ -49,6 +49,8 @@ lazy_static! {
 
         let pp = PublicParameters::setup(1 << CAPACITY, &mut rng).unwrap();
         let sender_sk = SecretKey::random(&mut rng);
+        let sender_pk = PublicKey::from(&sender_sk);
+        let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
 
         let mut tree = Tree::<(), HEIGHT>::new();
         let payload_hash = BlsScalar::from(1234u64);
@@ -67,8 +69,6 @@ lazy_static! {
         let deposit = 5;
         let max_fee = 5;
 
-        let sender_pk = PublicKey::from(&sender_sk);
-        let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
 
         // generate both ouput note public keys
         let receiver_npk = *receiver_pk.gen_stealth_address(
@@ -88,14 +88,15 @@ lazy_static! {
         let schnorr_sk_b = SchnorrSecretKey::from(sender_sk.b());
         let sig_b = schnorr_sk_b.sign(&mut rng, payload_hash);
 
-        let sender_blinder_0 = (
+        // sender blinder for the output notes
+        let sender_blinder_0 = [
             JubJubScalar::random(&mut rng),
             JubJubScalar::random(&mut rng),
-        );
-        let sender_blinder_1 = (
+        ];
+        let sender_blinder_1 = [
             JubJubScalar::random(&mut rng),
             JubJubScalar::random(&mut rng),
-        );
+        ];
 
         TestingParameters {
             pp,
@@ -115,7 +116,7 @@ lazy_static! {
 fn create_and_insert_test_note(
     rng: &mut (impl RngCore + CryptoRng),
     tree: &mut Tree<(), HEIGHT>,
-    pk: &PublicKey,
+    sender_pk: &PublicKey,
     pos: u64,
     value: u64,
 ) -> Note {
@@ -123,7 +124,10 @@ fn create_and_insert_test_note(
         JubJubScalar::random(&mut *rng),
         JubJubScalar::random(&mut *rng),
     ];
-    let mut note = Note::transparent(rng, pk, value, sender_blinder);
+
+    // create a note that belongs to the sender
+    let mut note =
+        Note::transparent(rng, sender_pk, sender_pk, value, sender_blinder);
     note.set_pos(pos);
 
     let item = Item {
@@ -138,17 +142,17 @@ fn create_and_insert_test_note(
 fn create_test_tx_input_notes<const I: usize>(
     rng: &mut (impl RngCore + CryptoRng),
     tree: &mut Tree<(), HEIGHT>,
-    sk: &SecretKey,
+    sender_sk: &SecretKey,
     payload_hash: BlsScalar,
 ) -> [TxInputNote<HEIGHT>; I] {
-    let pk = PublicKey::from(sk);
+    let sender_pk = PublicKey::from(sender_sk);
 
     let mut notes = Vec::new();
     for i in 0..I {
         notes.push(create_and_insert_test_note(
             rng,
             tree,
-            &pk,
+            &sender_pk,
             i.try_into().unwrap(),
             25,
         ));
@@ -157,9 +161,14 @@ fn create_test_tx_input_notes<const I: usize>(
     let mut input_notes = Vec::new();
     for i in 0..I {
         let merkle_opening = tree.opening(*notes[i].pos()).expect("Tree read.");
-        let input_note =
-            TxInputNote::new(rng, &notes[i], merkle_opening, &sk, payload_hash)
-                .expect("Note created properly.");
+        let input_note = TxInputNote::new(
+            rng,
+            &notes[i],
+            merkle_opening,
+            sender_sk,
+            payload_hash,
+        )
+        .expect("Note created properly.");
 
         input_notes.push(input_note);
     }
@@ -171,17 +180,16 @@ fn create_tx_output_note(
     rng: &mut (impl RngCore + CryptoRng),
     value: u64,
     note_pk: JubJubAffine,
-    // (blinder_A, blinder_B)
-    sender_blinder: (JubJubScalar, JubJubScalar),
+    sender_blinder: [JubJubScalar; 2],
 ) -> TxOutputNote {
     let value_blinder = JubJubScalar::random(&mut *rng);
     let value_commitment = value_commitment(value, value_blinder);
 
-    let sender_blinder_a = sender_blinder.0;
+    let sender_blinder_a = sender_blinder[0];
     let sender_enc_a =
         elgamal::encrypt(&note_pk.into(), TP.sender_pk.A(), &sender_blinder_a);
 
-    let sender_blinder_b = sender_blinder.1;
+    let sender_blinder_b = sender_blinder[1];
     let sender_enc_b =
         elgamal::encrypt(&note_pk.into(), TP.sender_pk.B(), &sender_blinder_b);
 
