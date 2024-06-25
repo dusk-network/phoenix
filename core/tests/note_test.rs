@@ -4,14 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::JubJubScalar;
+use dusk_bytes::Serializable;
+use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use ff::Field;
 use phoenix_core::{
-    encrypt_sender, value_commitment, Error, Note, NoteType, PublicKey,
-    SecretKey, ViewKey,
+    value_commitment, Error, Note, NoteType, PublicKey, SecretKey, Sender,
+    ViewKey,
 };
 use rand::rngs::StdRng;
-use rand::SeedableRng;
+use rand::{RngCore, SeedableRng};
 
 const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 
@@ -46,8 +47,10 @@ fn transparent_note() -> Result<(), Error> {
     assert_eq!(value, note.value(None)?);
     assert_eq!(
         sender_pk,
-        note.decrypt_sender(&receiver_sk.gen_note_sk(note.stealth_address()))
+        note.sender()
+            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
     );
+    assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
     Ok(())
 }
@@ -56,7 +59,6 @@ fn transparent_note() -> Result<(), Error> {
 fn transparent_stealth_note() -> Result<(), Error> {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
-    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
     let receiver_sk = SecretKey::random(&mut rng);
     let receiver_pk = PublicKey::from(&receiver_sk);
 
@@ -65,16 +67,11 @@ fn transparent_stealth_note() -> Result<(), Error> {
 
     let value = 25;
 
-    let sender_enc = encrypt_sender(
-        stealth.note_pk(),
-        &sender_pk,
-        &[
-            JubJubScalar::random(&mut rng),
-            JubJubScalar::random(&mut rng),
-        ],
-    );
+    let mut sender_data = [0u8; 4 * JubJubAffine::SIZE];
+    rng.fill_bytes(&mut sender_data);
+    let sender = Sender::ContractInfo(sender_data);
 
-    let note = Note::transparent_stealth(stealth, value, sender_enc);
+    let note = Note::transparent_stealth(stealth, value, sender);
 
     assert_eq!(note.note_type(), NoteType::Transparent);
     assert_eq!(
@@ -83,10 +80,8 @@ fn transparent_stealth_note() -> Result<(), Error> {
     );
     assert_eq!(value, note.value(None)?);
     assert_eq!(stealth, *note.stealth_address());
-    assert_eq!(
-        sender_pk,
-        note.decrypt_sender(&receiver_sk.gen_note_sk(note.stealth_address()))
-    );
+    assert_eq!(Sender::ContractInfo(sender_data), *note.sender());
+    assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
     Ok(())
 }
@@ -125,8 +120,10 @@ fn obfuscated_note() -> Result<(), Error> {
     assert_eq!(value, note.value(Some(&receiver_vk))?);
     assert_eq!(
         sender_pk,
-        note.decrypt_sender(&receiver_sk.gen_note_sk(note.stealth_address()))
+        note.sender()
+            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
     );
+    assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
     Ok(())
 }
@@ -165,8 +162,10 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     assert_eq!(value_blinder, note.value_blinder(Some(&receiver_vk))?);
     assert_eq!(
         sender_pk,
-        note.decrypt_sender(&receiver_sk.gen_note_sk(note.stealth_address()))
+        note.sender()
+            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
     );
+    assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
     Ok(())
 }

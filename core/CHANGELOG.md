@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `Sender` struct [#222]
 - Add `encrypt_sender` function to encrypt the sender with the npk [#214]
 - Add `decrypt_sender` method to the `Note` [#214]
 - Add `elgamal::encrypt` and `elgamal::decrypt`
@@ -351,6 +352,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#222]: https://github.com/dusk-network/phoenix/issues/222
 [#214]: https://github.com/dusk-network/phoenix/issues/214
 [#208]: https://github.com/dusk-network/phoenix/issues/208
 [#201]: https://github.com/dusk-network/phoenix/issues/201
