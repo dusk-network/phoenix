@@ -69,7 +69,6 @@ impl TxSkeleton {
 
         let num_nullifiers = self.nullifiers.len() as u64;
         bytes.extend(num_nullifiers.to_bytes());
-
         self.nullifiers.iter().for_each(|nullifier| {
             bytes.extend(nullifier.to_bytes());
         });
@@ -88,9 +87,9 @@ impl TxSkeleton {
     pub fn from_slice(buf: &[u8]) -> Result<Self, BytesError> {
         let mut buffer = buf;
         let root = BlsScalar::from_reader(&mut buffer)?;
+
         let num_nullifiers = u64::from_reader(&mut buffer)?;
         let mut nullifiers = Vec::with_capacity(num_nullifiers as usize);
-
         for _ in 0..num_nullifiers {
             nullifiers.push(BlsScalar::from_reader(&mut buffer)?);
         }
