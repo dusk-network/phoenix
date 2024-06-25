@@ -160,158 +160,6 @@ impl TxOutputNote {
     }
 }
 
-/// Transaction gadget proving the following properties in ZK for a generic
-/// `I` [`TxInputNote`] and [`OUTPUT_NOTES`] (2) [`TxOutputNote`]:
-///
-/// 1. Membership: every [`TxInputNote`] is included in the Merkle tree of
-///    notes.
-/// 2. Ownership: the sender holds the note secret key for every
-///    [`TxInputNote`].
-/// 3. Nullification: the nullifier is calculated correctly.
-/// 4. Minting: the value commitment for every [`TxOutputNote`] is computed
-///    correctly.
-/// 5. Balance integrity: the sum of the values of all [`TxInputNote`] is equal
-///    to the sum of the values of all [`TxOutputNote`] + the gas fee + a
-///    deposit, where a deposit refers to funds being transfered to a contract.
-///
-/// The gadget appends the following public input values to the circuit:
-/// - `root`
-/// - `[nullifier; I]`
-/// - `[output_value_commitment; 2]`
-/// - `max_fee`
-/// - `deposit`
-fn nullify_gadget<const H: usize, const I: usize>(
-    composer: &mut Composer,
-    payload_hash: &Witness,
-    root: &BlsScalar,
-    tx_input_notes: &[TxInputNote<H>; I],
-    tx_output_notes: &[TxOutputNote; OUTPUT_NOTES],
-    max_fee: u64,
-    deposit: u64,
-) -> Result<(), Error> {
-    let root_pi = composer.append_public(*root);
-
-    let mut tx_input_notes_sum = Composer::ZERO;
-
-    // NULLIFY ALL TX INPUT NOTES
-    for tx_input_note in tx_input_notes {
-        // APPEND THE WITNESSES TO THE CIRCUIT
-        let w_tx_input_note = tx_input_note.append_to_circuit(composer);
-
-        // VERIFY THE DOUBLE KEY SCHNORR SIGNATURE
-        gadgets::verify_signature_double(
-            composer,
-            w_tx_input_note.signature_u,
-            w_tx_input_note.signature_r,
-            w_tx_input_note.signature_r_p,
-            w_tx_input_note.note_pk,
-            w_tx_input_note.note_pk_p,
-            *payload_hash,
-        )?;
-
-        // COMPUTE AND ASSERT THE NULLIFIER
-        let nullifier = HashGadget::digest(
-            composer,
-            Domain::Other,
-            &[
-                *w_tx_input_note.note_pk_p.x(),
-                *w_tx_input_note.note_pk_p.y(),
-                w_tx_input_note.pos,
-            ],
-        )[0];
-        composer.assert_equal(nullifier, w_tx_input_note.nullifier);
-
-        // PERFORM A RANGE CHECK ([0, 2^64 - 1]) ON THE VALUE OF THE NOTE
-        composer.component_range::<32>(w_tx_input_note.value);
-
-        // SUM UP ALL THE TX INPUT NOTE VALUES
-        let constraint = Constraint::new()
-            .left(1)
-            .a(tx_input_notes_sum)
-            .right(1)
-            .b(w_tx_input_note.value);
-        tx_input_notes_sum = composer.gate_add(constraint);
-
-        // COMMIT TO THE VALUE OF THE NOTE
-        let pc_1 = composer
-            .component_mul_generator(w_tx_input_note.value, GENERATOR)?;
-        let pc_2 = composer.component_mul_generator(
-            w_tx_input_note.value_blinder,
-            GENERATOR_NUMS,
-        )?;
-        let value_commitment = composer.component_add_point(pc_1, pc_2);
-
-        // COMPUTE THE NOTE HASH
-        let note_hash = HashGadget::digest(
-            composer,
-            Domain::Other,
-            &[
-                w_tx_input_note.note_type,
-                *value_commitment.x(),
-                *value_commitment.y(),
-                *w_tx_input_note.note_pk.x(),
-                *w_tx_input_note.note_pk.y(),
-                w_tx_input_note.pos,
-            ],
-        )[0];
-
-        // VERIFY THE MERKLE OPENING
-        let root =
-            opening_gadget(composer, &tx_input_note.merkle_opening, note_hash);
-        composer.assert_equal(root, root_pi);
-    }
-
-    let mut tx_output_sum = Composer::ZERO;
-
-    // COMMIT TO ALL TX OUTPUT NOTES
-    for tx_output_note in tx_output_notes {
-        // APPEND THE WITNESSES TO THE CIRCUIT
-        let value = composer.append_witness(tx_output_note.value);
-        let expected_value_commitment =
-            composer.append_public_point(tx_output_note.value_commitment);
-        let value_blinder =
-            composer.append_witness(tx_output_note.value_blinder);
-
-        // PERFORM A RANGE CHECK ([0, 2^64 - 1]) ON THE VALUE OF THE NOTE
-        composer.component_range::<32>(value);
-
-        // SUM UP ALL THE TX OUTPUT NOTE VALUES
-        let constraint =
-            Constraint::new().left(1).a(tx_output_sum).right(1).b(value);
-        tx_output_sum = composer.gate_add(constraint);
-
-        // COMMIT TO THE VALUE OF THE NOTE
-        let pc_1 = composer.component_mul_generator(value, GENERATOR)?;
-        let pc_2 =
-            composer.component_mul_generator(value_blinder, GENERATOR_NUMS)?;
-        let computed_value_commitment =
-            composer.component_add_point(pc_1, pc_2);
-
-        composer.assert_equal_point(
-            expected_value_commitment,
-            computed_value_commitment,
-        );
-    }
-
-    let max_fee = composer.append_public(max_fee);
-    let deposit = composer.append_public(deposit);
-
-    // SUM UP THE DEPOSIT AND THE MAX FEE
-    let constraint = Constraint::new()
-        .left(1)
-        .a(tx_output_sum)
-        .right(1)
-        .b(max_fee)
-        .fourth(1)
-        .d(deposit);
-    tx_output_sum = composer.gate_add(constraint);
-
-    // VERIFY BALANCE
-    composer.assert_equal(tx_input_notes_sum, tx_output_sum);
-
-    Ok(())
-}
-
 /// Declaration of the transaction circuit calling the [`gadget`].
 #[derive(Debug)]
 pub struct TxCircuit<const H: usize, const I: usize> {
@@ -418,6 +266,22 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
 }
 
 impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
+    /// Transaction gadget proving the following properties in ZK for a generic
+    /// `I` [`TxInputNote`] and [`OUTPUT_NOTES`] [`TxOutputNote`]:
+    ///
+    /// 1. Membership: every [`TxInputNote`] is included in the Merkle tree of
+    ///    notes.
+    /// 2. Ownership: the sender holds the note secret key for every
+    ///    [`TxInputNote`].
+    /// 3. Nullification: the nullifier is calculated correctly.
+    /// 4. Minting: the value commitment for every [`TxOutputNote`] is computed
+    ///    correctly.
+    /// 5. Balance integrity: the sum of the values of all [`TxInputNote`] is
+    ///    equal to the sum of the values of all [`TxOutputNote`] + the gas fee
+    ///    + a deposit, where a deposit refers to funds being transfered to a
+    ///    contract.
+    /// 6. Sender-data: Verify that the sender was encrypted correctly.
+    ///
     /// The circuit has the following public inputs:
     /// - `payload_hash`
     /// - `root`
@@ -432,18 +296,132 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         // Make the payload hash a public input of the circuit
         let payload_hash = composer.append_public(self.payload_hash);
 
-        // Nullify all the tx input notes
-        nullify_gadget::<H, I>(
-            composer,
-            &payload_hash,
-            &self.root,
-            &self.tx_input_notes,
-            &self.tx_output_notes,
-            self.max_fee,
-            self.deposit,
-        )?;
+        // Append the root as public input
+        let root_pi = composer.append_public(self.root);
 
-        // Prove correctness of the sender keys encryption
+        let mut tx_input_notes_sum = Composer::ZERO;
+
+        // Check membership, ownership and nullification of all input notes
+        for tx_input_note in &self.tx_input_notes {
+            let w_tx_input_note = tx_input_note.append_to_circuit(composer);
+
+            // Verify: 2. Ownership
+            gadgets::verify_signature_double(
+                composer,
+                w_tx_input_note.signature_u,
+                w_tx_input_note.signature_r,
+                w_tx_input_note.signature_r_p,
+                w_tx_input_note.note_pk,
+                w_tx_input_note.note_pk_p,
+                payload_hash,
+            )?;
+
+            // Verify: 3. Nullification
+            let nullifier = HashGadget::digest(
+                composer,
+                Domain::Other,
+                &[
+                    *w_tx_input_note.note_pk_p.x(),
+                    *w_tx_input_note.note_pk_p.y(),
+                    w_tx_input_note.pos,
+                ],
+            )[0];
+            composer.assert_equal(nullifier, w_tx_input_note.nullifier);
+
+            // Perform a range check ([0, 2^64 - 1]) on the value of the note
+            composer.component_range::<32>(w_tx_input_note.value);
+
+            // Sum up all the tx input note values
+            let constraint = Constraint::new()
+                .left(1)
+                .a(tx_input_notes_sum)
+                .right(1)
+                .b(w_tx_input_note.value);
+            tx_input_notes_sum = composer.gate_add(constraint);
+
+            // Commit to the value of the note
+            let pc_1 = composer
+                .component_mul_generator(w_tx_input_note.value, GENERATOR)?;
+            let pc_2 = composer.component_mul_generator(
+                w_tx_input_note.value_blinder,
+                GENERATOR_NUMS,
+            )?;
+            let value_commitment = composer.component_add_point(pc_1, pc_2);
+
+            // Compute the note hash
+            let note_hash = HashGadget::digest(
+                composer,
+                Domain::Other,
+                &[
+                    w_tx_input_note.note_type,
+                    *value_commitment.x(),
+                    *value_commitment.y(),
+                    *w_tx_input_note.note_pk.x(),
+                    *w_tx_input_note.note_pk.y(),
+                    w_tx_input_note.pos,
+                ],
+            )[0];
+
+            // Verify: 1. Membership
+            let root = opening_gadget(
+                composer,
+                &tx_input_note.merkle_opening,
+                note_hash,
+            );
+            composer.assert_equal(root, root_pi);
+        }
+
+        let mut tx_output_sum = Composer::ZERO;
+
+        // Commit to all tx output notes
+        for tx_output_note in &self.tx_output_notes {
+            // Append the witnesses to the circuit
+            let value = composer.append_witness(tx_output_note.value);
+            let expected_value_commitment =
+                composer.append_public_point(tx_output_note.value_commitment);
+            let value_blinder =
+                composer.append_witness(tx_output_note.value_blinder);
+
+            // Perform a range check ([0, 2^64 - 1]) on the value OF THE NOTE
+            composer.component_range::<32>(value);
+
+            // Sum up all the tx output note values
+            let constraint =
+                Constraint::new().left(1).a(tx_output_sum).right(1).b(value);
+            tx_output_sum = composer.gate_add(constraint);
+
+            // Commit to the value of the note
+            let pc_1 = composer.component_mul_generator(value, GENERATOR)?;
+            let pc_2 = composer
+                .component_mul_generator(value_blinder, GENERATOR_NUMS)?;
+            let computed_value_commitment =
+                composer.component_add_point(pc_1, pc_2);
+
+            // Verify: 4. Minting
+            composer.assert_equal_point(
+                expected_value_commitment,
+                computed_value_commitment,
+            );
+        }
+
+        // Append max_fee and deposit as public inputs
+        let max_fee = composer.append_public(self.max_fee);
+        let deposit = composer.append_public(self.deposit);
+
+        // Add the deposit and the max fee to the sum of the output-values
+        let constraint = Constraint::new()
+            .left(1)
+            .a(tx_output_sum)
+            .right(1)
+            .b(max_fee)
+            .fourth(1)
+            .d(deposit);
+        tx_output_sum = composer.gate_add(constraint);
+
+        // Verify: 5. Balance integrity
+        composer.assert_equal(tx_input_notes_sum, tx_output_sum);
+
+        // Verify: 6. Sender-data
         sender_enc::gadget(
             composer,
             self.sender_pk,
