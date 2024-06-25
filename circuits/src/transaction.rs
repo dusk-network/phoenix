@@ -29,13 +29,20 @@ use crate::sender_enc;
 /// suitable for being introduced in the transfer circuit
 #[derive(Debug, Clone)]
 pub struct TxInputNote<const H: usize> {
-    pub(crate) merkle_opening: Opening<(), H>,
-    pub(crate) note: Note,
-    pub(crate) note_pk_p: JubJubAffine,
-    pub(crate) value: u64,
-    pub(crate) value_blinder: JubJubScalar,
-    pub(crate) nullifier: BlsScalar,
-    pub(crate) signature: SignatureDouble,
+    /// the merkle opening for the note
+    pub merkle_opening: Opening<(), H>,
+    /// the input note
+    pub note: Note,
+    /// the note-public-key prime
+    pub note_pk_p: JubJubAffine,
+    /// the value associated to the note
+    pub value: u64,
+    /// the value blinder used to obfuscate the value
+    pub value_blinder: JubJubScalar,
+    /// the nullifier used to spend the note
+    pub nullifier: BlsScalar,
+    /// the signature of the payload-hash
+    pub signature: SignatureDouble,
 }
 
 #[derive(Debug, Clone)]
