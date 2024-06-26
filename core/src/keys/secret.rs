@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, Note, StealthAddress};
+use crate::{keys::hash, StealthAddress};
 
 use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
 use ff::Field;
@@ -88,16 +88,14 @@ impl SecretKey {
     }
 
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
-    pub fn owns(&self, note: &Note) -> bool {
-        let stealth = note.stealth_address();
-
-        let aR = stealth.R() * self.a();
+    pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
+        let aR = stealth_address.R() * self.a();
         let hash_aR = hash(&aR);
         let note_sk = hash_aR + self.b();
 
         let note_pk = GENERATOR_EXTENDED * note_sk;
 
-        stealth.note_pk().as_ref() == &note_pk
+        stealth_address.note_pk().as_ref() == &note_pk
     }
 }
 
