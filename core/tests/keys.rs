@@ -79,8 +79,8 @@ fn keys_consistency() {
         sender_blinder,
     );
 
-    assert!(receiver_vk.owns(&note));
-    assert!(receiver_sk.owns(&note));
+    assert!(receiver_vk.owns(note.stealth_address()));
+    assert!(receiver_sk.owns(note.stealth_address()));
 
     let wrong_sk = SecretKey::random(&mut rng);
     let wrong_vk = ViewKey::from(&wrong_sk);
@@ -88,8 +88,8 @@ fn keys_consistency() {
     assert_ne!(receiver_sk, wrong_sk);
     assert_ne!(receiver_vk, wrong_vk);
 
-    assert!(!wrong_vk.owns(&note));
-    assert!(!wrong_sk.owns(&note));
+    assert!(!wrong_vk.owns(note.stealth_address()));
+    assert!(!wrong_sk.owns(note.stealth_address()));
 
     let sa = receiver_pk.gen_stealth_address(&r);
 

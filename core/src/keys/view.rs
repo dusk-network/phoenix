@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, Note, SecretKey};
+use crate::{keys::hash, SecretKey, StealthAddress};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
@@ -63,15 +63,13 @@ impl ViewKey {
     }
 
     /// Checks `note_pk = H(R · a) · G + B`
-    pub fn owns(&self, note: &Note) -> bool {
-        let stealth = note.stealth_address();
-
-        let aR = stealth.R() * self.a();
+    pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
+        let aR = stealth_address.R() * self.a();
         let hash_aR = hash(&aR);
         let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
         let note_pk = hash_aR_G + self.B();
 
-        stealth.note_pk().as_ref() == &note_pk
+        stealth_address.note_pk().as_ref() == &note_pk
     }
 }
 

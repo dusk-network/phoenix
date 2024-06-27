@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Let `owns` take a `StealthAddress` instead of a `Note`
 - Rename `tx_max_fee` to `max_fee` [#214]
 - Add `sender_enc` field to the `Note` [#214]
 - Add `sender_blinder` parameter for `Note` contructors [#214]
