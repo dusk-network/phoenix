@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `Sender` struct [#222]
+
+### Changed
+
+- Let `owns` take a `StealthAddress` instead of a `Note`
+
 ## [0.29.0] - 2024-06-19
 
 ### Added
 
-- Add `Sender` struct [#222]
 - Add `encrypt_sender` function to encrypt the sender with the npk [#214]
 - Add `decrypt_sender` method to the `Note` [#214]
 - Add `elgamal::encrypt` and `elgamal::decrypt`
@@ -22,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Let `owns` take a `StealthAddress` instead of a `Note`
 - Rename `tx_max_fee` to `max_fee` [#214]
 - Add `sender_enc` field to the `Note` [#214]
 - Add `sender_blinder` parameter for `Note` contructors [#214]
