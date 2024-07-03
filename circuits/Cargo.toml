@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-circuits"
-version = "0.2.1-rc.0"
+version = "0.2.1"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/circuits"
 description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
@@ -10,7 +10,7 @@ exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-phoenix-core = { version = "0.30.0-rc", default-features = false, path = "../core" }
+phoenix-core = { version = "0.30", default-features = false, path = "../core" }
 dusk-plonk = { version = "0.19", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false }
 poseidon-merkle = { version = "0.6", features = ["rkyv-impl", "zk", "size_32"] }

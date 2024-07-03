@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-07-03
+
 ### Changed
 
 - Make `TxInputNote` fields public
@@ -66,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#169]: https://github.com/dusk-network/phoenix/issues/169
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.1.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.2.1...HEAD
+[0.2.1]: https://github.com/dusk-network/phoenix/compare/circuits_v0.2.0...circuits_v0.2.1
 [0.2.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.1.0...circuits_v0.2.0
 [0.1.0]: https://github.com/dusk-network/phoenix/releases/tag/circuits_v0.1.0
