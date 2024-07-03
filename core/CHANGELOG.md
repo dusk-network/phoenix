@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2024-07-03
+
 ### Added
 
 - Add `Sender` struct [#222]
@@ -398,7 +400,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/dusk-network/phoenix/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/dusk-network/phoenix/compare/v0.28.1...v0.29.0
 [0.28.1]: https://github.com/dusk-network/phoenix/compare/v0.28.0...v0.28.1
 [0.28.0]: https://github.com/dusk-network/phoenix/compare/v0.27.0...v0.28.0
