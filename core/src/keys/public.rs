@@ -16,7 +16,7 @@ use dusk_jubjub::GENERATOR_EXTENDED;
 use subtle::{Choice, ConstantTimeEq};
 
 /// Public pair of `a·G` and `b·G` defining a [`PublicKey`]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -71,8 +71,6 @@ impl PartialEq for PublicKey {
         self.ct_eq(other).into()
     }
 }
-
-impl Eq for PublicKey {}
 
 impl From<&SecretKey> for PublicKey {
     fn from(sk: &SecretKey) -> Self {

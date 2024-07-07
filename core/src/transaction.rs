@@ -19,7 +19,7 @@ use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use crate::{Note, OUTPUT_NOTES};
 
 /// A phoenix transaction, referred to as tx-skeleton in the specs.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),

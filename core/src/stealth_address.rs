@@ -18,7 +18,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 /// system.
 /// A `StealthAddress` is composed by a one-time note-public-key (the actual
 /// address) and a random point `R`.
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
