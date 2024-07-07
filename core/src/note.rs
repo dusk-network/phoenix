@@ -66,7 +66,7 @@ impl TryFrom<i32> for NoteType {
 }
 
 /// A note that does not encrypt its value
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -88,8 +88,6 @@ impl PartialEq for Note {
             && self.hash() == other.hash()
     }
 }
-
-impl Eq for Note {}
 
 impl Note {
     /// Creates a new phoenix output note

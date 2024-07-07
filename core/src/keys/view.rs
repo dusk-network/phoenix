@@ -19,7 +19,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 ///
 /// The notes are encrypted against secret a, so this is used to decrypt the
 /// blinding factor and value
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -42,8 +42,6 @@ impl PartialEq for ViewKey {
         self.a == other.a && self.ct_eq(other).into()
     }
 }
-
-impl Eq for ViewKey {}
 
 impl ViewKey {
     /// This method is used to construct a new `ViewKey` from the given
