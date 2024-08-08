@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - impl `Eq` for `StealthAddress`
 - impl `Eq` for `TxSkeleton`
 
+### Changed
+
+- Update `bls12_381-bls` dep to 0.4
+
 ## [0.30.0] - 2024-07-03
 
 ### Added
