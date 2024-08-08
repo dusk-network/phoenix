@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Delete `TxInputNoteWitness` struct [#229]
+- Delete `TxCircuit::new` constructor [#229]
+- Delete `TxOutputNote::new` constructor [#229]
+
+### Changed
+
+- Make all `TxCircuit` fields public [#229]
+- Make all `TxOutputNote` fields public [#229]
+- Move `sender_blinder` field from `TxCircuit` to `TxOutputNote` [#229]
+- Move `TxCircuit` from `transaction` module to root module [#229]
+- Rename `TxInputNote` to `InputNoteInfo` [#229]
+- Rename `TxOutputNote` to `OutputNoteInfo` [#229]
+
 ## [0.2.1] - 2024-07-03
 
 ### Changed
@@ -55,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#229]: https://github.com/dusk-network/phoenix/issues/229
 [#214]: https://github.com/dusk-network/phoenix/issues/214
 [#201]: https://github.com/dusk-network/phoenix/issues/201
 [#197]: https://github.com/dusk-network/phoenix/issues/197

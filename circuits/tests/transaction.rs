@@ -8,7 +8,7 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::{CryptoRng, RngCore};
 
-use dusk_jubjub::JubJubScalar;
+use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
 use dusk_plonk::prelude::*;
 use ff::Field;
 use jubjub_schnorr::{
@@ -16,9 +16,10 @@ use jubjub_schnorr::{
 };
 use poseidon_merkle::{Item, Tree};
 
-use phoenix_circuits::transaction::{TxCircuit, TxInputNote, TxOutputNote};
+use phoenix_circuits::{InputNoteInfo, OutputNoteInfo, TxCircuit};
 use phoenix_core::{
-    elgamal, value_commitment, Note, PublicKey, SecretKey, OUTPUT_NOTES,
+    elgamal, value_commitment, Note, PublicKey, SecretKey, ViewKey,
+    OUTPUT_NOTES,
 };
 
 #[macro_use]
@@ -30,7 +31,7 @@ const HEIGHT: usize = 17;
 
 struct TestingParameters {
     pp: PublicParameters,
-    tx_input_notes: [TxInputNote<HEIGHT>; 4],
+    input_notes_info: Vec<InputNoteInfo<HEIGHT>>,
     payload_hash: BlsScalar,
     root: BlsScalar,
     deposit: u64,
@@ -56,7 +57,7 @@ lazy_static! {
         let payload_hash = BlsScalar::from(1234u64);
 
         // create and insert into the tree 4 testing tx input notes
-        let tx_input_notes = create_test_tx_input_notes::<4>(
+        let input_notes_info = create_test_input_notes_information(
             &mut rng,
             &mut tree,
             &sender_sk,
@@ -100,7 +101,7 @@ lazy_static! {
 
         TestingParameters {
             pp,
-            tx_input_notes,
+            input_notes_info,
             payload_hash,
             root,
             deposit,
@@ -139,16 +140,20 @@ fn create_and_insert_test_note(
     note
 }
 
-fn create_test_tx_input_notes<const I: usize>(
+fn create_test_input_notes_information(
     rng: &mut (impl RngCore + CryptoRng),
     tree: &mut Tree<(), HEIGHT>,
     sender_sk: &SecretKey,
     payload_hash: BlsScalar,
-) -> [TxInputNote<HEIGHT>; I] {
+) -> Vec<InputNoteInfo<HEIGHT>> {
     let sender_pk = PublicKey::from(sender_sk);
+    let sender_vk = ViewKey::from(sender_sk);
+    let total_inputs = 4;
 
+    // we first need to crate all the notes and insert them into the tree before
+    // we can fetch their openings
     let mut notes = Vec::new();
-    for i in 0..I {
+    for i in 0..total_inputs {
         notes.push(create_and_insert_test_note(
             rng,
             tree,
@@ -158,30 +163,42 @@ fn create_test_tx_input_notes<const I: usize>(
         ));
     }
 
-    let mut input_notes = Vec::new();
-    for i in 0..I {
-        let merkle_opening = tree.opening(*notes[i].pos()).expect("Tree read.");
-        let input_note = TxInputNote::new(
-            rng,
-            &notes[i],
+    let mut input_notes_info = Vec::new();
+    for note in notes.into_iter() {
+        let note_sk = sender_sk.gen_note_sk(note.stealth_address());
+        let merkle_opening = tree
+            .opening(*note.pos())
+            .expect("There should be a note at the given position");
+        let note_pk_p =
+            JubJubAffine::from(GENERATOR_NUMS_EXTENDED * note_sk.as_ref());
+        let value = note
+            .value(Some(&sender_vk))
+            .expect("sender_sk should own the note");
+        let value_blinder = note
+            .value_blinder(Some(&sender_vk))
+            .expect("sender_sk should own the note");
+        let nullifier = note.gen_nullifier(&sender_sk);
+        let signature = note_sk.sign_double(rng, payload_hash);
+        input_notes_info.push(InputNoteInfo {
             merkle_opening,
-            sender_sk,
-            payload_hash,
-        )
-        .expect("Note created properly.");
-
-        input_notes.push(input_note);
+            note,
+            note_pk_p,
+            value,
+            value_blinder,
+            nullifier,
+            signature,
+        });
     }
 
-    input_notes.try_into().unwrap()
+    input_notes_info
 }
 
-fn create_tx_output_note(
+fn create_output_note_information(
     rng: &mut (impl RngCore + CryptoRng),
     value: u64,
     note_pk: JubJubAffine,
     sender_blinder: [JubJubScalar; 2],
-) -> TxOutputNote {
+) -> OutputNoteInfo {
     let value_blinder = JubJubScalar::random(&mut *rng);
     let value_commitment = value_commitment(value, value_blinder);
 
@@ -196,13 +213,14 @@ fn create_tx_output_note(
     let sender_enc_a = (sender_enc_a.0.into(), sender_enc_a.1.into());
     let sender_enc_b = (sender_enc_b.0.into(), sender_enc_b.1.into());
 
-    TxOutputNote::new(
+    OutputNoteInfo {
         value,
         value_commitment,
         value_blinder,
         note_pk,
-        [sender_enc_a, sender_enc_b],
-    )
+        sender_enc: [sender_enc_a, sender_enc_b],
+        sender_blinder,
+    }
 }
 
 #[test]
@@ -213,17 +231,17 @@ fn test_transfer_circuit_1_2() {
         Compiler::compile::<TxCircuit<HEIGHT, 1>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
-    let input_notes = [TP.tx_input_notes[0].clone()];
+    let input_notes_info = [TP.input_notes_info[0].clone()];
 
     // create 2 testing tx output notes
-    let tx_output_notes = [
-        create_tx_output_note(
+    let output_notes_info = [
+        create_output_note_information(
             &mut rng,
             10,
             TP.output_npk[0],
             TP.sender_blinder[0],
         ),
-        create_tx_output_note(
+        create_output_note_information(
             &mut rng,
             5,
             TP.output_npk[1],
@@ -234,17 +252,16 @@ fn test_transfer_circuit_1_2() {
     let (proof, public_inputs) = prover
         .prove(
             &mut rng,
-            &TxCircuit::new(
-                input_notes,
-                tx_output_notes,
-                TP.payload_hash,
-                TP.root,
-                TP.deposit,
-                TP.max_fee,
-                TP.sender_pk,
-                TP.signatures,
-                [TP.sender_blinder[0], TP.sender_blinder[1]],
-            ),
+            &TxCircuit {
+                input_notes_info,
+                output_notes_info,
+                payload_hash: TP.payload_hash,
+                root: TP.root,
+                deposit: TP.deposit,
+                max_fee: TP.max_fee,
+                sender_pk: TP.sender_pk,
+                signatures: TP.signatures,
+            },
         )
         .expect("failed to prove");
 
@@ -261,18 +278,20 @@ fn test_transfer_circuit_2_2() {
         Compiler::compile::<TxCircuit<HEIGHT, 2>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
-    let input_notes =
-        [TP.tx_input_notes[0].clone(), TP.tx_input_notes[1].clone()];
+    let input_notes_info = [
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[1].clone(),
+    ];
 
     // create 2 testing tx output notes
-    let tx_output_notes = [
-        create_tx_output_note(
+    let output_notes_info = [
+        create_output_note_information(
             &mut rng,
             35,
             TP.output_npk[0],
             TP.sender_blinder[0],
         ),
-        create_tx_output_note(
+        create_output_note_information(
             &mut rng,
             5,
             TP.output_npk[1],
@@ -283,17 +302,16 @@ fn test_transfer_circuit_2_2() {
     let (proof, public_inputs) = prover
         .prove(
             &mut rng,
-            &TxCircuit::new(
-                input_notes,
-                tx_output_notes,
-                TP.payload_hash,
-                TP.root,
-                TP.deposit,
-                TP.max_fee,
-                TP.sender_pk,
-                TP.signatures,
-                [TP.sender_blinder[0], TP.sender_blinder[1]],
-            ),
+            &TxCircuit {
+                input_notes_info,
+                output_notes_info,
+                payload_hash: TP.payload_hash,
+                root: TP.root,
+                deposit: TP.deposit,
+                max_fee: TP.max_fee,
+                sender_pk: TP.sender_pk,
+                signatures: TP.signatures,
+            },
         )
         .expect("failed to prove");
 
@@ -310,21 +328,21 @@ fn test_transfer_circuit_3_2() {
         Compiler::compile::<TxCircuit<HEIGHT, 3>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
-    let input_notes = [
-        TP.tx_input_notes[0].clone(),
-        TP.tx_input_notes[1].clone(),
-        TP.tx_input_notes[2].clone(),
+    let input_notes_info = [
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[1].clone(),
+        TP.input_notes_info[2].clone(),
     ];
 
     // create 2 testing tx output notes
-    let tx_output_notes = [
-        create_tx_output_note(
+    let output_notes_info = [
+        create_output_note_information(
             &mut rng,
             35,
             TP.output_npk[0],
             TP.sender_blinder[0],
         ),
-        create_tx_output_note(
+        create_output_note_information(
             &mut rng,
             30,
             TP.output_npk[1],
@@ -335,17 +353,16 @@ fn test_transfer_circuit_3_2() {
     let (proof, public_inputs) = prover
         .prove(
             &mut rng,
-            &TxCircuit::new(
-                input_notes,
-                tx_output_notes,
-                TP.payload_hash,
-                TP.root,
-                TP.deposit,
-                TP.max_fee,
-                TP.sender_pk,
-                TP.signatures,
-                [TP.sender_blinder[0], TP.sender_blinder[1]],
-            ),
+            &TxCircuit {
+                input_notes_info,
+                output_notes_info,
+                payload_hash: TP.payload_hash,
+                root: TP.root,
+                deposit: TP.deposit,
+                max_fee: TP.max_fee,
+                sender_pk: TP.sender_pk,
+                signatures: TP.signatures,
+            },
         )
         .expect("failed to prove");
 
@@ -362,15 +379,22 @@ fn test_transfer_circuit_4_2() {
         Compiler::compile::<TxCircuit<HEIGHT, 4>>(&TP.pp, LABEL)
             .expect("failed to compile circuit");
 
+    let input_notes_info = [
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[1].clone(),
+        TP.input_notes_info[2].clone(),
+        TP.input_notes_info[3].clone(),
+    ];
+
     // create 2 testing tx output notes
-    let tx_output_notes = [
-        create_tx_output_note(
+    let output_notes_info = [
+        create_output_note_information(
             &mut rng,
             60,
             TP.output_npk[0],
             TP.sender_blinder[0],
         ),
-        create_tx_output_note(
+        create_output_note_information(
             &mut rng,
             30,
             TP.output_npk[1],
@@ -381,17 +405,16 @@ fn test_transfer_circuit_4_2() {
     let (proof, public_inputs) = prover
         .prove(
             &mut rng,
-            &TxCircuit::new(
-                TP.tx_input_notes.clone(),
-                tx_output_notes,
-                TP.payload_hash,
-                TP.root,
-                TP.deposit,
-                TP.max_fee,
-                TP.sender_pk,
-                TP.signatures,
-                [TP.sender_blinder[0], TP.sender_blinder[1]],
-            ),
+            &TxCircuit {
+                input_notes_info,
+                output_notes_info,
+                payload_hash: TP.payload_hash,
+                root: TP.root,
+                deposit: TP.deposit,
+                max_fee: TP.max_fee,
+                sender_pk: TP.sender_pk,
+                signatures: TP.signatures,
+            },
         )
         .expect("failed to prove");
 
