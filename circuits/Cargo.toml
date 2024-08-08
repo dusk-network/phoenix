@@ -10,6 +10,7 @@ exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dusk-bytes = "0.1"
 phoenix-core = { version = "0.30", default-features = false, path = "../core" }
 dusk-plonk = { version = "0.19", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false }
