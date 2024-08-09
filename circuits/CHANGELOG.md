@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Serializable` trait implementation for `OutputNoteInfo` [#232]
 - Add `Clone` and `PartialEq` derives for `TxCircuit` [#232]
 - Add `PartialEq` derive for `InputNoteInfo` [#232]
+- Add associated const `TxCircuit::SIZE`
+- Add associated const `InputNoteInfo::SIZE`
 - Add `PartialEq` derive for `OutputNoteInfo` [#232]
 - Add `dusk-bls12_381` dependency [#235]
 - Add `"plonk"` feature to add the `dusk-plonk` dependency [#235]

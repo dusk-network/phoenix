@@ -39,12 +39,12 @@ fn tx_ciruit_1_2() -> Result<(), BytesError> {
 fn tx_ciruit_2_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    let circuit = random_circuit::<1>(&mut rng);
+    let circuit = random_circuit::<2>(&mut rng);
     let circuit_bytes = circuit.to_var_bytes();
 
     assert_eq!(
         circuit,
-        TxCircuit::<HEIGHT, 1>::from_slice(&circuit_bytes[..])?
+        TxCircuit::<HEIGHT, 2>::from_slice(&circuit_bytes[..])?
     );
 
     Ok(())
@@ -54,12 +54,12 @@ fn tx_ciruit_2_2() -> Result<(), BytesError> {
 fn tx_ciruit_3_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    let circuit = random_circuit::<1>(&mut rng);
+    let circuit = random_circuit::<3>(&mut rng);
     let circuit_bytes = circuit.to_var_bytes();
 
     assert_eq!(
         circuit,
-        TxCircuit::<HEIGHT, 1>::from_slice(&circuit_bytes[..])?
+        TxCircuit::<HEIGHT, 3>::from_slice(&circuit_bytes[..])?
     );
 
     Ok(())
@@ -69,12 +69,12 @@ fn tx_ciruit_3_2() -> Result<(), BytesError> {
 fn tx_ciruit_4_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
-    let circuit = random_circuit::<1>(&mut rng);
+    let circuit = random_circuit::<4>(&mut rng);
     let circuit_bytes = circuit.to_var_bytes();
 
     assert_eq!(
         circuit,
-        TxCircuit::<HEIGHT, 1>::from_slice(&circuit_bytes[..])?
+        TxCircuit::<HEIGHT, 4>::from_slice(&circuit_bytes[..])?
     );
 
     Ok(())
