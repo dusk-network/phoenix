@@ -35,3 +35,9 @@ jobs:
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
       test_flags: -p phoenix-circuits
+
+  test_circuits_no_default:
+    name: test cirucits no-default-features
+    uses: dusk-network/.github/.github/workflows/run-tests.yml@main
+    with:
+      test_flags: -p phoenix-circuits --no-default-features
