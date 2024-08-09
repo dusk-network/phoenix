@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-core"
-version = "0.30.0"
+version = "0.31.0-rc.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
