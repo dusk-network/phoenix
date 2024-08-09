@@ -4,8 +4,14 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_EXTENDED};
-use dusk_plonk::prelude::*;
+#![cfg(feature = "plonk")]
+
+use dusk_jubjub::{
+    JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
+};
+use dusk_plonk::prelude::{
+    Circuit, Compiler, Composer, Error as PlonkError, PublicParameters,
+};
 use ff::Field;
 use phoenix_circuits::elgamal::{decrypt_gadget, encrypt_gadget};
 use phoenix_core::{elgamal, PublicKey, SecretKey};
@@ -46,7 +52,7 @@ impl ElGamalCircuit {
 }
 
 impl Circuit for ElGamalCircuit {
-    fn circuit(&self, composer: &mut Composer) -> Result<(), Error> {
+    fn circuit(&self, composer: &mut Composer) -> Result<(), PlonkError> {
         // IMPORT INPUTS
         let public_key = composer.append_point(self.public_key);
         let secret_key = composer.append_witness(self.secret_key);

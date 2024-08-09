@@ -4,12 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+#![cfg(feature = "plonk")]
+
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::{CryptoRng, RngCore};
 
+use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
-use dusk_plonk::prelude::*;
+use dusk_plonk::prelude::{Compiler, PublicParameters};
 use ff::Field;
 use jubjub_schnorr::{
     SecretKey as SchnorrSecretKey, Signature as SchnorrSignature,

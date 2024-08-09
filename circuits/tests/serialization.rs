@@ -8,9 +8,9 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand::{CryptoRng, Rng, RngCore};
 
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_EXTENDED};
-use dusk_plonk::prelude::*;
 use ff::Field;
 use jubjub_schnorr::{Signature as SchnorrSignature, SignatureDouble};
 use poseidon_merkle::{Item, Tree};

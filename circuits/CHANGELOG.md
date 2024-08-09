@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move `TxCircuit` from `transaction` module to root module [#229]
 - Rename `TxInputNote` to `InputNoteInfo` [#229]
 - Rename `TxOutputNote` to `OutputNoteInfo` [#229]
+- Move `ff` and `rand` dependencies to dev-dependencies [#235]
 
 ### Added
 
@@ -31,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Clone` and `PartialEq` derives for `TxCircuit` [#232]
 - Add `PartialEq` derive for `InputNoteInfo` [#232]
 - Add `PartialEq` derive for `OutputNoteInfo` [#232]
+- Add `dusk-bls12_381` dependency [#235]
+- Add `"plonk"` feature to add the `dusk-plonk` dependency [#235]
+- Add `"plonk"` feature as default feature [#235]
 
 ## [0.2.1] - 2024-07-03
 
@@ -80,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#235]: https://github.com/dusk-network/phoenix/issues/235
 [#232]: https://github.com/dusk-network/phoenix/issues/232
 [#229]: https://github.com/dusk-network/phoenix/issues/229
 [#214]: https://github.com/dusk-network/phoenix/issues/214
