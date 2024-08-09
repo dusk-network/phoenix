@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename `TxInputNote` to `InputNoteInfo` [#229]
 - Rename `TxOutputNote` to `OutputNoteInfo` [#229]
 
+### Added
+
+- Add `dusk-bytes` dependency at v0.1 [#232]
+- Add `TxCircuit::from_slice` and `TxCircuit::to_var_bytes` [#232]
+- Add `InputNoteInfo::from_slice` and `InputNoteInfo::to_var_bytes` [#232]
+- Add `Serializable` trait implementation for `OutputNoteInfo` [#232]
+- Add `Clone` and `PartialEq` derives for `TxCircuit` [#232]
+- Add `PartialEq` derive for `InputNoteInfo` [#232]
+- Add `PartialEq` derive for `OutputNoteInfo` [#232]
+
 ## [0.2.1] - 2024-07-03
 
 ### Changed
@@ -70,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#232]: https://github.com/dusk-network/phoenix/issues/232
 [#229]: https://github.com/dusk-network/phoenix/issues/229
 [#214]: https://github.com/dusk-network/phoenix/issues/214
 [#201]: https://github.com/dusk-network/phoenix/issues/201

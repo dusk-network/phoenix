@@ -16,11 +16,12 @@ mod sender_enc;
 /// ElGamal asymmetric cipher
 pub use encryption::elgamal;
 
+use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR, GENERATOR_NUMS};
 use dusk_plonk::prelude::*;
 use dusk_poseidon::{Domain, HashGadget};
 use jubjub_schnorr::{gadgets, Signature as SchnorrSignature, SignatureDouble};
-use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree};
+use poseidon_merkle::{zk::opening_gadget, Item, Opening, Tree, ARITY};
 
 use phoenix_core::{Note, PublicKey, SecretKey, OUTPUT_NOTES};
 
@@ -28,7 +29,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 /// Declaration of the transaction circuit calling the [`gadget`].
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TxCircuit<const H: usize, const I: usize> {
     /// All information needed in relation to the transaction input-notes
     pub input_notes_info: [InputNoteInfo<H>; I],
@@ -209,7 +210,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         composer.assert_equal(input_notes_sum, tx_output_sum);
 
         // Verify: 6. Sender-data
-        // appends as public input the note-pk of both output-noes:
+        // appends as public input the note-pk of both output-notes:
         // `(npk_out_0, npk_out_1)`
         // and the encryption of the sender-pk.A and sender-pk.B,
         // encrypted first with the note-pk of one output note:
@@ -234,6 +235,88 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         )?;
 
         Ok(())
+    }
+}
+
+impl<const H: usize, const I: usize> TxCircuit<H, I> {
+    const SIZE: usize = I * InputNoteInfo::<H>::SIZE
+        + OUTPUT_NOTES * OutputNoteInfo::SIZE
+        + 2 * BlsScalar::SIZE
+        + 2 * u64::SIZE
+        + PublicKey::SIZE
+        + 2 * SchnorrSignature::SIZE;
+
+    /// Serialize a [`TxCircuit`] to a vector of bytes.
+    // Once the new implementation of the `Serializable` trait becomes
+    // available, we will want that instead, but for the time being we use
+    // this implementation.
+    pub fn to_var_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(Self::SIZE);
+
+        for info in self.input_notes_info.iter() {
+            bytes.extend(info.to_var_bytes());
+        }
+        for info in self.output_notes_info.iter() {
+            bytes.extend(info.to_bytes());
+        }
+        bytes.extend(self.payload_hash.to_bytes());
+        bytes.extend(self.root.to_bytes());
+        bytes.extend(self.deposit.to_bytes());
+        bytes.extend(self.max_fee.to_bytes());
+        bytes.extend(self.sender_pk.to_bytes());
+        bytes.extend(self.signatures.0.to_bytes());
+        bytes.extend(self.signatures.1.to_bytes());
+
+        bytes
+    }
+
+    /// Deserialize a [`TxCircuit`] from a slice of bytes.
+    ///
+    /// # Errors
+    ///
+    /// Will return [`dusk_bytes::Error`] in case of a deserialization error.
+    // Once the new implementation of the `Serializable` trait becomes
+    // available, we will want that instead, but for the time being we use
+    // this implementation.
+    pub fn from_slice(bytes: &[u8]) -> Result<Self, BytesError> {
+        if bytes.len() < Self::SIZE {
+            return Err(BytesError::BadLength {
+                found: bytes.len(),
+                expected: Self::SIZE,
+            });
+        }
+
+        let mut input_notes_info = Vec::new();
+        for _ in 0..I {
+            input_notes_info.push(InputNoteInfo::from_slice(bytes)?);
+        }
+
+        let mut reader = &bytes[I * InputNoteInfo::<H>::SIZE..];
+
+        let output_notes_info = [
+            OutputNoteInfo::from_reader(&mut reader)?,
+            OutputNoteInfo::from_reader(&mut reader)?,
+        ];
+        let payload_hash = BlsScalar::from_reader(&mut reader)?;
+        let root = BlsScalar::from_reader(&mut reader)?;
+        let deposit = u64::from_reader(&mut reader)?;
+        let max_fee = u64::from_reader(&mut reader)?;
+        let sender_pk = PublicKey::from_reader(&mut reader)?;
+        let signature_0 = SchnorrSignature::from_reader(&mut reader)?;
+        let signature_1 = SchnorrSignature::from_reader(&mut reader)?;
+
+        Ok(Self {
+            input_notes_info: input_notes_info
+                .try_into()
+                .expect("The vector has exactly I elements"),
+            output_notes_info,
+            payload_hash,
+            root,
+            deposit,
+            max_fee,
+            sender_pk,
+            signatures: (signature_0, signature_1),
+        })
     }
 }
 
@@ -300,21 +383,21 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
 
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction input-notes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct InputNoteInfo<const H: usize> {
-    /// the merkle opening for the note
+    /// The merkle opening for the note
     pub merkle_opening: Opening<(), H>,
-    /// the input note
+    /// The input note
     pub note: Note,
-    /// the note-public-key prime
+    /// The note-public-key prime
     pub note_pk_p: JubJubAffine,
-    /// the value associated to the note
+    /// The value associated to the note
     pub value: u64,
-    /// the value blinder used to obfuscate the value
+    /// The value blinder used to obfuscate the value
     pub value_blinder: JubJubScalar,
-    /// the nullifier used to spend the note
+    /// The nullifier used to spend the note
     pub nullifier: BlsScalar,
-    /// the signature of the payload-hash, signed with the note-sk
+    /// The signature of the payload-hash, signed with the note-sk
     pub signature: SignatureDouble,
 }
 
@@ -365,11 +448,78 @@ impl<const H: usize> InputNoteInfo<H> {
             signature_r_p,
         )
     }
+
+    const SIZE: usize = (1 + H * ARITY) * Item::SIZE
+        + H * (u32::BITS as usize / 8)
+        + Note::SIZE
+        + JubJubAffine::SIZE
+        + u64::SIZE
+        + JubJubScalar::SIZE
+        + BlsScalar::SIZE
+        + SignatureDouble::SIZE;
+
+    /// Serialize an [`InputNoteInfo`] to a vector of bytes.
+    // Once the new implementation of the `Serializable` trait becomes
+    // available, we will want that instead, but for the time being we use
+    // this implementation.
+    pub fn to_var_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(Self::SIZE);
+
+        bytes.extend(self.merkle_opening.to_var_bytes());
+        bytes.extend(self.note.to_bytes());
+        bytes.extend(self.note_pk_p.to_bytes());
+        bytes.extend(self.value.to_bytes());
+        bytes.extend(self.value_blinder.to_bytes());
+        bytes.extend(self.nullifier.to_bytes());
+        bytes.extend(self.signature.to_bytes());
+
+        bytes
+    }
+
+    /// Deserialize an [`InputNoteInfo`] from a slice of bytes.
+    ///
+    /// # Errors
+    ///
+    /// Will return [`dusk_bytes::Error`] in case of a deserialization error.
+    // Once the new implementation of the `Serializable` trait becomes
+    // available, we will want that instead, but for the time being we use
+    // this implementation.
+    pub fn from_slice(bytes: &[u8]) -> Result<Self, BytesError> {
+        if bytes.len() < Self::SIZE {
+            return Err(BytesError::BadLength {
+                found: bytes.len(),
+                expected: Self::SIZE,
+            });
+        }
+
+        let merkle_opening_size =
+            (1 + H * ARITY) * Item::SIZE + H * (u32::BITS as usize / 8);
+        let merkle_opening =
+            Opening::<(), H>::from_slice(&bytes[..merkle_opening_size])?;
+
+        let mut buf = &bytes[merkle_opening_size..];
+        let note = Note::from_reader(&mut buf)?;
+        let note_pk_p = JubJubAffine::from_reader(&mut buf)?;
+        let value = u64::from_reader(&mut buf)?;
+        let value_blinder = JubJubScalar::from_reader(&mut buf)?;
+        let nullifier = BlsScalar::from_reader(&mut buf)?;
+        let signature = SignatureDouble::from_reader(&mut buf)?;
+
+        Ok(Self {
+            merkle_opening,
+            note,
+            note_pk_p,
+            value,
+            value_blinder,
+            nullifier,
+            signature,
+        })
+    }
 }
 
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction output-notes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct OutputNoteInfo {
     /// The value of the note
     pub value: u64,
@@ -377,10 +527,84 @@ pub struct OutputNoteInfo {
     pub value_commitment: JubJubAffine,
     /// The blinder used to calculate the value commitment
     pub value_blinder: JubJubScalar,
-    /// the public key of the note
+    /// The public key of the note
     pub note_pk: JubJubAffine,
     /// The encrypted sender information of the note
     pub sender_enc: [(JubJubAffine, JubJubAffine); 2],
     /// The blinder used to encrypt the sender
     pub sender_blinder: [JubJubScalar; 2],
+}
+
+const OUTPUT_NOTE_INFO_SIZE: usize = u64::SIZE
+    + JubJubAffine::SIZE
+    + JubJubScalar::SIZE
+    + JubJubAffine::SIZE
+    + 4 * JubJubAffine::SIZE
+    + 2 * JubJubScalar::SIZE;
+
+impl Serializable<OUTPUT_NOTE_INFO_SIZE> for OutputNoteInfo {
+    type Error = BytesError;
+
+    fn to_bytes(&self) -> [u8; Self::SIZE] {
+        let mut bytes = [0u8; Self::SIZE];
+        let mut offset = 0;
+
+        bytes[..u64::SIZE].copy_from_slice(&self.value.to_bytes());
+        offset += u64::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.value_commitment.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubScalar::SIZE]
+            .copy_from_slice(&self.value_blinder.to_bytes());
+        offset += JubJubScalar::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.note_pk.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[0].0.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[0].1.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[1].0.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubAffine::SIZE]
+            .copy_from_slice(&self.sender_enc[1].1.to_bytes());
+        offset += JubJubAffine::SIZE;
+        bytes[offset..offset + JubJubScalar::SIZE]
+            .copy_from_slice(&self.sender_blinder[0].to_bytes());
+        offset += JubJubScalar::SIZE;
+        bytes[offset..offset + JubJubScalar::SIZE]
+            .copy_from_slice(&self.sender_blinder[1].to_bytes());
+
+        bytes
+    }
+
+    fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
+        let mut reader = &bytes[..];
+
+        let value = u64::from_reader(&mut reader)?;
+        let value_commitment = JubJubAffine::from_reader(&mut reader)?;
+        let value_blinder = JubJubScalar::from_reader(&mut reader)?;
+        let note_pk = JubJubAffine::from_reader(&mut reader)?;
+        let sender_enc_0_0 = JubJubAffine::from_reader(&mut reader)?;
+        let sender_enc_0_1 = JubJubAffine::from_reader(&mut reader)?;
+        let sender_enc_1_0 = JubJubAffine::from_reader(&mut reader)?;
+        let sender_enc_1_1 = JubJubAffine::from_reader(&mut reader)?;
+        let sender_blinder_0 = JubJubScalar::from_reader(&mut reader)?;
+        let sender_blinder_1 = JubJubScalar::from_reader(&mut reader)?;
+
+        Ok(Self {
+            value,
+            value_commitment,
+            value_blinder,
+            note_pk,
+            sender_enc: [
+                (sender_enc_0_0, sender_enc_0_1),
+                (sender_enc_1_0, sender_enc_1_1),
+            ],
+            sender_blinder: [sender_blinder_0, sender_blinder_1],
+        })
+    }
 }
