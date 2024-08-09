@@ -54,7 +54,8 @@ pub struct TxCircuit<const H: usize, const I: usize> {
 }
 
 impl<const H: usize, const I: usize> TxCircuit<H, I> {
-    const SIZE: usize = I * InputNoteInfo::<H>::SIZE
+    /// The size of a `TxCircuit`.
+    pub const SIZE: usize = I * InputNoteInfo::<H>::SIZE
         + OUTPUT_NOTES * OutputNoteInfo::SIZE
         + 2 * BlsScalar::SIZE
         + 2 * u64::SIZE
@@ -102,8 +103,9 @@ impl<const H: usize, const I: usize> TxCircuit<H, I> {
         }
 
         let mut input_notes_info = Vec::new();
-        for _ in 0..I {
-            input_notes_info.push(InputNoteInfo::from_slice(bytes)?);
+        for i in 0..I {
+            let start = i * InputNoteInfo::<H>::SIZE;
+            input_notes_info.push(InputNoteInfo::from_slice(&bytes[start..])?);
         }
 
         let mut reader = &bytes[I * InputNoteInfo::<H>::SIZE..];
@@ -217,7 +219,8 @@ pub struct InputNoteInfo<const H: usize> {
 }
 
 impl<const H: usize> InputNoteInfo<H> {
-    const SIZE: usize = (1 + H * ARITY) * Item::SIZE
+    /// The size of an `InputNoteInfo`
+    pub const SIZE: usize = (1 + H * ARITY) * Item::SIZE
         + H * (u32::BITS as usize / 8)
         + Note::SIZE
         + JubJubAffine::SIZE
