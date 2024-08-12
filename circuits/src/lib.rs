@@ -27,6 +27,9 @@ use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use jubjub_schnorr::{Signature as SchnorrSignature, SignatureDouble};
 use poseidon_merkle::{Item, Opening, Tree, ARITY};
 
+#[cfg(feature = "rkyv-impl")]
+use rkyv::{Archive, Deserialize, Serialize};
+
 use phoenix_core::{Note, PublicKey, SecretKey, OUTPUT_NOTES};
 
 extern crate alloc;
@@ -34,6 +37,11 @@ use alloc::vec::Vec;
 
 /// Declaration of the transaction circuit calling the [`gadget`].
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct TxCircuit<const H: usize, const I: usize> {
     /// All information needed in relation to the transaction input-notes
     pub input_notes_info: [InputNoteInfo<H>; I],
@@ -201,6 +209,11 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction input-notes.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct InputNoteInfo<const H: usize> {
     /// The merkle opening for the note
     pub merkle_opening: Opening<(), H>,
@@ -291,6 +304,11 @@ impl<const H: usize> InputNoteInfo<H> {
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction output-notes.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(
+    feature = "rkyv-impl",
+    derive(Archive, Serialize, Deserialize),
+    archive_attr(derive(bytecheck::CheckBytes))
+)]
 pub struct OutputNoteInfo {
     /// The value of the note
     pub value: u64,

@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `dusk-bls12_381` dependency [#235]
 - Add `"plonk"` feature to add the `dusk-plonk` dependency [#235]
 - Add `"plonk"` feature as default feature [#235]
+- Add `"rkyv-impl"` feature
+- Add rkyv dependencies behind `rkyv-impl` feature
+- Add rkyv derives for `TxCircuit`, `InputNoteInfo` and `OutputNoteInfo`
 
 ## [0.2.1] - 2024-07-03
 
