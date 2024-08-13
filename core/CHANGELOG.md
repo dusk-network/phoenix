@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update `bls12_381-bls` dep to 0.4
 
+### Fixed
+
+- Fix panic when attempting to decrypt the note with an incorrect view-key [#240]
+
 ## [0.30.0] - 2024-07-03
 
 ### Added
@@ -370,6 +374,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#240]: https://github.com/dusk-network/phoenix/issues/240
 [#222]: https://github.com/dusk-network/phoenix/issues/222
 [#214]: https://github.com/dusk-network/phoenix/issues/214
 [#208]: https://github.com/dusk-network/phoenix/issues/208
