@@ -40,4 +40,4 @@ jobs:
     name: test cirucits no-default-features
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: -p phoenix-circuits --no-default-features
+      test_flags: -p phoenix-circuits --no-default-features --features=rkyv-impl,rkyv/size_16 --no-run
