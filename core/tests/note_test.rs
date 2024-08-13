@@ -169,3 +169,29 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
 
     Ok(())
 }
+
+#[test]
+fn note_not_owned() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let owner_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let value_blinder = JubJubScalar::random(&mut rng);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+
+    let note = Note::obfuscated(
+        &mut rng,
+        &owner_pk,
+        &owner_pk,
+        42,
+        value_blinder,
+        sender_blinder,
+    );
+
+    let not_owner_sk = SecretKey::random(&mut rng);
+    let not_owner_vk = ViewKey::from(&not_owner_sk);
+
+    assert!(note.value(Some(&not_owner_vk)).is_err());
+}

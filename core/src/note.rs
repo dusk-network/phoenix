@@ -233,7 +233,7 @@ impl Note {
     fn decrypt_value(
         &self,
         vk: &ViewKey,
-    ) -> Result<(u64, JubJubScalar), BytesError> {
+    ) -> Result<(u64, JubJubScalar), Error> {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
 
@@ -249,7 +249,7 @@ impl Note {
             match JubJubScalar::from_slice(&dec_plaintext[u64::SIZE..])?.into()
             {
                 Some(scalar) => scalar,
-                None => return Err(BytesError::InvalidData),
+                None => return Err(Error::InvalidData),
             };
 
         Ok((value, value_blinder))
@@ -337,10 +337,9 @@ impl Note {
                     u64::from_slice(&self.value_enc[..u64::SIZE]).unwrap();
                 Ok(value)
             }
-            (NoteType::Obfuscated, Some(vk)) => self
-                .decrypt_value(vk)
-                .map(|(value, _)| value)
-                .map_err(|_| Error::InvalidEncryption),
+            (NoteType::Obfuscated, Some(vk)) => {
+                self.decrypt_value(vk).map(|(value, _)| value)
+            }
             _ => Err(Error::MissingViewKey),
         }
     }
@@ -356,8 +355,7 @@ impl Note {
             (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
             (NoteType::Obfuscated, Some(vk)) => self
                 .decrypt_value(vk)
-                .map(|(_, value_blinder)| value_blinder)
-                .map_err(|_| Error::InvalidEncryption),
+                .map(|(_, value_blinder)| value_blinder),
             _ => Err(Error::MissingViewKey),
         }
     }
