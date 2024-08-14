@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2024-08-14
+
+### Changed
+
+- Update dusk-poseidon to v0.40
+- Update jubjub-schnorr to v0.5
+
 ## [0.31.0] - 2024-08-14
 
 ### Added
@@ -416,7 +423,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/dusk-network/phoenix/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/dusk-network/phoenix/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/dusk-network/phoenix/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/dusk-network/phoenix/compare/v0.28.1...v0.29.0

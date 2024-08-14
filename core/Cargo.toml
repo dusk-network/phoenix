@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-core"
-version = "0.31.0"
+version = "0.32.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
@@ -13,8 +13,8 @@ dusk-bytes = "0.1"
 dusk-bls12_381 = { version = "0.13", default-features = false }
 bls12_381-bls = { version = "0.4", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false, features = ["zeroize"] }
-dusk-poseidon = "0.39"
-jubjub-schnorr = "0.4"
+dusk-poseidon = "0.40"
+jubjub-schnorr = "0.5"
 subtle = { version = "^2.2.1", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc", "rand_core"] }
