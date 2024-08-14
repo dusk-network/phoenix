@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2024-08-14
+
 ### Removed
 
 - Delete `TxInputNoteWitness` struct [#229]
@@ -105,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#169]: https://github.com/dusk-network/phoenix/issues/169
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.2.1...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.3.0...HEAD
+[0.3.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.2.1...circuits_v0.3.0
 [0.2.1]: https://github.com/dusk-network/phoenix/compare/circuits_v0.2.0...circuits_v0.2.1
 [0.2.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.1.0...circuits_v0.2.0
 [0.1.0]: https://github.com/dusk-network/phoenix/releases/tag/circuits_v0.1.0
