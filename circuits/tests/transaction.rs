@@ -425,3 +425,63 @@ fn test_transfer_circuit_4_2() {
         .verify(&proof, &public_inputs)
         .expect("failed to verify proof");
 }
+
+#[test]
+fn test_double_spend() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let (prover, verifier) =
+        Compiler::compile::<TxCircuit<HEIGHT, 4>>(&TP.pp, LABEL)
+            .expect("failed to compile circuit");
+
+    // use 4 duplicates of the same input
+    let input_notes_info = [
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[0].clone(),
+        TP.input_notes_info[0].clone(),
+    ];
+
+    // set that our four duplicates contain (summed) 4x their real value
+    let output_notes_info = [
+        create_output_note_information(
+            &mut rng,
+            60,
+            TP.output_npk[0],
+            TP.sender_blinder[0],
+        ),
+        create_output_note_information(
+            &mut rng,
+            30,
+            TP.output_npk[1],
+            TP.sender_blinder[1],
+        ),
+    ];
+
+    match prover.prove(
+        &mut rng,
+        &TxCircuit {
+            input_notes_info,
+            output_notes_info,
+            payload_hash: TP.payload_hash,
+            root: TP.root,
+            deposit: TP.deposit,
+            max_fee: TP.max_fee,
+            sender_pk: TP.sender_pk,
+            signatures: TP.signatures,
+        },
+    ) {
+        Ok((proof, public_inputs)) => {
+            println!("Being able to prove this already pretty bad. Now does it verify?");
+
+            let err = verifier.verify(&proof, &public_inputs).expect_err(
+                "This should fail to verify since it is a double spend (quadruple really)",
+            );
+
+            println!("Phew we're out of the woods with error: {err:?}");
+        }
+        Err(err) => {
+            println!("Phew we're out of the woods with error: {err:?}");
+        }
+    }
+}
