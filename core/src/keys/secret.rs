@@ -42,6 +42,11 @@ use subtle::{Choice, ConstantTimeEq};
 ///
 /// sk.zeroize();
 /// ```
+///
+/// # Note
+/// Implementing `ZeroizeOnDrop` seems like an excellent way to lift the burden
+/// of manually zeroizing after use off the user, but unfortunately it doesn't
+/// delete the memory reliably. See #244
 #[derive(Clone, Eq, Debug, Zeroize)]
 #[cfg_attr(
     feature = "rkyv-impl",
