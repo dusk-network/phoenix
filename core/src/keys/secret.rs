@@ -89,11 +89,9 @@ impl SecretKey {
 
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
-        let aR = stealth_address.R() * self.a();
-        let hash_aR = hash(&aR);
-        let note_sk = hash_aR + self.b();
+        let note_sk = self.gen_note_sk(stealth_address);
 
-        let note_pk = GENERATOR_EXTENDED * note_sk;
+        let note_pk = GENERATOR_EXTENDED * note_sk.as_ref();
 
         stealth_address.note_pk().as_ref() == &note_pk
     }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
+
 ## [0.32.0] - 2024-08-14
 
 ### Changed
