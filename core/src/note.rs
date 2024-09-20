@@ -65,7 +65,7 @@ impl TryFrom<i32> for NoteType {
     }
 }
 
-/// A note that does not encrypt its value
+/// Phoenix Note struct
 #[derive(Clone, Debug, Eq)]
 #[cfg_attr(
     feature = "rkyv-impl",
