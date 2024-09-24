@@ -21,7 +21,7 @@ use phoenix_core::{Note, PublicKey, SecretKey};
 const HEIGHT: usize = 17;
 
 #[test]
-fn tx_ciruit_1_2() -> Result<(), BytesError> {
+fn tx_circuit_1_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
     let circuit = random_circuit::<1>(&mut rng);
@@ -36,7 +36,7 @@ fn tx_ciruit_1_2() -> Result<(), BytesError> {
 }
 
 #[test]
-fn tx_ciruit_2_2() -> Result<(), BytesError> {
+fn tx_circuit_2_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
     let circuit = random_circuit::<2>(&mut rng);
@@ -51,7 +51,7 @@ fn tx_ciruit_2_2() -> Result<(), BytesError> {
 }
 
 #[test]
-fn tx_ciruit_3_2() -> Result<(), BytesError> {
+fn tx_circuit_3_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
     let circuit = random_circuit::<3>(&mut rng);
@@ -66,7 +66,7 @@ fn tx_ciruit_3_2() -> Result<(), BytesError> {
 }
 
 #[test]
-fn tx_ciruit_4_2() -> Result<(), BytesError> {
+fn tx_circuit_4_2() -> Result<(), BytesError> {
     let mut rng = StdRng::seed_from_u64(0xbeef);
 
     let circuit = random_circuit::<4>(&mut rng);
