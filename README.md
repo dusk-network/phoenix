@@ -8,4 +8,4 @@ Unlike transparent transaction models, where it is easy to monitor which notes w
 To prevent double spending, transactions include a list of deterministic values called nullifiers, one for each note being spent, which invalidates these notes.
 The idea here is that the nullifier is computed in such a way that an external observer cannot link it to any specific note. This way, when a transaction is accepted, the network knows that some notes are nullified and can no longer be spent, but does not know which ones.
 
-Please refer to the [docs](https://github.com/dusk-network/phoenix/blob/master/docs/protocol-description.pdf) for more detail.
+Please refer to the [docs](https://github.com/dusk-network/phoenix/blob/master/docs/v2/protocol.pdf) for more detail.
