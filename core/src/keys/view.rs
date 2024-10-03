@@ -32,14 +32,13 @@ pub struct ViewKey {
 
 impl ConstantTimeEq for ViewKey {
     fn ct_eq(&self, other: &Self) -> Choice {
-        // TODO - Why self.a is not checked?
-        self.B.ct_eq(&other.B)
+        self.a.ct_eq(&other.a) & self.B.ct_eq(&other.B)
     }
 }
 
 impl PartialEq for ViewKey {
     fn eq(&self, other: &Self) -> bool {
-        self.a == other.a && self.ct_eq(other).into()
+        self.ct_eq(other).into()
     }
 }
 

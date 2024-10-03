@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
+- `ViewKey` now checks both `a` and `B` in `ct_eq()`
 
 ## [0.32.0] - 2024-08-14
 
