@@ -22,7 +22,7 @@ mod transaction;
 /// The number of output notes in a transaction
 pub const OUTPUT_NOTES: usize = 2;
 
-pub use encryption::{aes, elgamal};
+pub use encryption::aes;
 pub use error::Error;
 pub use keys::hash;
 pub use keys::public::PublicKey;

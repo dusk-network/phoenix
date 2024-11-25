@@ -6,5 +6,3 @@
 
 /// AES symmetric cipher
 pub mod aes;
-/// ElGamal asymmetric encryption
-pub mod elgamal;
