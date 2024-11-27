@@ -14,6 +14,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
 use dusk_plonk::prelude::{Compiler, PublicParameters};
 use ff::Field;
+use jubjub_elgamal as elgamal;
 use jubjub_schnorr::{
     SecretKey as SchnorrSecretKey, Signature as SchnorrSignature,
 };
@@ -21,8 +22,7 @@ use poseidon_merkle::{Item, Tree};
 
 use phoenix_circuits::{InputNoteInfo, OutputNoteInfo, TxCircuit};
 use phoenix_core::{
-    elgamal, value_commitment, Note, PublicKey, SecretKey, ViewKey,
-    OUTPUT_NOTES,
+    value_commitment, Note, PublicKey, SecretKey, ViewKey, OUTPUT_NOTES,
 };
 
 #[macro_use]

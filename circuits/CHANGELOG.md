@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add jubjub-elgamal dependency [#255]
+
+### Removed
+
+- Remove elgamal encryption module [#255]
+
 ## [0.4.0] - 2024-08-14
 
 ### Changed
@@ -100,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#255]: https://github.com/dusk-network/phoenix/issues/255
 [#235]: https://github.com/dusk-network/phoenix/issues/235
 [#232]: https://github.com/dusk-network/phoenix/issues/232
 [#229]: https://github.com/dusk-network/phoenix/issues/229

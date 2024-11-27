@@ -14,9 +14,10 @@ dusk-bytes = "0.1"
 phoenix-core = { version = "0.32", default-features = false, path = "../core" }
 dusk-bls12_381 = { version = "0.13", default-features = false }
 dusk-jubjub = { version = "0.14", default-features = false }
-poseidon-merkle = { version = "0.7" }
-dusk-poseidon = { version = "0.40" }
-jubjub-schnorr = { version = "0.5" }
+poseidon-merkle = "0.7"
+dusk-poseidon = "0.40"
+jubjub-schnorr = "0.5"
+jubjub-elgamal = "0.1"
 rkyv = { version = "0.7", default-features = false, optional = true }
 bytecheck = { version = "0.6", default-features = false, optional = true }
 dusk-plonk = { version = "0.20", default-features = false, optional = true }
@@ -33,6 +34,7 @@ plonk = [
     "poseidon-merkle/zk",
     "dusk-poseidon/zk",
     "jubjub-schnorr/zk",
+    "jubjub-elgamal/zk",
 ]
 rkyv-impl = [
     "phoenix-core/rkyv-impl",

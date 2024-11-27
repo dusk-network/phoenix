@@ -13,13 +13,7 @@
 #[cfg(feature = "plonk")]
 mod circuit_impl;
 #[cfg(feature = "plonk")]
-mod encryption;
-#[cfg(feature = "plonk")]
 mod sender_enc;
-
-/// ElGamal asymmetric cipher
-#[cfg(feature = "plonk")]
-pub use encryption::elgamal;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};

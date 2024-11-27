@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add jubjub-elgamal dependency [#255]
+
+### Removed
+
+- Remove elgamal encryption module [#255]
+
 ### Changed
 
 - Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
@@ -388,6 +396,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#255]: https://github.com/dusk-network/phoenix/issues/255
 [#240]: https://github.com/dusk-network/phoenix/issues/240
 [#222]: https://github.com/dusk-network/phoenix/issues/222
 [#214]: https://github.com/dusk-network/phoenix/issues/214
