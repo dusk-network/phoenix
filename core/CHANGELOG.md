@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add jubjub-elgamal dependency [#255]
+- Add serde `Serialize` and `Deserialize` implementations for `PublicKey`, `SecretKey`, `ViewKey`,
+`NoteType`, `StealthAddress`, `Sender`, `Note` and `TxSkeleton` [#258]
+- Add `serde`, `bs58`, `base64`, `hex` and `serde_json` optional dependencies [#258]
+- Add `serde` feature [#258]
 
 ### Removed
 
@@ -396,6 +400,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#258]: https://github.com/dusk-network/phoenix/issues/258
 [#255]: https://github.com/dusk-network/phoenix/issues/255
 [#240]: https://github.com/dusk-network/phoenix/issues/240
 [#222]: https://github.com/dusk-network/phoenix/issues/222

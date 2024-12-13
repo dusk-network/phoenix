@@ -22,7 +22,7 @@ jobs:
     name: test core
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
-      test_flags: -p phoenix-core --features=alloc
+      test_flags: -p phoenix-core --features=alloc,serde
 
   test_core_rkyv:
     name: test core rkyv compiles

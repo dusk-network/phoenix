@@ -19,6 +19,9 @@ mod stealth_address;
 #[cfg(feature = "alloc")]
 mod transaction;
 
+#[cfg(feature = "serde")]
+mod serde_support;
+
 /// The number of output notes in a transaction
 pub const OUTPUT_NOTES: usize = 2;
 
