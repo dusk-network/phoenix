@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.1] - 2024-12-17
+
 ### Added
 
 - Add jubjub-elgamal dependency [#255]
@@ -15,14 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `serde`, `bs58`, `base64`, `hex` and `serde_json` optional dependencies [#258]
 - Add `serde` feature [#258]
 
-### Removed
-
-- Remove elgamal encryption module [#255]
-
 ### Changed
 
 - Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
 - `ViewKey` now checks both `a` and `B` in `ct_eq()`
+
+### Removed
+
+- Remove elgamal encryption module [#255]
 
 ## [0.32.0] - 2024-08-14
 
@@ -442,7 +444,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.32.1...HEAD
+[0.32.1]: https://github.com/dusk-network/phoenix/compare/v0.32.0...v0.32.1
 [0.32.0]: https://github.com/dusk-network/phoenix/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/dusk-network/phoenix/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/dusk-network/phoenix/compare/v0.29.0...v0.30.0
