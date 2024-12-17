@@ -20,10 +20,11 @@ fn test_aes_encrypt_and_decrypt() {
         JubJubAffine::from(GENERATOR * JubJubScalar::from(1234u64));
 
     let plaintext = b"00112233445566778899";
+    let salt = b"0123456789";
     let encryption: [u8; ENCRYPTION_SIZE] =
-        aes::encrypt(&shared_secret_key, plaintext, &mut rng)
+        aes::encrypt(&shared_secret_key, salt, plaintext, &mut rng)
             .expect("Encrypted correctly.");
-    let dec_plaintext = aes::decrypt(&shared_secret_key, &encryption)
+    let dec_plaintext = aes::decrypt(&shared_secret_key, salt, &encryption)
         .expect("Decrypted correctly.");
 
     assert_eq!(&dec_plaintext, plaintext);

@@ -123,7 +123,9 @@ impl Note {
                 let mut plaintext = value.to_bytes().to_vec();
                 plaintext.append(&mut value_blinder.to_bytes().to_vec());
 
-                aes::encrypt(&shared_secret, &plaintext, rng)
+                let salt = stealth_address.to_bytes();
+
+                aes::encrypt(&shared_secret, &salt, &plaintext, rng)
                     .expect("Encrypted correctly.")
             }
         };
@@ -238,8 +240,10 @@ impl Note {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
 
+        let salt = self.stealth_address.to_bytes();
+
         let dec_plaintext: [u8; PLAINTEXT_SIZE] =
-            aes::decrypt(&shared_secret, &self.value_enc)?;
+            aes::decrypt(&shared_secret, &salt, &self.value_enc)?;
 
         let value = u64::from_slice(&dec_plaintext[..u64::SIZE])?;
 

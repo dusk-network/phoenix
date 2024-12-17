@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
 - `ViewKey` now checks both `a` and `B` in `ct_eq()`
+- Compute AES key using HKDF
 
 ### Removed
 

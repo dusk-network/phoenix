@@ -12,6 +12,9 @@ use aes_gcm::{
     Aes256Gcm, Key,
 };
 
+use hkdf::Hkdf;
+use sha2::Sha256;
+
 use crate::Error;
 
 const NONCE_SIZE: usize = 12;
@@ -24,13 +27,22 @@ pub const ENCRYPTION_EXTRA_SIZE: usize = NONCE_SIZE + 16;
 /// containing a nonce and the ciphertext (which includes the tag)
 pub fn encrypt<R: RngCore + CryptoRng, const ENCRYPTION_SIZE: usize>(
     shared_secret_key: &JubJubAffine,
+    salt: &[u8],
     plaintext: &[u8],
     rng: &mut R,
 ) -> Result<[u8; ENCRYPTION_SIZE], Error> {
     // To encrypt using AES256 we need 32-bytes keys. Thus, we use
-    // the 32-bytes serialization of the 64-bytes DH key.
-    let key = shared_secret_key.to_bytes();
-    let key = Key::<Aes256Gcm>::from_slice(&key);
+    // a 32-bytes key computed out of the 32-bytes serialization of the 64-bytes
+    // DH key, using the HKDF algorithm.
+    let ikm = shared_secret_key.to_bytes();
+    let info = b"Phoenix-Dusk".to_vec();
+
+    let hk = Hkdf::<Sha256>::new(Some(salt), &ikm);
+    let mut okm = [0u8; 32];
+    hk.expand(&info, &mut okm)
+        .expect("32 is a valid length for Sha256 to output");
+
+    let key = Key::<Aes256Gcm>::from_slice(&okm);
 
     let cipher = Aes256Gcm::new(key);
     let nonce = Aes256Gcm::generate_nonce(rng);
@@ -48,12 +60,21 @@ pub fn encrypt<R: RngCore + CryptoRng, const ENCRYPTION_SIZE: usize>(
 /// returning the plaintext
 pub fn decrypt<const PLAINTEXT_SIZE: usize>(
     shared_secret_key: &JubJubAffine,
+    salt: &[u8],
     encryption: &[u8],
 ) -> Result<[u8; PLAINTEXT_SIZE], Error> {
     // To decrypt using AES256 we need 32-bytes keys. Thus, we use
-    // the 32-bytes serialization of the 64-bytes DH key.
-    let key = shared_secret_key.to_bytes();
-    let key = Key::<Aes256Gcm>::from_slice(&key);
+    // a 32-bytes key computed out of the 32-bytes serialization of the 64-bytes
+    // DH key, using the HKDF algorithm.
+    let ikm = shared_secret_key.to_bytes();
+    let info = b"Phoenix-Dusk".to_vec();
+
+    let hk = Hkdf::<Sha256>::new(Some(salt), &ikm);
+    let mut okm = [0u8; 32];
+    hk.expand(&info, &mut okm)
+        .expect("32 is a valid length for Sha256 to output");
+
+    let key = Key::<Aes256Gcm>::from_slice(&okm);
 
     let nonce = &encryption[..NONCE_SIZE];
     let ciphertext = &encryption[NONCE_SIZE..];
