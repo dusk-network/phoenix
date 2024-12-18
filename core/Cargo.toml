@@ -27,6 +27,8 @@ bs58 = { version = "0.4" , optional = true }
 base64 = { version = "0.22", optional = true }
 serde_json = { version = "1.0", optional = true }
 hex = { version = "0.4" , optional = true }
+hkdf = "0.12"
+sha2 = "0.10"
 
 [dev-dependencies]
 assert_matches = "1.3"

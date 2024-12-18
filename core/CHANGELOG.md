@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Compute AES key using HKDF [#261]
+
 ## [0.32.1] - 2024-12-17
 
 ### Added
@@ -402,6 +406,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#261]: https://github.com/dusk-network/phoenix/issues/261
 [#258]: https://github.com/dusk-network/phoenix/issues/258
 [#255]: https://github.com/dusk-network/phoenix/issues/255
 [#240]: https://github.com/dusk-network/phoenix/issues/240
