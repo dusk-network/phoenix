@@ -7,11 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Compute AES key using HKDF [#261]
-
-## [0.32.1] - 2024-12-17
+## [0.33.0] - 2024-12-18
 
 ### Added
 
@@ -25,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Call `gen_note_sk` in `SecretKey::owns` to avoid code duplication [#246]
 - `ViewKey` now checks both `a` and `B` in `ct_eq()`
+- Compute AES key using HKDF [#261]
 
 ### Removed
 
@@ -449,8 +446,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.32.1...HEAD
-[0.32.1]: https://github.com/dusk-network/phoenix/compare/v0.32.0...v0.32.1
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/dusk-network/phoenix/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/dusk-network/phoenix/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/dusk-network/phoenix/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/dusk-network/phoenix/compare/v0.29.0...v0.30.0
