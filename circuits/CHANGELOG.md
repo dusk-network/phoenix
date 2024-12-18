@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add jubjub-elgamal dependency [#255]
 
+### Changed
+
+- Update phoenix-core to v0.33
+
 ### Removed
 
 - Remove elgamal encryption module [#255]
