@@ -165,7 +165,7 @@ impl<'de> Deserialize<'de> for StealthAddress {
 }
 
 // To serialize and deserialize u64s as big ints:
-// https://github.com/dusk-network/rusk/issues/2773#issuecomment-2519791322.
+#[derive(Debug)]
 struct Bigint(u64);
 
 impl Serialize for Bigint {
@@ -173,7 +173,7 @@ impl Serialize for Bigint {
         &self,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
-        let s: String = format!("{}n", self.0);
+        let s: String = format!("{}", self.0);
         s.serialize(serializer)
     }
 }
@@ -182,17 +182,11 @@ impl<'de> Deserialize<'de> for Bigint {
     fn deserialize<D: Deserializer<'de>>(
         deserializer: D,
     ) -> Result<Self, D::Error> {
-        let mut s = String::deserialize(deserializer)?;
-        let last_char = s.pop().ok_or_else(|| {
-            SerdeError::invalid_value(
-                Unexpected::Str(&s),
-                &"a non-empty string",
-            )
-        })?;
-        if last_char != 'n' {
+        let s = String::deserialize(deserializer)?;
+        if s.is_empty() {
             return Err(SerdeError::invalid_value(
                 Unexpected::Str(&s),
-                &"a bigint ending with character 'n'",
+                &"a non-empty string",
             ));
         }
         let parsed_number = u64::from_str_radix(&s, 10).map_err(|e| {
@@ -230,7 +224,7 @@ impl<'de> Deserialize<'de> for Sender {
     ) -> Result<Self, D::Error> {
         struct SenderVisitor;
 
-        static VARIANTS: [&'static str; 2] = ["Encryption", "ContractInfo"];
+        const VARIANTS: [&str; 2] = ["Encryption", "ContractInfo"];
 
         impl<'de> Visitor<'de> for SenderVisitor {
             type Value = Sender;
@@ -304,7 +298,7 @@ impl<'de> Deserialize<'de> for Note {
     ) -> Result<Self, D::Error> {
         struct NoteVisitor;
 
-        static FIELDS: [&'static str; 6] = [
+        const FIELDS: [&str; 6] = [
             "note_type",
             "value_commitment",
             "stealth_address",
@@ -487,7 +481,7 @@ impl<'de> Deserialize<'de> for TxSkeleton {
         deserializer: D,
     ) -> Result<Self, D::Error> {
         struct TxSkeletonVisitor;
-        static FIELDS: [&'static str; 5] =
+        const FIELDS: [&str; 5] =
             ["root", "nullifiers", "outputs", "max_fee", "deposit"];
 
         impl<'de> Visitor<'de> for TxSkeletonVisitor {
@@ -585,5 +579,36 @@ impl<'de> Deserialize<'de> for TxSkeleton {
             &FIELDS,
             TxSkeletonVisitor,
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rand::rngs::StdRng;
+    use rand::{RngCore, SeedableRng};
+
+    use super::*;
+
+    #[test]
+    fn serde_bigint() {
+        let mut rng = StdRng::seed_from_u64(0xc0b);
+        let n = Bigint(rng.next_u64());
+        let ser = serde_json::to_string(&n).unwrap();
+        let deser: Bigint = serde_json::from_str(&ser).unwrap();
+        assert_eq!(n.0, deser.0);
+    }
+
+    #[test]
+    fn serde_bigint_max() {
+        let n = Bigint(u64::MAX);
+        let ser = serde_json::to_string(&n).unwrap();
+        let deser: Bigint = serde_json::from_str(&ser).unwrap();
+        assert_eq!(n.0, deser.0);
+    }
+
+    #[test]
+    fn serde_bigint_empty() {
+        let deser: Result<Bigint, _> = serde_json::from_str("\"\"");
+        assert!(deser.is_err());
     }
 }
