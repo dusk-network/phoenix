@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed suffix 'n' in serde serialization & deserialization of `u64`
+
 ## [0.33.1] - 2024-12-20
 
 ### Changed
