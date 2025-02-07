@@ -46,4 +46,4 @@ rkyv-impl = [
     "rkyv",
     "bytecheck"
 ]
-serde = ["dep:serde", "bs58", "base64", "hex", "serde_json", "dusk-jubjub/serde"]
+serde = ["dep:serde", "bs58", "base64", "hex", "serde_json", "dusk-jubjub/serde", "alloc"]
