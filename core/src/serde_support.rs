@@ -187,7 +187,7 @@ impl<'de> Deserialize<'de> for Bigint {
                 &"a non-empty string",
             ));
         }
-        let parsed_number = u64::from_str_radix(&s, 10).map_err(|e| {
+        let parsed_number = s.parse::<u64>().map_err(|e| {
             SerdeError::custom(format!("failed to deserialize u64: {e}"))
         })?;
         Ok(Self(parsed_number))
@@ -246,7 +246,7 @@ impl<'de> Deserialize<'de> for Sender {
                     }
                     ("ContractInfo", variant) => {
                         let variant_data: String = variant.newtype_variant()?;
-                        let decoded = hex::decode(&variant_data)
+                        let decoded = hex::decode(variant_data)
                             .map_err(SerdeError::custom)?;
                         let decoded_len = decoded.len();
                         let byte_length_str =
@@ -284,7 +284,7 @@ impl Serialize for Note {
         struct_ser.serialize_field("stealth_address", &self.stealth_address)?;
         struct_ser.serialize_field("pos", &Bigint(self.pos))?;
         struct_ser
-            .serialize_field("value_enc", &hex::encode(&self.value_enc))?;
+            .serialize_field("value_enc", &hex::encode(self.value_enc))?;
         struct_ser.serialize_field("sender", &self.sender)?;
         struct_ser.end()
     }
