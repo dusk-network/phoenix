@@ -8,9 +8,7 @@ extern crate alloc;
 
 use alloc::format;
 use alloc::string::{String, ToString};
-use alloc::vec::Vec;
 
-use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_jubjub::JubJubAffine;
 use serde::de::{
@@ -419,56 +417,14 @@ impl<'de> Deserialize<'de> for Note {
     }
 }
 
-// The current serde implementation for `BlsScalar` is not what it's expected to
-// be, so this is needed at the moment: https://github.com/dusk-network/bls12_381/issues/145.
-struct BlsScalarSerde(BlsScalar);
-
-impl Serialize for BlsScalarSerde {
-    fn serialize<S: Serializer>(
-        &self,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
-        let s = hex::encode(self.0.to_bytes());
-        s.serialize(serializer)
-    }
-}
-
-impl<'de> Deserialize<'de> for BlsScalarSerde {
-    fn deserialize<D: Deserializer<'de>>(
-        deserializer: D,
-    ) -> Result<Self, D::Error> {
-        let s = String::deserialize(deserializer)?;
-        let decoded = hex::decode(&s).map_err(SerdeError::custom)?;
-        let decoded_len = decoded.len();
-        let bytes: [u8; BlsScalar::SIZE] =
-            decoded.try_into().map_err(|_| {
-                SerdeError::invalid_length(
-                    decoded_len,
-                    &BlsScalar::SIZE.to_string().as_str(),
-                )
-            })?;
-        let bls_scalar = BlsScalar::from_bytes(&bytes).into_option().ok_or(
-            SerdeError::custom(
-                "Failed to deserialize BlsScalar: invalid BlsScalar",
-            ),
-        )?;
-        Ok(BlsScalarSerde(bls_scalar))
-    }
-}
-
 impl Serialize for TxSkeleton {
     fn serialize<S: Serializer>(
         &self,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
         let mut struct_ser = serializer.serialize_struct("TxSkeleton", 5)?;
-        let serde_nullifiers: Vec<BlsScalarSerde> = self
-            .nullifiers
-            .iter()
-            .map(|nullifier| BlsScalarSerde(nullifier.clone()))
-            .collect();
-        struct_ser.serialize_field("root", &BlsScalarSerde(self.root))?;
-        struct_ser.serialize_field("nullifiers", &serde_nullifiers)?;
+        struct_ser.serialize_field("root", &self.root)?;
+        struct_ser.serialize_field("nullifiers", &self.nullifiers)?;
         struct_ser.serialize_field("outputs", &self.outputs)?;
         struct_ser.serialize_field("max_fee", &Bigint(self.max_fee))?;
         struct_ser.serialize_field("deposit", &Bigint(self.deposit))?;
@@ -498,8 +454,8 @@ impl<'de> Deserialize<'de> for TxSkeleton {
                 self,
                 mut map: A,
             ) -> Result<Self::Value, A::Error> {
-                let mut root: Option<BlsScalarSerde> = None;
-                let mut nullifiers: Option<Vec<BlsScalarSerde>> = None;
+                let mut root = None;
+                let mut nullifiers = None;
                 let mut outputs = None;
                 let mut deposit: Option<Bigint> = None;
                 let mut max_fee: Option<Bigint> = None;
@@ -555,13 +511,10 @@ impl<'de> Deserialize<'de> for TxSkeleton {
                 }
                 Ok(TxSkeleton {
                     root: root
-                        .ok_or_else(|| SerdeError::missing_field("root"))?
-                        .0,
-                    nullifiers: nullifiers
-                        .ok_or_else(|| SerdeError::missing_field("nullifiers"))?
-                        .into_iter()
-                        .map(|serde_nullifier| serde_nullifier.0)
-                        .collect(),
+                        .ok_or_else(|| SerdeError::missing_field("root"))?,
+                    nullifiers: nullifiers.ok_or_else(|| {
+                        SerdeError::missing_field("nullifiers")
+                    })?,
                     outputs: outputs
                         .ok_or_else(|| SerdeError::missing_field("output"))?,
                     max_fee: max_fee
