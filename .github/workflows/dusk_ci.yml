@@ -24,6 +24,12 @@ jobs:
     with:
       test_flags: -p phoenix-core --features=alloc,serde
 
+  test_core_no_default_serde:
+    name: test core no-default-features serde
+    uses: dusk-network/.github/.github/workflows/run-tests.yml@main
+    with:
+      test_flags: -p phoenix-core --no-default-features --features=serde
+
   test_core_rkyv:
     name: test core rkyv compiles
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
