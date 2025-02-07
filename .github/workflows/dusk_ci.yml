@@ -12,7 +12,7 @@ jobs:
     uses: dusk-network/.github/.github/workflows/code-analysis.yml@main
     with:
       clippy_default: false
-      clippy_args: --release --features=alloc -- -D warnings
+      clippy_args: --release --features=alloc,serde -- -D warnings
 
   dusk_analyzer:
     name: Dusk Analyzer
