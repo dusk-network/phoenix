@@ -10,12 +10,12 @@ exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 [dependencies]
 rand = { version = "0.8", default-features = false }
 dusk-bytes = "0.1"
-dusk-bls12_381 = { version = "0.13", default-features = false }
+dusk-bls12_381 = { version = "0.14", default-features = false }
 bls12_381-bls = { version = "0.4", default-features = false }
-dusk-jubjub = { version = "0.14", default-features = false, features = ["zeroize"] }
-dusk-poseidon = "0.40"
-jubjub-schnorr = "0.5"
-jubjub-elgamal = "0.1"
+dusk-jubjub = { version = "0.15", default-features = false, features = ["zeroize"] }
+dusk-poseidon = "0.41"
+jubjub-schnorr = "0.6"
+jubjub-elgamal = "0.2"
 subtle = { version = "^2.2.1", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc", "rand_core"] }
@@ -46,4 +46,4 @@ rkyv-impl = [
     "rkyv",
     "bytecheck"
 ]
-serde = ["dep:serde", "bs58", "base64", "hex", "serde_json", "dusk-jubjub/serde", "alloc"]
+serde = ["dep:serde", "bs58", "base64", "hex", "serde_json", "dusk-jubjub/serde", "dusk-bls12_381/serde", "alloc"]

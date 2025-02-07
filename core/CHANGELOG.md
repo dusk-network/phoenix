@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Removed suffix 'n' in serde serialization & deserialization of `u64`
+- Update `dusk-bls12_381` to v0.14
+- Update `dusk-jubjub` to v0.15
+- Update `dusk-poseidon` to v0.41
+- Update `jubjub-schnorr` to v0.6
+- Update `jubjub-elgamal` to v0.2
 
 ## [0.33.1] - 2024-12-20
 
