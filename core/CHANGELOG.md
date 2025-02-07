@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2024-02-07
+
 ### Changed
 
 - Removed suffix 'n' in serde serialization & deserialization of `u64`
@@ -461,7 +463,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.33.1...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.34.0...HEAD
+[0.34.0]: https://github.com/dusk-network/phoenix/compare/v0.33.1...v0.34.0
 [0.33.1]: https://github.com/dusk-network/phoenix/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/dusk-network/phoenix/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/dusk-network/phoenix/compare/v0.31.0...v0.32.0
