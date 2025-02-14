@@ -1,6 +1,6 @@
 # Phoenix Circuits
 
-Phoenix is the transaction model used by Dusk, an open-source public blockchain with a UTXO-based architecture that allows for the execution of obfuscated transactions and confidential smart contracts.
+Phoenix is one of the transaction models used by Dusk, an open-source public blockchain. Phoenix has a UTXO-based architecture and allows for the execution of obfuscated transactions and confidential smart contracts.
 
 This library contains the implementation of the Phoenix-circuits, to prove, in zero-knowledge, that the following conditions hold true:
 
