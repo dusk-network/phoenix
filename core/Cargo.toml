@@ -11,12 +11,11 @@ exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 rand = { version = "0.8", default-features = false }
 dusk-bytes = "0.1"
 dusk-bls12_381 = { version = "0.14", default-features = false }
-bls12_381-bls = { version = "0.4", default-features = false }
 dusk-jubjub = { version = "0.15", default-features = false, features = ["zeroize"] }
 dusk-poseidon = "0.41"
 jubjub-schnorr = "0.6"
 jubjub-elgamal = "0.2"
-subtle = { version = "^2.2.1", default-features = false }
+subtle = { version = "2.6", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc", "rand_core"] }
 zeroize = { version = "1", default-features = false, features = ["derive"] }
@@ -42,7 +41,6 @@ rkyv-impl = [
     "dusk-jubjub/rkyv-impl",
     "jubjub-schnorr/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
-    "bls12_381-bls/rkyv-impl",
     "rkyv",
     "bytecheck"
 ]
