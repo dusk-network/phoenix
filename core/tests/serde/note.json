@@ -1,0 +1,19 @@
+{
+    "note_type": "Obfuscated",
+    "value_commitment": "1b32e8cda88981d21c7fbfa0ce6827b1826c76d0266f7dff8617af9e43814919",
+    "stealth_address": "5xypMFFDSDtAeY7wJTfYc3UQkiHFAoYhWY6Ew2s5m43FfafM66zcsoxgBdLEYUki2KxbG9o4ikjzwzmxpeLfv8Po",
+    "pos": "18446744073709551615",
+    "value_enc": "0aa442f45be6ace8b98ce8eba1580f280a82dc8454bfa3166500ab9414d8ad0b6f43da0f1e7049f5dd71f9c013e2c6584286cc88858a3f38670768a1b223eaac405882a9",
+    "sender": {
+        "Encryption": [
+            [
+                "391d595ec6366e6f7dfd01198b00d0c1811c6c826066cf88733e4ddfa8933b58",
+                "00b9ab31d700846d06d07e2e2cac28a40d23fa156cc914dade7017e603ee7499"
+            ],
+            [
+                "8fae70481bf1c5e580c450e5a1483f4d7757d1c99dad3dd3adbbaf35ccf70ed7",
+                "50ffc41e5d85fa70ec9d81907281fd41662d6b912563d64c91621ec162b1cb81"
+            ]
+        ]
+    }
+}
