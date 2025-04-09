@@ -21,7 +21,8 @@ aes-gcm = { version = "0.10", default-features = false, features = ["aes", "allo
 zeroize = { version = "1", default-features = false, features = ["derive"] }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
-serde = { version = "1.0", default-features = false, optional = true }
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+serde_with = { version = "3.9", default-features = false, features = ["macros", "hex"], optional = true }
 bs58 = { version = "0.4" , default-features = false, optional = true }
 base64 = { version = "0.22", default-features = false, optional = true }
 hex = { version = "0.4", default-features = false, optional = true }
@@ -44,4 +45,4 @@ rkyv-impl = [
     "rkyv",
     "bytecheck"
 ]
-serde = ["serde/alloc", "bs58/alloc", "base64/alloc", "hex/alloc", "dusk-jubjub/serde", "dusk-bls12_381/serde", "alloc"]
+serde = ["serde/alloc", "bs58/alloc", "base64/alloc", "hex/alloc", "dusk-jubjub/serde", "dusk-bls12_381/serde", "alloc", "serde_with"]

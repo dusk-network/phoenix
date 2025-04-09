@@ -8,6 +8,7 @@
 
 #![allow(non_snake_case)]
 #![deny(missing_docs)]
+#![feature(cfg_eval)]
 #![no_std]
 
 mod encryption;
