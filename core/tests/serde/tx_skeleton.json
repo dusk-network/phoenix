@@ -1,0 +1,52 @@
+{
+    "root": "fe9a9c1876745ca351435dec31217662ff1fcf67287de6fd9b6c7de1d0846b21",
+    "nullifiers": [
+        "ffaa1ff7ffffa56eb98f86838b6a65a0fe9de75a618c29a70f626688e2aa2160",
+        "4e570d00c6054a89119f9a4e5c1a054862937310110c6e9c427db7c931e9cb38",
+        "19af3823885a6554cf95a8ed15b96d31b322042bc65aedd6e6afdc69229c704e",
+        "52074793a992554044f97dffdcf52d7097ab2fb45a2190996506b8501f8a9d38",
+        "8a5693d349b48ae3a0e09f75a4620880036cca28a2f3edd2c6f062a00ccd2830"
+    ],
+    "outputs": [
+        {
+            "note_type": "Obfuscated",
+            "value_commitment": "1b32e8cda88981d21c7fbfa0ce6827b1826c76d0266f7dff8617af9e43814919",
+            "stealth_address": "5f5jAMNt2kcUaUXZkZTkTNTAtK7MMgButUXYcCofMiYH88cLp8B8ocwih3iP54JaEeChDgScPiwVvxbF6DJyNFws",
+            "pos": "18446744073709551615",
+            "value_enc": "0788aeecb15dcada122f5c4068d9ac73208e6a3298f10243f4d055978f49fbc757ed76b704933f447a4cb56ff1c5b05e126263a5784d7e0db6013a4922df55d29e5ff87e",
+            "sender": {
+                "Encryption": [
+                    [
+                        "391d595ec6366e6f7dfd01198b00d0c1811c6c826066cf88733e4ddfa8933b58",
+                        "89f00aed59562b920c4da0d86d82a86d92eacb0aad3c28fb3be2a9bd3b344b24"
+                    ],
+                    [
+                        "8fae70481bf1c5e580c450e5a1483f4d7757d1c99dad3dd3adbbaf35ccf70ed7",
+                        "9b948903e5f3a9d9f001071237196fb4d98aef9e3e8f2a45f5aeb3d1eed20daf"
+                    ]
+                ]
+            }
+        },
+        {
+            "note_type": "Obfuscated",
+            "value_commitment": "1b32e8cda88981d21c7fbfa0ce6827b1826c76d0266f7dff8617af9e43814919",
+            "stealth_address": "48Qy4vHWBnm9Qpqkreeypv6sXYFgk5HHAoygZ9mbmJJdGWtchDGXswNCqFL9MXS4hZq6aqSdFmKb6vvrB3kv57EQ",
+            "pos": "18446744073709551615",
+            "value_enc": "43b20fbaf4c96d9bc68a175065f3b3c05bbe27cd8c2f41567326e407c20d0a884e2c5e766c41395205e115630b0bb4606847b0d1c09457acab5a94e93673d3c402aed3c0",
+            "sender": {
+                "Encryption": [
+                    [
+                        "391d595ec6366e6f7dfd01198b00d0c1811c6c826066cf88733e4ddfa8933b58",
+                        "8f3aecf39572005f080fb2bb7d9b907376f36384de83e2f87872fd3719378315"
+                    ],
+                    [
+                        "8fae70481bf1c5e580c450e5a1483f4d7757d1c99dad3dd3adbbaf35ccf70ed7",
+                        "28b9f4b744e0e572b4946d2229fb1c238946abd158d30bf1e124e2778a04ca21"
+                    ]
+                ]
+            }
+        }
+    ],
+    "max_fee": "622",
+    "deposit": "707"
+}

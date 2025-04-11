@@ -47,3 +47,13 @@ jobs:
     uses: dusk-network/.github/.github/workflows/run-tests.yml@main
     with:
       test_flags: -p phoenix-circuits --no-default-features --features=rkyv-impl,rkyv/size_16 --no-run
+
+  compiles_to_wasm_with_serde:
+    name: Compiles to wasm with serde enabled
+    runs-on: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dsherret/rust-toolchain-file@v1
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo b --release --no-default-features --features serde --target wasm32-unknown-unknown
+        working-directory: core

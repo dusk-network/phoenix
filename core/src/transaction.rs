@@ -7,6 +7,9 @@
 //! Transaction skeleton defining the minimum amount of data needed for a
 //! phoenix transaction.
 
+#[cfg(feature = "serde")]
+use serde_with::{serde_as, DisplayFromStr};
+
 extern crate alloc;
 use alloc::vec::Vec;
 
@@ -25,6 +28,8 @@ use crate::{Note, OUTPUT_NOTES};
     derive(Archive, Serialize, Deserialize),
     archive_attr(derive(bytecheck::CheckBytes))
 )]
+#[cfg_attr(feature = "serde", cfg_eval, serde_as)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxSkeleton {
     /// The root of the transfer tree on top of which this transaction is
     /// based.
@@ -34,8 +39,10 @@ pub struct TxSkeleton {
     /// The new output notes of this transaction.
     pub outputs: [Note; OUTPUT_NOTES],
     /// Describes the maximum fee to be paid for this transaction.
+    #[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
     pub max_fee: u64,
     /// A deposit is used to transferring funds to a contract
+    #[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
     pub deposit: u64,
 }
 
