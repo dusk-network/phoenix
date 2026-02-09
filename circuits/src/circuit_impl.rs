@@ -27,8 +27,8 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     /// 4. Minting: the value commitment for every input-note is computed
     ///    correctly.
     /// 5. Balance integrity: the sum of the values of all input-notes is equal
-    ///    to the sum of the values of all output-notes + the gas fee
-    ///    + a deposit, where a deposit refers to funds being transferred to a
+    ///    to the sum of the values of all output-notes + the gas fee + a
+    ///    deposit, where a deposit refers to funds being transferred to a
     ///    contract.
     /// 6. Sender-data: Verify that the sender was encrypted correctly for each
     ///    output-note.

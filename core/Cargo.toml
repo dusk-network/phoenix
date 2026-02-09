@@ -14,7 +14,7 @@ dusk-bls12_381 = { version = "0.14", default-features = false }
 dusk-jubjub = { version = "0.15", default-features = false, features = ["zeroize"] }
 dusk-poseidon = "0.41"
 jubjub-schnorr = "0.6"
-jubjub-elgamal = "0.2"
+jubjub-elgamal = "0.4.3"
 subtle = { version = "2.6", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc", "rand_core"] }

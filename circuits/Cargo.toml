@@ -17,7 +17,7 @@ dusk-jubjub = { version = "0.15", default-features = false }
 poseidon-merkle = "0.8"
 dusk-poseidon = "0.41"
 jubjub-schnorr = "0.6"
-jubjub-elgamal = "0.2"
+jubjub-elgamal = "0.4.3"
 rkyv = { version = "0.7", default-features = false, optional = true }
 bytecheck = { version = "0.6", default-features = false, optional = true }
 dusk-plonk = { version = "0.21", default-features = false, optional = true }

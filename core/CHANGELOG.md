@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix order-dependent deserialization of `Note` [#274]
 
+### Changed
+
+- Update `jubjub-elgamal` to v0.4.3
+
 ## [0.34.0] - 2024-02-07
 
 ### Changed
