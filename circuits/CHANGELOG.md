@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Update `jubjub-elgamal` to v0.4.3
+- Move to stable MSRV 1.85
+- Update `dusk-plonk` to v0.22.0-rc.0
+- Update `poseidon-merkle` to v0.9.0-rc.0
+- Update `dusk-poseidon` to v0.42.0-rc.0
+- Update `jubjub-schnorr` to v0.7.0-rc.0
+- Update `jubjub-elgamal` to v0.5.0-rc.0
 
 ## [0.6.0] - 2025-02-07
 
@@ -135,7 +140,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#232]: https://github.com/dusk-network/phoenix/issues/232
 [#229]: https://github.com/dusk-network/phoenix/issues/229
 [#214]: https://github.com/dusk-network/phoenix/issues/214
-[#201]: https://github.com/dusk-network/phoenix/issues/201
 [#197]: https://github.com/dusk-network/phoenix/issues/197
 [#188]: https://github.com/dusk-network/phoenix/issues/188
 [#191]: https://github.com/dusk-network/phoenix/issues/191
