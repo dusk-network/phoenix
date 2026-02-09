@@ -14,7 +14,7 @@ use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
 use dusk_plonk::prelude::{Compiler, PublicParameters};
 use ff::Field;
-use jubjub_elgamal as elgamal;
+use jubjub_elgamal::Encryption as elgamal;
 use jubjub_schnorr::{
     SecretKey as SchnorrSecretKey, Signature as SchnorrSignature,
 };
@@ -206,15 +206,23 @@ fn create_output_note_information(
     let value_commitment = value_commitment(value, value_blinder);
 
     let sender_blinder_a = sender_blinder[0];
-    let sender_enc_a =
-        elgamal::encrypt(&note_pk.into(), TP.sender_pk.A(), &sender_blinder_a);
+    let (sender_enc_a, _) = elgamal::encrypt(
+        &note_pk.into(),
+        TP.sender_pk.A(),
+        None,
+        &sender_blinder_a,
+    );
 
     let sender_blinder_b = sender_blinder[1];
-    let sender_enc_b =
-        elgamal::encrypt(&note_pk.into(), TP.sender_pk.B(), &sender_blinder_b);
+    let (sender_enc_b, _) = elgamal::encrypt(
+        &note_pk.into(),
+        TP.sender_pk.B(),
+        None,
+        &sender_blinder_b,
+    );
 
-    let sender_enc_a = (sender_enc_a.0.into(), sender_enc_a.1.into());
-    let sender_enc_b = (sender_enc_b.0.into(), sender_enc_b.1.into());
+    let sender_enc_a = (sender_enc_a.c1().into(), sender_enc_a.c2().into());
+    let sender_enc_b = (sender_enc_b.c1().into(), sender_enc_b.c2().into());
 
     OutputNoteInfo {
         value,
