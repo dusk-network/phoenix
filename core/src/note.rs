@@ -4,7 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-
 use core::convert::{TryFrom, TryInto};
 
 use dusk_bls12_381::BlsScalar;
@@ -80,9 +79,15 @@ pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubAffine,
     pub(crate) stealth_address: StealthAddress,
-    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub(crate) pos: u64,
-    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::hex::Hex>"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::hex::Hex>")
+    )]
     pub(crate) value_enc: [u8; VALUE_ENC_SIZE],
     pub(crate) sender: Sender,
 }
@@ -459,7 +464,10 @@ pub enum Sender {
     /// Information to identify the origin of a `Note`, if it wasn't created as
     /// a phoenix-transaction output-note.
     ContractInfo(
-        #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::hex::Hex>"))]
+        #[cfg_attr(
+            feature = "serde",
+            serde(with = "serde_with::As::<serde_with::hex::Hex>")
+        )]
         [u8; 4 * JubJubAffine::SIZE],
     ),
 }

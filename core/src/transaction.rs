@@ -7,7 +7,6 @@
 //! Transaction skeleton defining the minimum amount of data needed for a
 //! phoenix transaction.
 
-
 extern crate alloc;
 use alloc::vec::Vec;
 
@@ -36,10 +35,16 @@ pub struct TxSkeleton {
     /// The new output notes of this transaction.
     pub outputs: [Note; OUTPUT_NOTES],
     /// Describes the maximum fee to be paid for this transaction.
-    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub max_fee: u64,
     /// A deposit is used to transferring funds to a contract
-    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub deposit: u64,
 }
 
