@@ -1,13 +1,13 @@
 [package]
 name = "phoenix-core"
 version = "0.34.0"
-edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
 
 license.workspace = true
 rust-version.workspace = true
+edition.workspace = true
 
 [dependencies]
 rand = { version = "0.8", default-features = false }
