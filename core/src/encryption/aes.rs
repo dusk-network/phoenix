@@ -8,8 +8,8 @@ use dusk_jubjub::JubJubAffine;
 use rand::{CryptoRng, RngCore};
 
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit},
     Aes256Gcm, Key,
+    aead::{Aead, AeadCore, KeyInit},
 };
 
 use hkdf::Hkdf;

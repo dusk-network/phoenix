@@ -4,11 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, SecretKey, StealthAddress};
+use crate::{SecretKey, StealthAddress, keys::hash};
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
-    JubJubAffine, JubJubExtended, JubJubScalar, GENERATOR_EXTENDED,
+    GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
 };
 use subtle::{Choice, ConstantTimeEq};
 

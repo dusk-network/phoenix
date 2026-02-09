@@ -8,8 +8,8 @@ use dusk_bytes::Serializable;
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use ff::Field;
 use phoenix_core::{
-    value_commitment, Error, Note, NoteType, PublicKey, SecretKey, Sender,
-    ViewKey,
+    Error, Note, NoteType, PublicKey, SecretKey, Sender, ViewKey,
+    value_commitment,
 };
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};

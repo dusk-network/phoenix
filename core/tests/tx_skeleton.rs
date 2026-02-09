@@ -8,8 +8,8 @@ use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{Error, Note, PublicKey, SecretKey, TxSkeleton};
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 fn output_notes(rng: &mut StdRng) -> [Note; 2] {
     let sender_pk = PublicKey::from(&SecretKey::random(rng));

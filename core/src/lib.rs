@@ -39,7 +39,7 @@ pub use stealth_address::StealthAddress;
 pub use transaction::TxSkeleton;
 
 use dusk_jubjub::{
-    JubJubAffine, JubJubScalar, GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED,
+    GENERATOR_EXTENDED, GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar,
 };
 
 /// Use the pedersen commitment scheme to compute a transparent value

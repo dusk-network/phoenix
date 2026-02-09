@@ -15,7 +15,7 @@ use dusk_poseidon::{Domain, HashGadget};
 use jubjub_schnorr::gadgets;
 use poseidon_merkle::zk::opening_gadget;
 
-use crate::{sender_enc, InputNoteInfo, TxCircuit};
+use crate::{InputNoteInfo, TxCircuit, sender_enc};
 
 impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     /// Transaction gadget proving the following properties in ZK for a generic

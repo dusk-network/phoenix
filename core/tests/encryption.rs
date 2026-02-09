@@ -4,10 +4,10 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR};
+use dusk_jubjub::{GENERATOR, JubJubAffine, JubJubScalar};
 use phoenix_core::aes;
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 #[test]
 fn test_aes_encrypt_and_decrypt() {

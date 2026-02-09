@@ -8,7 +8,7 @@ use core::convert::{TryFrom, TryInto};
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
-use dusk_jubjub::{dhke, JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
+use dusk_jubjub::{GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar, dhke};
 use dusk_poseidon::{Domain, Hash};
 use ff::Field;
 use jubjub_elgamal::{DecryptFrom, Encryption as ElGamal};
@@ -16,8 +16,8 @@ use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
 use rand::{CryptoRng, RngCore};
 
 use crate::{
-    aes, transparent_value_commitment, value_commitment, Error, PublicKey,
-    SecretKey, StealthAddress, ViewKey,
+    Error, PublicKey, SecretKey, StealthAddress, ViewKey, aes,
+    transparent_value_commitment, value_commitment,
 };
 
 #[cfg(feature = "rkyv-impl")]
