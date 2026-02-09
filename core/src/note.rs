@@ -14,7 +14,7 @@ use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{dhke, JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
 use dusk_poseidon::{Domain, Hash};
 use ff::Field;
-use jubjub_elgamal::{DecryptFrom, Encryption as elgamal};
+use jubjub_elgamal::{DecryptFrom, Encryption as ElGamal};
 use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
 use rand::{CryptoRng, RngCore};
 
@@ -476,14 +476,14 @@ impl Sender {
         sender_pk: &PublicKey,
         blinder: &[JubJubScalar; 2],
     ) -> Self {
-        let (sender_enc_A, _) = elgamal::encrypt(
+        let (sender_enc_A, _) = ElGamal::encrypt(
             note_pk.as_ref(),
             sender_pk.A(),
             None,
             &blinder[0],
         );
 
-        let (sender_enc_B, _) = elgamal::encrypt(
+        let (sender_enc_B, _) = ElGamal::encrypt(
             note_pk.as_ref(),
             sender_pk.B(),
             None,
@@ -516,9 +516,9 @@ impl Sender {
         };
 
         let sender_enc_A =
-            elgamal::new(sender_enc[0].0.into(), sender_enc[0].1.into());
+            ElGamal::new(sender_enc[0].0.into(), sender_enc[0].1.into());
         let sender_enc_B =
-            elgamal::new(sender_enc[1].0.into(), sender_enc[1].1.into());
+            ElGamal::new(sender_enc[1].0.into(), sender_enc[1].1.into());
 
         let decrypt_A =
             sender_enc_A.decrypt(&DecryptFrom::SecretKey(*note_sk.as_ref()));
