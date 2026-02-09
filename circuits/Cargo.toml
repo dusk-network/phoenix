@@ -4,8 +4,10 @@ version = "0.6.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/circuits"
 description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
-license = "MPL-2.0"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
+
+license.workspace = true
+rust-version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -42,5 +44,5 @@ rkyv-impl = [
     "jubjub-schnorr/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
     "rkyv",
-    "bytecheck"
+    "bytecheck",
 ]
