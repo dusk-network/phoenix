@@ -115,8 +115,8 @@ fn random_circuit<const I: usize>(
         ],
         payload_hash: BlsScalar::random(&mut *rng),
         root: BlsScalar::random(&mut *rng),
-        deposit: rng.gen(),
-        max_fee: rng.gen(),
+        deposit: rng.r#gen(),
+        max_fee: rng.r#gen(),
         sender_pk,
         signatures: (
             SchnorrSignature::from_bytes(&signature_0_bytes)
@@ -168,7 +168,7 @@ fn random_input_note_info(
         merkle_opening,
         note,
         note_pk_p,
-        value: rng.gen(),
+        value: rng.r#gen(),
         value_blinder: JubJubScalar::random(&mut *rng),
         nullifier: BlsScalar::random(&mut *rng),
         signature: SignatureDouble::from_bytes(&signature_bytes)
@@ -188,7 +188,7 @@ fn random_output_note_info(
     let sender_enc_1_1 = random_jubjub_affine(rng);
 
     OutputNoteInfo {
-        value: rng.gen(),
+        value: rng.r#gen(),
         value_commitment,
         value_blinder: JubJubScalar::random(&mut *rng),
         note_pk,
