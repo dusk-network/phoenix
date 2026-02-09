@@ -11,7 +11,7 @@ use dusk_plonk::prelude::*;
 use jubjub_schnorr::{gadgets, Signature as SchnorrSignature};
 use phoenix_core::{PublicKey, OUTPUT_NOTES};
 
-use jubjub_elgamal::zk::Encryption as elgamalZK;
+use jubjub_elgamal::zk::Encryption as ElGamalZK;
 
 /// Gadget to prove a valid origin for a given transaction.
 pub(crate) fn gadget(
@@ -96,11 +96,11 @@ fn assert_sender_enc(
 ) -> Result<(), Error> {
     let blinder_A = blinder.0;
     let (enc_A, _) =
-        elgamalZK::encrypt(composer, note_pk, sender_pk_A, None, blinder_A)?;
+        ElGamalZK::encrypt(composer, note_pk, sender_pk_A, None, blinder_A)?;
 
     let blinder_B = blinder.1;
     let (enc_B, _) =
-        elgamalZK::encrypt(composer, note_pk, sender_pk_B, None, blinder_B)?;
+        ElGamalZK::encrypt(composer, note_pk, sender_pk_B, None, blinder_B)?;
 
     let sender_enc_A = sender_enc[0];
     let sender_enc_B = sender_enc[1];
