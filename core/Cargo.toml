@@ -33,7 +33,6 @@ serde = { version = "1.0", default-features = false, features = [
     "derive",
 ], optional = true }
 serde_with = { version = "3.9", default-features = false, features = [
-    "macros",
     "hex",
 ], optional = true }
 bs58 = { version = "0.4", default-features = false, optional = true }

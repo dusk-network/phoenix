@@ -4,8 +4,6 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-#[cfg(feature = "serde")]
-use serde_with::{hex::Hex, serde_as, DisplayFromStr};
 
 use core::convert::{TryFrom, TryInto};
 
@@ -77,15 +75,14 @@ impl TryFrom<i32> for NoteType {
     derive(Archive, Serialize, Deserialize),
     archive_attr(derive(bytecheck::CheckBytes))
 )]
-#[cfg_attr(feature = "serde", cfg_eval, serde_as)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Note {
     pub(crate) note_type: NoteType,
     pub(crate) value_commitment: JubJubAffine,
     pub(crate) stealth_address: StealthAddress,
-    #[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
     pub(crate) pos: u64,
-    #[cfg_attr(feature = "serde", serde_as(as = "Hex"))]
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::hex::Hex>"))]
     pub(crate) value_enc: [u8; VALUE_ENC_SIZE],
     pub(crate) sender: Sender,
 }
@@ -454,7 +451,6 @@ impl Serializable<SIZE> for Note {
     derive(Archive, Serialize, Deserialize),
     archive_attr(derive(bytecheck::CheckBytes))
 )]
-#[cfg_attr(feature = "serde", cfg_eval, serde_as)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Sender {
     /// The sender's [`PublicKey`], encrypted using the note_pk of the
@@ -463,7 +459,7 @@ pub enum Sender {
     /// Information to identify the origin of a `Note`, if it wasn't created as
     /// a phoenix-transaction output-note.
     ContractInfo(
-        #[cfg_attr(feature = "serde", serde_as(as = "Hex"))]
+        #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::hex::Hex>"))]
         [u8; 4 * JubJubAffine::SIZE],
     ),
 }
