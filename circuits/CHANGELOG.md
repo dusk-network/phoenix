@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Update `jubjub-elgamal` to v0.4.3
+
 ## [0.6.0] - 2025-02-07
 
 ### Changed
