@@ -4,8 +4,10 @@ version = "0.6.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/circuits"
 description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
-license = "MPL-2.0"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
+
+license.workspace = true
+rust-version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -14,13 +16,13 @@ dusk-bytes = "0.1"
 phoenix-core = { version = "0.34", default-features = false, path = "../core" }
 dusk-bls12_381 = { version = "0.14", default-features = false }
 dusk-jubjub = { version = "0.15", default-features = false }
-poseidon-merkle = "0.8"
-dusk-poseidon = "0.41"
-jubjub-schnorr = "0.6"
-jubjub-elgamal = "0.4.3"
+poseidon-merkle = "0.9.0-rc.0"
+dusk-poseidon = "0.42.0-rc.0"
+jubjub-schnorr = "0.7.0-rc.0"
+jubjub-elgamal = "0.5.0-rc.0"
 rkyv = { version = "0.7", default-features = false, optional = true }
 bytecheck = { version = "0.6", default-features = false, optional = true }
-dusk-plonk = { version = "0.21", default-features = false, optional = true }
+dusk-plonk = { version = "0.22.0-rc.0", default-features = false, optional = true }
 
 [dev-dependencies]
 lazy_static = "1.4"
@@ -42,5 +44,5 @@ rkyv-impl = [
     "jubjub-schnorr/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
     "rkyv",
-    "bytecheck"
+    "bytecheck",
 ]

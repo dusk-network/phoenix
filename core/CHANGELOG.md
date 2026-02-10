@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Update `jubjub-elgamal` to v0.4.3
+- Move to stable MSRV 1.85
+- Update `dusk-poseidon` to v0.42.0-rc.0
+- Update `jubjub-schnorr` to v0.7.0-rc.0
+- Update `jubjub-elgamal` to v0.5.0-rc.0
 
 ## [0.34.0] - 2024-02-07
 
@@ -166,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `bls12_381-bls` to v0.3.0
 - Update `jubjub-schnorr` to v0.3.0
 
-### Removed 
+### Removed
 
 - Remove the `Message` module.
 - Remove `StealthAddress::address` method [#156]
@@ -322,6 +325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add rust-toolchain file set to nightly-2021-06-06 [#85]
 
 ### Changed
+
 - Change CI rules to get toolchain from file [#86]
 - Change `Crossover` to use all attributes as hash inputs [#69]
 - Change `Message` to use all attributes as hash inputs [#69]
@@ -437,7 +441,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#214]: https://github.com/dusk-network/phoenix/issues/214
 [#208]: https://github.com/dusk-network/phoenix/issues/208
 [#201]: https://github.com/dusk-network/phoenix/issues/201
-[#199]: https://github.com/dusk-network/phoenix/issues/199
 [#195]: https://github.com/dusk-network/phoenix/issues/195
 [#190]: https://github.com/dusk-network/phoenix/issues/190
 [#183]: https://github.com/dusk-network/phoenix/issues/183
@@ -508,7 +511,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.6.0]: https://github.com/dusk-network/phoenix/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/dusk-network/phoenix/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/dusk-network/phoenix/compare/v0.3.1...v0.5.0
-[0.3.1]: https://github.com/dusk-network/phoenix/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/dusk-network/phoenix/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/dusk-network/phoenix/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/dusk-network/phoenix/releases/tag/v0.1.0

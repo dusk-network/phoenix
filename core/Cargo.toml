@@ -4,26 +4,38 @@ version = "0.34.0"
 edition = "2021"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
-license = "MPL-2.0"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
+
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 rand = { version = "0.8", default-features = false }
 dusk-bytes = "0.1"
 dusk-bls12_381 = { version = "0.14", default-features = false }
-dusk-jubjub = { version = "0.15", default-features = false, features = ["zeroize"] }
-dusk-poseidon = "0.41"
-jubjub-schnorr = "0.6"
-jubjub-elgamal = "0.4.3"
+dusk-jubjub = { version = "0.15", default-features = false, features = [
+    "zeroize",
+] }
+dusk-poseidon = "0.42.0-rc.0"
+jubjub-schnorr = "0.7.0-rc.0"
+jubjub-elgamal = "0.5.0-rc.0"
 subtle = { version = "2.6", default-features = false }
 ff = { version = "0.13", default-features = false }
-aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc", "rand_core"] }
+aes-gcm = { version = "0.10", default-features = false, features = [
+    "aes",
+    "alloc",
+    "rand_core",
+] }
 zeroize = { version = "1", default-features = false, features = ["derive"] }
 rkyv = { version = "0.7", optional = true, default-features = false }
 bytecheck = { version = "0.6", optional = true, default-features = false }
-serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
-serde_with = { version = "3.9", default-features = false, features = ["macros", "hex"], optional = true }
-bs58 = { version = "0.4" , default-features = false, optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+], optional = true }
+serde_with = { version = "3.9", default-features = false, features = [
+    "hex",
+], optional = true }
+bs58 = { version = "0.4", default-features = false, optional = true }
 base64 = { version = "0.22", default-features = false, optional = true }
 hex = { version = "0.4", default-features = false, optional = true }
 hkdf = "0.12"
@@ -43,6 +55,15 @@ rkyv-impl = [
     "jubjub-schnorr/rkyv-impl",
     "dusk-bls12_381/rkyv-impl",
     "rkyv",
-    "bytecheck"
+    "bytecheck",
 ]
-serde = ["serde/alloc", "bs58/alloc", "base64/alloc", "hex/alloc", "dusk-jubjub/serde", "dusk-bls12_381/serde", "alloc", "serde_with"]
+serde = [
+    "serde/alloc",
+    "bs58/alloc",
+    "base64/alloc",
+    "hex/alloc",
+    "dusk-jubjub/serde",
+    "dusk-bls12_381/serde",
+    "alloc",
+    "serde_with",
+]
