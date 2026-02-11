@@ -13,7 +13,7 @@ edition.workspace = true
 
 [dependencies]
 dusk-bytes = "0.1"
-phoenix-core = { version = "0.34", default-features = false, path = "../core" }
+phoenix-core = { version = "0.35.0-rc.0", default-features = false, path = "../core" }
 dusk-bls12_381 = { version = "0.14", default-features = false }
 dusk-jubjub = { version = "0.15", default-features = false }
 poseidon-merkle = "0.9.0-rc.0"
