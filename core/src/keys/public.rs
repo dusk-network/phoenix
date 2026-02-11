@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, SecretKey, StealthAddress, ViewKey};
+use crate::{SecretKey, StealthAddress, ViewKey, keys::hash};
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
 

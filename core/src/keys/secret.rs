@@ -4,9 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{keys::hash, StealthAddress};
+use crate::{StealthAddress, keys::hash};
 
-use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
+use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
 use zeroize::Zeroize;

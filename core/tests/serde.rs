@@ -61,7 +61,7 @@ fn serde_public_key() -> Result<(), Box<dyn std::error::Error>> {
     let pk = PublicKey::from(&sk);
     let ser = assert_canonical_json(
         &pk,
-        "\"nrkRNs188TSAy7LdQcwDfbghZEk3agdT7b7h83ynP6KcFb8ExYvUyE6r3v2yrt2Tie8pybzobLGebF6LapsDnAa\""
+        "\"nrkRNs188TSAy7LdQcwDfbghZEk3agdT7b7h83ynP6KcFb8ExYvUyE6r3v2yrt2Tie8pybzobLGebF6LapsDnAa\"",
     )?;
     let deser = serde_json::from_str(&ser)?;
     assert_eq!(pk, deser);
@@ -74,7 +74,7 @@ fn serde_secret_key() -> Result<(), Box<dyn std::error::Error>> {
     let sk = SecretKey::random(&mut rng);
     let ser = assert_canonical_json(
         &sk,
-        "\"4VWvwJK79fznAuRZm9qP6Eqv57hLuYGU2PkoJJxYii2C7kquTNQYAygrJuYVLY1vsmVHSLifNtCdcN6dHN69rJKC\""
+        "\"4VWvwJK79fznAuRZm9qP6Eqv57hLuYGU2PkoJJxYii2C7kquTNQYAygrJuYVLY1vsmVHSLifNtCdcN6dHN69rJKC\"",
     )?;
     let deser = serde_json::from_str(&ser)?;
     assert_eq!(sk, deser);
@@ -88,7 +88,7 @@ fn serde_view_key() -> Result<(), Box<dyn std::error::Error>> {
     let vk = ViewKey::from(&sk);
     let ser = assert_canonical_json(
         &vk,
-        "\"4VWvwJK79fznAuRZm9qP6Eqv57hLuYGU2PkoJJxYii2CB6ZEEiHSgjYzXkaiQaAq7TDr6zEyuqUgpzLRcXfq1pdU\""
+        "\"4VWvwJK79fznAuRZm9qP6Eqv57hLuYGU2PkoJJxYii2CB6ZEEiHSgjYzXkaiQaAq7TDr6zEyuqUgpzLRcXfq1pdU\"",
     )?;
     let deser = serde_json::from_str(&ser)?;
     assert_eq!(vk, deser);
@@ -115,7 +115,9 @@ fn serde_stealth_address() -> Result<(), Box<dyn std::error::Error>> {
     let pk = PublicKey::from(&SecretKey::random(&mut rng));
     let stealth_addr = pk.gen_stealth_address(&scalar);
     let ser = assert_canonical_json(
-        &stealth_addr, "\"nrkRNs188TSAy7LdQcwDfbghZEk3agdT7b7h83ynP6KU2WHtBFqNXSZt9qJwZDZmhWPakFuWRg4m5hRHH2kF5su\"")?;
+        &stealth_addr,
+        "\"nrkRNs188TSAy7LdQcwDfbghZEk3agdT7b7h83ynP6KU2WHtBFqNXSZt9qJwZDZmhWPakFuWRg4m5hRHH2kF5su\"",
+    )?;
     let deser = serde_json::from_str(&ser)?;
     assert_eq!(stealth_addr, deser);
     Ok(())

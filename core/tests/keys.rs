@@ -8,8 +8,8 @@ use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use zeroize::Zeroize;
 
 #[test]
@@ -54,7 +54,7 @@ fn keys_encoding() {
 
 #[test]
 fn keys_consistency() {
-    use dusk_jubjub::{JubJubScalar, GENERATOR_EXTENDED};
+    use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
 
     const NOTE_VALUE: u64 = 42;
 

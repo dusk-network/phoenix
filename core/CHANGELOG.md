@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Move to edition 2024
 - Move to stable MSRV 1.85
 - Update `dusk-poseidon` to v0.42.0-rc.0
 - Update `jubjub-schnorr` to v0.7.0-rc.0

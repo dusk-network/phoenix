@@ -8,8 +8,8 @@
 
 use dusk_jubjub::JubJubAffine;
 use dusk_plonk::prelude::*;
-use jubjub_schnorr::{gadgets, Signature as SchnorrSignature};
-use phoenix_core::{PublicKey, OUTPUT_NOTES};
+use jubjub_schnorr::{Signature as SchnorrSignature, gadgets};
+use phoenix_core::{OUTPUT_NOTES, PublicKey};
 
 use jubjub_elgamal::zk::Encryption as ElGamalZK;
 

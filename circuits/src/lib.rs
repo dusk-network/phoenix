@@ -19,12 +19,12 @@ use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
 use jubjub_schnorr::{Signature as SchnorrSignature, SignatureDouble};
-use poseidon_merkle::{Item, Opening, Tree, ARITY};
+use poseidon_merkle::{ARITY, Item, Opening, Tree};
 
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
-use phoenix_core::{Note, PublicKey, SecretKey, OUTPUT_NOTES};
+use phoenix_core::{Note, OUTPUT_NOTES, PublicKey, SecretKey};
 
 extern crate alloc;
 use alloc::vec::Vec;

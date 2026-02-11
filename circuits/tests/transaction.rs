@@ -6,12 +6,12 @@
 
 #![cfg(feature = "plonk")]
 
-use rand::rngs::StdRng;
 use rand::SeedableRng;
+use rand::rngs::StdRng;
 use rand::{CryptoRng, RngCore};
 
 use dusk_bls12_381::BlsScalar;
-use dusk_jubjub::{JubJubAffine, JubJubScalar, GENERATOR_NUMS_EXTENDED};
+use dusk_jubjub::{GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar};
 use dusk_plonk::prelude::{Compiler, PublicParameters};
 use ff::Field;
 use jubjub_elgamal::Encryption as ElGamal;
@@ -22,7 +22,7 @@ use poseidon_merkle::{Item, Tree};
 
 use phoenix_circuits::{InputNoteInfo, OutputNoteInfo, TxCircuit};
 use phoenix_core::{
-    value_commitment, Note, PublicKey, SecretKey, ViewKey, OUTPUT_NOTES,
+    Note, OUTPUT_NOTES, PublicKey, SecretKey, ViewKey, value_commitment,
 };
 
 #[macro_use]
