@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-core"
-version = "0.34.0"
+version = "0.35.0-rc.0"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
