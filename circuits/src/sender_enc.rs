@@ -8,10 +8,9 @@
 
 use dusk_jubjub::JubJubAffine;
 use dusk_plonk::prelude::*;
+use jubjub_elgamal as elgamal;
 use jubjub_schnorr::{Signature as SchnorrSignature, gadgets};
 use phoenix_core::{OUTPUT_NOTES, PublicKey};
-
-use jubjub_elgamal::zk::Encryption as ElGamalZK;
 
 /// Gadget to prove a valid origin for a given transaction.
 pub(crate) fn gadget(
@@ -95,21 +94,29 @@ fn assert_sender_enc(
     sender_enc: [(JubJubAffine, JubJubAffine); 2],
 ) -> Result<(), Error> {
     let blinder_A = blinder.0;
-    let (enc_A, _) =
-        ElGamalZK::encrypt(composer, note_pk, sender_pk_A, None, blinder_A)?;
+    let (enc_A_c1, enc_A_c2) = elgamal::zk::encrypt_unchecked(
+        composer,
+        note_pk,
+        sender_pk_A,
+        blinder_A,
+    )?;
 
     let blinder_B = blinder.1;
-    let (enc_B, _) =
-        ElGamalZK::encrypt(composer, note_pk, sender_pk_B, None, blinder_B)?;
+    let (enc_B_c1, enc_B_c2) = elgamal::zk::encrypt_unchecked(
+        composer,
+        note_pk,
+        sender_pk_B,
+        blinder_B,
+    )?;
 
     let sender_enc_A = sender_enc[0];
     let sender_enc_B = sender_enc[1];
 
-    composer.assert_equal_public_point(*enc_A.c1(), sender_enc_A.0);
-    composer.assert_equal_public_point(*enc_A.c2(), sender_enc_A.1);
+    composer.assert_equal_public_point(enc_A_c1, sender_enc_A.0);
+    composer.assert_equal_public_point(enc_A_c2, sender_enc_A.1);
 
-    composer.assert_equal_public_point(*enc_B.c1(), sender_enc_B.0);
-    composer.assert_equal_public_point(*enc_B.c2(), sender_enc_B.1);
+    composer.assert_equal_public_point(enc_B_c1, sender_enc_B.0);
+    composer.assert_equal_public_point(enc_B_c2, sender_enc_B.1);
 
     Ok(())
 }
