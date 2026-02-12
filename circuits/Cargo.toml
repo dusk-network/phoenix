@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-circuits"
-version = "0.7.0-rc.0"
+version = "0.8.0-rc.0"
 repository = "https://github.com/dusk-network/phoenix/circuits"
 description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
