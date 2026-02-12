@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-circuits"
-version = "0.7.0-rc.0"
+version = "0.8.0-rc.0"
 repository = "https://github.com/dusk-network/phoenix/circuits"
 description = "Circuit definitions for Phoenix, a privacy-preserving ZKP-based transaction model"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
@@ -19,7 +19,7 @@ dusk-jubjub = { version = "0.15", default-features = false }
 poseidon-merkle = "0.9.0-rc.0"
 dusk-poseidon = "0.42.0-rc.0"
 jubjub-schnorr = "0.7.0-rc.0"
-jubjub-elgamal = "0.5.0-rc.0"
+jubjub-elgamal = "0.5.0-rc.1"
 rkyv = { version = "0.7", default-features = false, optional = true }
 bytecheck = { version = "0.6", default-features = false, optional = true }
 dusk-plonk = { version = "0.22.0-rc.0", default-features = false, optional = true }
