@@ -28,6 +28,8 @@ dusk-plonk = { version = "0.22.0-rc.0", default-features = false, optional = tru
 lazy_static = "1.4"
 rand = { version = "0.8", default-features = false, features = ["std_rng"] }
 ff = { version = "0.13", default-features = false }
+ureq = "3"
+sha2 = "0.10"
 
 [features]
 default = ["plonk"]
