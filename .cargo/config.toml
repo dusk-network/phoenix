@@ -1,0 +1,4 @@
+[net]
+# Use the system `git` for fetching git dependencies so CI can reuse
+# credentials configured by `actions/checkout`.
+git-fetch-with-cli = true

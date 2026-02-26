@@ -520,9 +520,11 @@ impl Sender {
         };
 
         let sender_enc_A =
-            ElGamal::new(sender_enc[0].0.into(), sender_enc[0].1.into());
+            ElGamal::new(sender_enc[0].0.into(), sender_enc[0].1.into())
+                .map_err(|_| Error::InvalidEncryption)?;
         let sender_enc_B =
-            ElGamal::new(sender_enc[1].0.into(), sender_enc[1].1.into());
+            ElGamal::new(sender_enc[1].0.into(), sender_enc[1].1.into())
+                .map_err(|_| Error::InvalidEncryption)?;
 
         let decrypt_A =
             sender_enc_A.decrypt(&DecryptFrom::SecretKey(*note_sk.as_ref()));
