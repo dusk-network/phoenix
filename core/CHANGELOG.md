@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix order-dependent deserialization of `Note` [#274]
 - Preserve compatibility when decoding historical Phoenix transactions after
   stricter `dusk-jubjub` subgroup checks.
 - Bound `TxSkeleton::from_slice` nullifier allocation to reject malformed
   oversized nullifier counts before allocation.
+
+## [0.35.0] - 2026-02-27
+
+### Fixed
+
+- Fix order-dependent deserialization of `Note` [#274]
 
 ### Changed
 
@@ -21,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move to stable MSRV 1.85
 - Update `dusk-poseidon` to v0.42.0-rc.0
 - Update `jubjub-schnorr` to v0.7.0-rc.0
-- Update `jubjub-elgamal` to v0.5.0-rc.0
+- Update `jubjub-elgamal` to v0.5.0
 
 ## [0.34.0] - 2024-02-07
 
@@ -480,7 +485,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/dusk-network/phoenix/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/dusk-network/phoenix/compare/v0.33.1...v0.34.0
 [0.33.1]: https://github.com/dusk-network/phoenix/compare/v0.33.0...v0.33.1
 [0.33.0]: https://github.com/dusk-network/phoenix/compare/v0.32.0...v0.33.0
