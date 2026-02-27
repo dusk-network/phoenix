@@ -1,6 +1,6 @@
 [package]
 name = "phoenix-core"
-version = "0.35.0-rc.0"
+version = "0.35.0"
 repository = "https://github.com/dusk-network/phoenix/core"
 description = "Core types and functionalities for Phoenix, a privacy-preserving ZKP-based transaction model"
 exclude = [".github/workflows/dusk-ci.yml", ".gitignore"]
@@ -18,7 +18,7 @@ dusk-jubjub = { version = "0.15", default-features = false, features = [
 ] }
 dusk-poseidon = "0.42.0-rc.0"
 jubjub-schnorr = "0.7.0-rc.0"
-jubjub-elgamal = "0.5.0-rc.0"
+jubjub-elgamal = "0.5.0"
 subtle = { version = "2.6", default-features = false }
 ff = { version = "0.13", default-features = false }
 aes-gcm = { version = "0.10", default-features = false, features = [
