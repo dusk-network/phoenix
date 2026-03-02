@@ -97,8 +97,24 @@ impl TxSkeleton {
         let mut buffer = buf;
         let root = BlsScalar::from_reader(&mut buffer)?;
 
-        let num_nullifiers = u64::from_reader(&mut buffer)?;
-        let mut nullifiers = Vec::with_capacity(num_nullifiers as usize);
+        let num_nullifiers_u64 = u64::from_reader(&mut buffer)?;
+        let min_tail_len = OUTPUT_NOTES
+            .checked_mul(Note::SIZE)
+            .and_then(|len| len.checked_add(u64::SIZE + u64::SIZE))
+            .ok_or(BytesError::InvalidData)?;
+        if buffer.len() < min_tail_len {
+            return Err(BytesError::InvalidData);
+        }
+
+        let max_nullifiers_by_len =
+            (buffer.len() - min_tail_len) / BlsScalar::SIZE;
+        let num_nullifiers = usize::try_from(num_nullifiers_u64)
+            .map_err(|_| BytesError::InvalidData)?;
+        if num_nullifiers > max_nullifiers_by_len {
+            return Err(BytesError::InvalidData);
+        }
+
+        let mut nullifiers = Vec::with_capacity(num_nullifiers);
         for _ in 0..num_nullifiers {
             nullifiers.push(BlsScalar::from_reader(&mut buffer)?);
         }
@@ -140,5 +156,25 @@ impl TxSkeleton {
     /// Returns the deposit of the transaction.
     pub fn deposit(&self) -> u64 {
         self.deposit
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_slice_rejects_unbounded_nullifier_count() {
+        let mut bytes = Vec::new();
+        bytes.extend(BlsScalar::from(0u64).to_bytes());
+        bytes.extend(u64::MAX.to_bytes());
+
+        // Fill enough bytes to pass fixed-tail length checks while keeping the
+        // nullifier count obviously inconsistent with the available payload.
+        let min_tail_len = OUTPUT_NOTES * Note::SIZE + u64::SIZE + u64::SIZE;
+        bytes.resize(BlsScalar::SIZE + u64::SIZE + min_tail_len, 0u8);
+
+        let err = TxSkeleton::from_slice(&bytes).unwrap_err();
+        assert_eq!(err, BytesError::InvalidData);
     }
 }
