@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix order-dependent deserialization of `Note` [#274]
+- Preserve compatibility when decoding historical Phoenix transactions after
+  stricter `dusk-jubjub` subgroup checks.
 - Bound `TxSkeleton::from_slice` nullifier allocation to reject malformed
   oversized nullifier counts before allocation.
 
