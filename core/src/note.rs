@@ -17,6 +17,7 @@ use rand::{CryptoRng, RngCore};
 
 use crate::{
     Error, PublicKey, SecretKey, StealthAddress, ViewKey, aes,
+    stealth_address::affine_from_slice_legacy_compat,
     transparent_value_commitment, value_commitment,
 };
 
@@ -241,6 +242,54 @@ impl Note {
                 [(JubJubAffine::default(), JubJubAffine::default()); 2],
             ),
         }
+    }
+
+    pub(crate) fn read_strict(reader: &mut &[u8]) -> Result<Self, BytesError> {
+        Self::from_reader(reader)
+    }
+
+    pub(crate) fn read_legacy_compat(
+        reader: &mut &[u8],
+    ) -> Result<Self, BytesError> {
+        let bytes = take_fixed_bytes::<SIZE>(reader)?;
+        Self::from_bytes_legacy_compat(bytes)
+    }
+
+    pub(crate) fn from_bytes_legacy_compat(
+        bytes: &[u8; Self::SIZE],
+    ) -> Result<Self, BytesError> {
+        let note_type =
+            bytes[0].try_into().map_err(|_| BytesError::InvalidData)?;
+
+        let mut buf = &bytes[1..];
+        let value_commitment =
+            affine_from_slice_legacy_compat(&buf[..JubJubAffine::SIZE])?;
+        buf = &buf[JubJubAffine::SIZE..];
+
+        let mut stealth_address_bytes = [0u8; StealthAddress::SIZE];
+        stealth_address_bytes.copy_from_slice(&buf[..StealthAddress::SIZE]);
+        let stealth_address =
+            StealthAddress::from_bytes_legacy_compat(&stealth_address_bytes)?;
+        buf = &buf[StealthAddress::SIZE..];
+
+        let pos = u64::from_reader(&mut buf)?;
+
+        let mut value_enc = [0u8; VALUE_ENC_SIZE];
+        value_enc.copy_from_slice(&buf[..VALUE_ENC_SIZE]);
+        buf = &buf[VALUE_ENC_SIZE..];
+
+        let mut sender_bytes = [0u8; Sender::SIZE];
+        sender_bytes.copy_from_slice(&buf[..Sender::SIZE]);
+        let sender = Sender::from_bytes_legacy_compat(&sender_bytes)?;
+
+        Ok(Self {
+            note_type,
+            value_commitment,
+            stealth_address,
+            pos,
+            value_enc,
+            sender,
+        })
     }
 
     fn decrypt_value(
@@ -596,4 +645,56 @@ impl Serializable<{ 1 + 4 * JubJubAffine::SIZE }> for Sender {
 
         Ok(sender)
     }
+}
+
+impl Sender {
+    /// Attempts to convert a byte representation of a sender into a `Sender`,
+    /// accepting historical on-curve `JubJub` points without subgroup checks.
+    pub fn from_bytes_legacy_compat(
+        bytes: &[u8; Self::SIZE],
+    ) -> Result<Self, BytesError> {
+        match bytes[0] {
+            0 => {
+                let mut buf = &bytes[1..];
+                let sender_enc_A_0 = affine_from_slice_legacy_compat(
+                    &buf[..JubJubAffine::SIZE],
+                )?;
+                buf = &buf[JubJubAffine::SIZE..];
+                let sender_enc_A_1 = affine_from_slice_legacy_compat(
+                    &buf[..JubJubAffine::SIZE],
+                )?;
+                buf = &buf[JubJubAffine::SIZE..];
+                let sender_enc_B_0 = affine_from_slice_legacy_compat(
+                    &buf[..JubJubAffine::SIZE],
+                )?;
+                buf = &buf[JubJubAffine::SIZE..];
+                let sender_enc_B_1 = affine_from_slice_legacy_compat(
+                    &buf[..JubJubAffine::SIZE],
+                )?;
+
+                Ok(Sender::Encryption([
+                    (sender_enc_A_0, sender_enc_A_1),
+                    (sender_enc_B_0, sender_enc_B_1),
+                ]))
+            }
+            1 => {
+                let mut contract_data = [0u8; 4 * JubJubAffine::SIZE];
+                contract_data.copy_from_slice(&bytes[1..Self::SIZE]);
+                Ok(Sender::ContractInfo(contract_data))
+            }
+            _ => Err(BytesError::InvalidData),
+        }
+    }
+}
+
+fn take_fixed_bytes<'a, const N: usize>(
+    reader: &mut &'a [u8],
+) -> Result<&'a [u8; N], BytesError> {
+    if reader.len() < N {
+        return Err(BytesError::InvalidData);
+    }
+
+    let (bytes, rest) = reader.split_at(N);
+    *reader = rest;
+    bytes.try_into().map_err(|_| BytesError::InvalidData)
 }
