@@ -51,8 +51,8 @@ jobs:
     name: Dusk Analyzer
     uses: dusk-network/.github/.github/workflows/dusk-analysis.yml@main
 
-  test_core:
-    name: test core
+  test:
+    name: Tests
     runs-on: core
     steps:
       - uses: actions/checkout@v4
@@ -69,90 +69,10 @@ jobs:
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
-      - run: cargo test --release -p phoenix-core --features=alloc,serde
+      - run: make test
 
-  test_core_no_default_serde:
-    name: test core no-default-features serde
-    runs-on: core
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
-      - name: Add Rust tools to PATH
-        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - uses: dsherret/rust-toolchain-file@v1
-      - run: cargo test --release -p phoenix-core --no-default-features --features=serde
-
-  test_core_rkyv:
-    name: test core rkyv compiles
-    runs-on: core
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
-      - name: Add Rust tools to PATH
-        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - uses: dsherret/rust-toolchain-file@v1
-      - run: cargo test --release -p phoenix-core --features=rkyv-impl,alloc --no-run
-
-  test_circuits:
-    name: test cirucits
-    runs-on: core
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
-      - name: Add Rust tools to PATH
-        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - uses: dsherret/rust-toolchain-file@v1
-      - run: cargo test --release -p phoenix-circuits
-
-  test_circuits_no_default:
-    name: test cirucits no-default-features
-    runs-on: core
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
-      - name: Add Rust tools to PATH
-        run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - uses: dsherret/rust-toolchain-file@v1
-      - run: cargo test --release -p phoenix-circuits --no-default-features --features=rkyv-impl,rkyv/size_16 --no-run
-
-  compiles_to_wasm_with_serde:
-    name: Compiles to wasm with serde enabled
+  test-no-std:
+    name: No-std checks
     runs-on: core
     steps:
       - uses: actions/checkout@v4
@@ -170,5 +90,4 @@ jobs:
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
       - run: rustup target add wasm32-unknown-unknown
-      - run: cargo b --release --no-default-features --features serde --target wasm32-unknown-unknown
-        working-directory: core
+      - run: make test-no-std
