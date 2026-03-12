@@ -4,19 +4,18 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{StealthAddress, keys::hash};
-
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
-use zeroize::Zeroize;
-
+use rand::{CryptoRng, RngCore};
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
-
-use dusk_bytes::{DeserializableSlice, Error, Serializable};
-use rand::{CryptoRng, RngCore};
 use subtle::{Choice, ConstantTimeEq};
+use zeroize::Zeroize;
+
+use crate::StealthAddress;
+use crate::keys::hash;
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]
 ///
