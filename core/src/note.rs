@@ -14,15 +14,14 @@ use ff::Field;
 use jubjub_elgamal::{DecryptFrom, Encryption as ElGamal};
 use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
 use rand::{CryptoRng, RngCore};
-
-use crate::{
-    Error, PublicKey, SecretKey, StealthAddress, ViewKey, aes,
-    stealth_address::affine_from_slice_legacy_compat,
-    transparent_value_commitment, value_commitment,
-};
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
+
+use crate::stealth_address::affine_from_slice_legacy_compat;
+use crate::{
+    Error, PublicKey, SecretKey, StealthAddress, ViewKey, aes,
+    transparent_value_commitment, value_commitment,
+};
 
 /// Blinder used for transparent notes.
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();

@@ -4,15 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use jubjub_schnorr::PublicKey as NotePublicKey;
-
-use dusk_bytes::{DeserializableSlice, Error, Serializable};
-
-use subtle::{Choice, ConstantTimeEq};
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
+use subtle::{Choice, ConstantTimeEq};
 
 /// To obfuscate the identity of the participants, we utilizes a Stealth Address
 /// system.

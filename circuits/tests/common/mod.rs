@@ -8,10 +8,6 @@ use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
 
-use rand::SeedableRng;
-use rand::rngs::StdRng;
-use rand::{CryptoRng, RngCore};
-
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar};
 use dusk_plonk::prelude::PublicParameters;
@@ -20,13 +16,14 @@ use jubjub_elgamal::Encryption as ElGamal;
 use jubjub_schnorr::{
     SecretKey as SchnorrSecretKey, Signature as SchnorrSignature,
 };
-use poseidon_merkle::{Item, Tree};
-use sha2::{Digest, Sha256};
-
 pub use phoenix_circuits::{InputNoteInfo, OutputNoteInfo};
 use phoenix_core::{
     Note, OUTPUT_NOTES, PublicKey, SecretKey, ViewKey, value_commitment,
 };
+use poseidon_merkle::{Item, Tree};
+use rand::rngs::StdRng;
+use rand::{CryptoRng, RngCore, SeedableRng};
+use sha2::{Digest, Sha256};
 
 const CRS_URL: &str = "https://testnet.nodes.dusk.network/trusted-setup";
 const CRS_HASH: &str =

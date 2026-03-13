@@ -4,8 +4,9 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use aes_gcm::Error as AesError;
 use core::fmt;
+
+use aes_gcm::Error as AesError;
 use dusk_bytes::{BadLength, Error as DuskBytesError, InvalidChar};
 
 /// All possible errors for Phoenix's Core
