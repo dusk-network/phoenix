@@ -114,5 +114,25 @@ Phoenix uses a **UTXO model** where:
 ## Git Conventions
 
 - Default branch: `master`
-- Commit messages: concise, imperative mood (e.g. "add Makefile targets for CI parity")
 - License: MPL-2.0
+
+### Commit messages
+
+Format: `<scope>: <Description>` — imperative mood, capitalize first word after colon.
+
+**One commit per crate per concern.** Each commit touches exactly one crate and one logical concern. Never bundle changes to different crates in one commit, and don't mix unrelated changes within the same crate either. Order commits bottom-up through the dependency chain (`core` before `circuits`).
+
+Canonical scopes:
+
+| Scope | Directory |
+|-------|-----------|
+| `core` | `core/` |
+| `circuits` | `circuits/` |
+| `workspace` | Root `Cargo.toml`, root Makefile |
+| `ci` | `.github/workflows/` |
+| `docs` | Documentation-only changes |
+
+Examples:
+- `core: Add serde support for ContractCall`
+- `circuits: Fix TxCircuit witness generation`
+- `workspace: Update dusk dependencies`
