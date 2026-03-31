@@ -6,6 +6,3 @@ resolver = "2"
 rust-version = "1.85"
 license = "MPL-2.0"
 edition = "2024"
-
-[patch.crates-io]
-jubjub-elgamal = { git = "https://github.com/dusk-network/jubjub-elgamal-private.git", tag = "AEGIS" }

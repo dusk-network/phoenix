@@ -12,16 +12,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -32,16 +22,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -56,16 +36,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -76,16 +46,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -96,16 +56,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -116,16 +66,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -136,16 +76,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
@@ -156,16 +86,6 @@ jobs:
     runs-on: core
     steps:
       - uses: actions/checkout@v4
-      - name: Configure git auth for private dependencies
-        run: |
-          if [ -z "${{ secrets.PLONK_PRIVATE_READ_TOKEN }}" ]; then
-            echo "PLONK_PRIVATE_READ_TOKEN is not configured"
-            exit 1
-          fi
-          export GIT_CONFIG_GLOBAL="${RUNNER_TEMP}/gitconfig"
-          echo "GIT_CONFIG_GLOBAL=${RUNNER_TEMP}/gitconfig" >> "$GITHUB_ENV"
-          git config --global url."https://x-access-token:${{ secrets.PLONK_PRIVATE_READ_TOKEN }}@github.com/".insteadOf "https://github.com/"
-          git config --local --unset-all http.https://github.com/.extraheader || true
       - name: Add Rust tools to PATH
         run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - uses: dsherret/rust-toolchain-file@v1
