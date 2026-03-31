@@ -22,7 +22,7 @@ jubjub-schnorr = "0.7.0-rc.0"
 jubjub-elgamal = "0.5.0"
 rkyv = { version = "0.7", default-features = false, optional = true }
 bytecheck = { version = "0.6", default-features = false, optional = true }
-dusk-plonk = { version = "0.22.0-rc.0", default-features = false, optional = true }
+dusk-plonk = { version = "0.22.0", default-features = false, optional = true }
 
 [dev-dependencies]
 lazy_static = "1.4"
