@@ -102,7 +102,7 @@ fn random_circuit<const I: usize>(
     signature_1_bytes[..32]
         .copy_from_slice(&JubJubScalar::random(&mut *rng).to_bytes()[..]);
     // generate random signature_1.R
-    signature_0_bytes[32..]
+    signature_1_bytes[32..]
         .copy_from_slice(&random_jubjub_affine(rng).to_bytes()[..]);
 
     TxCircuit {
