@@ -18,8 +18,13 @@ clippy: ## Run clippy
 	@$(MAKE) -C ./core $@
 	@$(MAKE) -C ./circuits $@
 
+cq: ## Run code quality checks (formatting + clippy)
+	@$(MAKE) fmt CHECK=1
+	@$(MAKE) clippy
+
 fmt: ## Format code (requires nightly)
-	@cargo +nightly fmt --all
+	@rustup component add --toolchain nightly rustfmt 2>/dev/null || true
+	@cargo +nightly fmt --all $(if $(CHECK),-- --check,)
 
 doc: ## Generate documentation
 	@cargo doc --no-deps
@@ -27,4 +32,4 @@ doc: ## Generate documentation
 clean: ## Clean build artifacts
 	@cargo clean
 
-.PHONY: help test test-no-std no-std clippy fmt doc clean
+.PHONY: help test test-no-std no-std clippy cq fmt doc clean

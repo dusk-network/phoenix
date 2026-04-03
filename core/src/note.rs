@@ -243,10 +243,12 @@ impl Note {
         }
     }
 
+    #[cfg(feature = "alloc")]
     pub(crate) fn read_strict(reader: &mut &[u8]) -> Result<Self, BytesError> {
         Self::from_reader(reader)
     }
 
+    #[cfg(feature = "alloc")]
     pub(crate) fn read_legacy_compat(
         reader: &mut &[u8],
     ) -> Result<Self, BytesError> {
@@ -254,6 +256,7 @@ impl Note {
         Self::from_bytes_legacy_compat(bytes)
     }
 
+    #[cfg(feature = "alloc")]
     pub(crate) fn from_bytes_legacy_compat(
         bytes: &[u8; Self::SIZE],
     ) -> Result<Self, BytesError> {
@@ -686,6 +689,7 @@ impl Sender {
     }
 }
 
+#[cfg(feature = "alloc")]
 fn take_fixed_bytes<'a, const N: usize>(
     reader: &mut &'a [u8],
 ) -> Result<&'a [u8; N], BytesError> {

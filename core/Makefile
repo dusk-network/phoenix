@@ -17,5 +17,6 @@ no-std: ## Verify no_std compatibility on bare-metal target
 
 clippy: ## Run clippy
 	@cargo clippy --release --features=alloc,serde -- -D warnings
+	@cargo clippy --release --no-default-features -- -D warnings
 
 .PHONY: help test test-no-std no-std clippy
