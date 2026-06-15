@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.1] - 2026-06-15
+
 ### Fixed
 
 - Preserve compatibility when decoding historical Phoenix transactions after
@@ -485,7 +487,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#61]: https://github.com/dusk-network/phoenix/issues/61
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/v0.35.1...HEAD
+[0.35.1]: https://github.com/dusk-network/phoenix/compare/v0.35.0...v0.35.1
 [0.35.0]: https://github.com/dusk-network/phoenix/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/dusk-network/phoenix/compare/v0.33.1...v0.34.0
 [0.33.1]: https://github.com/dusk-network/phoenix/compare/v0.33.0...v0.33.1
