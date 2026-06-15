@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve compatibility when decoding historical Phoenix transactions after
+  stricter `dusk-jubjub` subgroup checks.
+- Bound `TxSkeleton::from_slice` nullifier allocation to reject malformed
+  oversized nullifier counts before allocation.
+
 ## [0.35.0] - 2026-02-27
 
 ### Fixed

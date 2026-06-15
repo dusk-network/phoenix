@@ -14,12 +14,10 @@
 
 #![cfg(feature = "plonk")]
 
+use dusk_plonk::prelude::{Compiler, Verifier};
+use phoenix_circuits::TxCircuit;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
-
-use dusk_plonk::prelude::{Compiler, Verifier};
-
-use phoenix_circuits::TxCircuit;
 
 mod common;
 use common::*;

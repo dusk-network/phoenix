@@ -4,15 +4,12 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubExtended};
 use jubjub_schnorr::PublicKey as NotePublicKey;
-
-use dusk_bytes::{DeserializableSlice, Error, Serializable};
-
-use subtle::{Choice, ConstantTimeEq};
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
+use subtle::{Choice, ConstantTimeEq};
 
 /// To obfuscate the identity of the participants, we utilizes a Stealth Address
 /// system.
@@ -55,6 +52,22 @@ impl StealthAddress {
     pub const fn note_pk(&self) -> &NotePublicKey {
         &self.note_pk
     }
+
+    /// Decode a historical stealth address without enforcing subgroup checks
+    /// on the underlying points.
+    pub fn from_bytes_legacy_compat(
+        bytes: &[u8; Self::SIZE],
+    ) -> Result<Self, Error> {
+        let r_affine = affine_from_slice_legacy_compat(&bytes[..32])?;
+        let note_pk_affine = affine_from_slice_legacy_compat(&bytes[32..])?;
+
+        Ok(Self {
+            R: JubJubExtended::from(r_affine),
+            note_pk: NotePublicKey::from_raw_unchecked(JubJubExtended::from(
+                note_pk_affine,
+            )),
+        })
+    }
 }
 
 impl ConstantTimeEq for StealthAddress {
@@ -91,4 +104,13 @@ impl Serializable<64> for StealthAddress {
 
         Ok(StealthAddress { R, note_pk })
     }
+}
+
+pub(crate) fn affine_from_slice_legacy_compat(
+    bytes: &[u8],
+) -> Result<JubJubAffine, Error> {
+    let mut point = [0u8; JubJubAffine::SIZE];
+    point.copy_from_slice(bytes);
+    Option::<JubJubAffine>::from(JubJubAffine::from_bytes(point))
+        .ok_or(Error::InvalidData)
 }

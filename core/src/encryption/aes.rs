@@ -4,15 +4,11 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use aes_gcm::aead::{Aead, AeadCore, KeyInit};
+use aes_gcm::{Aes256Gcm, Key};
 use dusk_jubjub::JubJubAffine;
-use rand::{CryptoRng, RngCore};
-
-use aes_gcm::{
-    Aes256Gcm, Key,
-    aead::{Aead, AeadCore, KeyInit},
-};
-
 use hkdf::Hkdf;
+use rand::{CryptoRng, RngCore};
 use sha2::Sha256;
 
 use crate::Error;
