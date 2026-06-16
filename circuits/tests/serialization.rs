@@ -4,19 +4,16 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use rand::SeedableRng;
-use rand::rngs::StdRng;
-use rand::{CryptoRng, Rng, RngCore};
-
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{Error as BytesError, Serializable};
 use dusk_jubjub::{GENERATOR_EXTENDED, JubJubAffine, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::{Signature as SchnorrSignature, SignatureDouble};
-use poseidon_merkle::{Item, Tree};
-
 use phoenix_circuits::{InputNoteInfo, OutputNoteInfo, TxCircuit};
 use phoenix_core::{Note, PublicKey, SecretKey};
+use poseidon_merkle::{Item, Tree};
+use rand::rngs::StdRng;
+use rand::{CryptoRng, Rng, RngCore, SeedableRng};
 
 const HEIGHT: usize = 17;
 

@@ -4,16 +4,16 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use crate::{SecretKey, StealthAddress, keys::hash};
-
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
     GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
 };
-use subtle::{Choice, ConstantTimeEq};
-
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
+use subtle::{Choice, ConstantTimeEq};
+
+use crate::keys::hash;
+use crate::{SecretKey, StealthAddress};
 
 /// Pair of a secret `a` and public `b·G`
 ///

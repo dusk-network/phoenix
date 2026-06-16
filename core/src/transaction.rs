@@ -10,11 +10,10 @@
 extern crate alloc;
 use alloc::vec::Vec;
 
-#[cfg(feature = "rkyv-impl")]
-use rkyv::{Archive, Deserialize, Serialize};
-
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
+#[cfg(feature = "rkyv-impl")]
+use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::{Note, OUTPUT_NOTES};
 
@@ -49,6 +48,54 @@ pub struct TxSkeleton {
 }
 
 impl TxSkeleton {
+    fn from_slice_with(
+        buf: &[u8],
+        read_note: fn(&mut &[u8]) -> Result<Note, BytesError>,
+    ) -> Result<Self, BytesError> {
+        let mut buffer = buf;
+        let root = BlsScalar::from_reader(&mut buffer)?;
+
+        let num_nullifiers_u64 = u64::from_reader(&mut buffer)?;
+        let min_tail_len = OUTPUT_NOTES
+            .checked_mul(Note::SIZE)
+            .and_then(|len| len.checked_add(u64::SIZE + u64::SIZE))
+            .ok_or(BytesError::InvalidData)?;
+        if buffer.len() < min_tail_len {
+            return Err(BytesError::InvalidData);
+        }
+
+        let max_nullifiers_by_len =
+            (buffer.len() - min_tail_len) / BlsScalar::SIZE;
+        let num_nullifiers = usize::try_from(num_nullifiers_u64)
+            .map_err(|_| BytesError::InvalidData)?;
+        if num_nullifiers > max_nullifiers_by_len {
+            return Err(BytesError::InvalidData);
+        }
+
+        let mut nullifiers = Vec::with_capacity(num_nullifiers);
+        for _ in 0..num_nullifiers {
+            nullifiers.push(BlsScalar::from_reader(&mut buffer)?);
+        }
+
+        let mut outputs = Vec::with_capacity(OUTPUT_NOTES);
+        for _ in 0..OUTPUT_NOTES {
+            outputs.push(read_note(&mut buffer)?);
+        }
+        let outputs: [Note; OUTPUT_NOTES] =
+            outputs.try_into().map_err(|_| BytesError::InvalidData)?;
+
+        let max_fee = u64::from_reader(&mut buffer)?;
+        let deposit = u64::from_reader(&mut buffer)?;
+
+        Ok(Self {
+            root,
+            nullifiers,
+            outputs,
+            max_fee,
+            deposit,
+        })
+    }
+
     /// Return input bytes to a hash function for the transaction.
     #[must_use]
     pub fn to_hash_input_bytes(&self) -> Vec<u8> {
@@ -94,32 +141,13 @@ impl TxSkeleton {
 
     /// Deserialize the transaction from a bytes buffer.
     pub fn from_slice(buf: &[u8]) -> Result<Self, BytesError> {
-        let mut buffer = buf;
-        let root = BlsScalar::from_reader(&mut buffer)?;
+        Self::from_slice_with(buf, Note::read_strict)
+    }
 
-        let num_nullifiers = u64::from_reader(&mut buffer)?;
-        let mut nullifiers = Vec::with_capacity(num_nullifiers as usize);
-        for _ in 0..num_nullifiers {
-            nullifiers.push(BlsScalar::from_reader(&mut buffer)?);
-        }
-
-        let mut outputs = Vec::with_capacity(OUTPUT_NOTES);
-        for _ in 0..OUTPUT_NOTES {
-            outputs.push(Note::from_reader(&mut buffer)?);
-        }
-        let outputs: [Note; OUTPUT_NOTES] =
-            outputs.try_into().map_err(|_| BytesError::InvalidData)?;
-
-        let max_fee = u64::from_reader(&mut buffer)?;
-        let deposit = u64::from_reader(&mut buffer)?;
-
-        Ok(Self {
-            root,
-            nullifiers,
-            outputs,
-            max_fee,
-            deposit,
-        })
+    /// Deserialize the transaction from a bytes buffer, accepting historical
+    /// on-curve `JubJub` points inside output notes.
+    pub fn from_slice_legacy_compat(buf: &[u8]) -> Result<Self, BytesError> {
+        Self::from_slice_with(buf, Note::read_legacy_compat)
     }
 
     /// Returns the inputs to the transaction.
@@ -140,5 +168,25 @@ impl TxSkeleton {
     /// Returns the deposit of the transaction.
     pub fn deposit(&self) -> u64 {
         self.deposit
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_slice_rejects_unbounded_nullifier_count() {
+        let mut bytes = Vec::new();
+        bytes.extend(BlsScalar::from(0u64).to_bytes());
+        bytes.extend(u64::MAX.to_bytes());
+
+        // Fill enough bytes to pass fixed-tail length checks while keeping the
+        // nullifier count obviously inconsistent with the available payload.
+        let min_tail_len = OUTPUT_NOTES * Note::SIZE + u64::SIZE + u64::SIZE;
+        bytes.resize(BlsScalar::SIZE + u64::SIZE + min_tail_len, 0u8);
+
+        let err = TxSkeleton::from_slice(&bytes).unwrap_err();
+        assert_eq!(err, BytesError::InvalidData);
     }
 }

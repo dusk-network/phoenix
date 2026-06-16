@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-15
+
+### Changed
+
+- Update `phoenix-core` to v0.35.1
+- Update `dusk-plonk` to v0.22.1
+
 ## [0.8.0] - 2026-02-27
 
 ### Changed
@@ -156,7 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#169]: https://github.com/dusk-network/phoenix/issues/169
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.0...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.1...HEAD
+[0.8.1]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.0...circuits_v0.8.1
 [0.8.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.6.0...circuits_v0.8.0
 [0.6.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.5.0...circuits_v0.6.0
 [0.5.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.4.0...circuits_v0.5.0
