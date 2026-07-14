@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `StealthAddress::from_bytes_checked`, rejecting non-prime-order stealth
+  points [#288]
+
 ### Changed
 
 - Update `dusk-jubjub` to v0.15.2 for its torsion-rejecting point decoder [#288]

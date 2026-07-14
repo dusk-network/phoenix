@@ -53,6 +53,37 @@ impl StealthAddress {
         &self.note_pk
     }
 
+    /// Decode a `StealthAddress` from 64 bytes, requiring `R` and `note_pk` to
+    /// lie in the prime-order subgroup.
+    ///
+    /// The transaction circuit constrains membership of neither point, so this
+    /// decoder is what rejects them: an identity `R` collapses the
+    /// value-encryption key `dhke(vk.a, R)` to a shared secret anyone can
+    /// derive, and an identity `note_pk` publishes the ElGamal-encrypted sender
+    /// public key. A stealth address that must reject these points has to be
+    /// decoded through here — [`Serializable::from_bytes`] does not, and the
+    /// archived/rkyv path validates layout only.
+    ///
+    /// Membership is enforced in two halves, because a point is prime-order
+    /// exactly when it is torsion-free and not the identity. The point decode
+    /// rejects torsion, so this only has to reject the identity, which is
+    /// torsion-free and survives it. The torsion half rests on the
+    /// `dusk-jubjub` requirement in `Cargo.toml`, pinned by
+    /// `strict_decode_rejects_mixed_order_stealth_point`; lowering the
+    /// requirement or dropping that test reopens it.
+    pub fn from_bytes_checked(bytes: &[u8; Self::SIZE]) -> Result<Self, Error> {
+        let stealth_address = Self::from_bytes(bytes)?;
+        if stealth_address.has_identity_point() {
+            return Err(Error::InvalidData);
+        }
+        Ok(stealth_address)
+    }
+
+    /// Returns `true` when `R` or `note_pk` is the identity.
+    pub(crate) fn has_identity_point(&self) -> bool {
+        bool::from(self.R.is_identity() | self.note_pk.as_ref().is_identity())
+    }
+
     /// Decode a historical stealth address without enforcing subgroup checks
     /// on the underlying points.
     pub fn from_bytes_legacy_compat(
@@ -113,4 +144,71 @@ pub(crate) fn affine_from_slice_legacy_compat(
     point.copy_from_slice(bytes);
     Option::<JubJubAffine>::from(JubJubAffine::from_bytes(point))
         .ok_or(Error::InvalidData)
+}
+
+#[cfg(test)]
+mod tests {
+    use dusk_jubjub::{Fq, GENERATOR_EXTENDED};
+    use ff::Field;
+
+    use super::*;
+
+    fn address(r: JubJubExtended, note_pk: JubJubExtended) -> StealthAddress {
+        StealthAddress::from_raw_unchecked(
+            r,
+            NotePublicKey::from_raw_unchecked(note_pk),
+        )
+    }
+
+    fn prime_order() -> JubJubExtended {
+        GENERATOR_EXTENDED
+    }
+
+    fn identity() -> JubJubExtended {
+        JubJubExtended::default()
+    }
+
+    fn torsion() -> JubJubExtended {
+        // The order-2 point (0, -1): non-identity, not prime-order.
+        JubJubExtended::from(JubJubAffine::from_raw_unchecked(
+            Fq::ZERO,
+            -Fq::ONE,
+        ))
+    }
+
+    #[test]
+    fn has_identity_point_covers_each_operand() {
+        assert!(!address(prime_order(), prime_order()).has_identity_point());
+
+        // An identity in either operand is caught, so neither is redundant.
+        assert!(address(identity(), prime_order()).has_identity_point());
+        assert!(address(prime_order(), identity()).has_identity_point());
+
+        // Torsion is the point decode's half of the membership rule, not this
+        // predicate's: `strict_decode_rejects_mixed_order_stealth_point` pins
+        // it. If these ever fail, the two halves have drifted.
+        assert!(!address(torsion(), prime_order()).has_identity_point());
+        assert!(!address(prime_order(), torsion()).has_identity_point());
+    }
+
+    #[test]
+    fn from_bytes_checked_accepts_valid_rejects_identity_operands() {
+        // Positive path: a prime-order stealth address decodes.
+        let good = address(prime_order(), prime_order());
+        assert!(StealthAddress::from_bytes_checked(&good.to_bytes()).is_ok());
+
+        // The identity is torsion-free, so it survives the point decode and
+        // reaches the guard; each operand is checked in isolation.
+        let bad_r = address(identity(), prime_order());
+        assert_eq!(
+            StealthAddress::from_bytes_checked(&bad_r.to_bytes()).unwrap_err(),
+            Error::InvalidData
+        );
+        let bad_note_pk = address(prime_order(), identity());
+        assert_eq!(
+            StealthAddress::from_bytes_checked(&bad_note_pk.to_bytes())
+                .unwrap_err(),
+            Error::InvalidData
+        );
+    }
 }
