@@ -47,11 +47,48 @@ pub struct TxSkeleton {
     pub deposit: u64,
 }
 
+/// Selects how a [`TxSkeleton`] byte-region is decoded. Each variant fixes
+/// both the note reader and whether trailing bytes are rejected, so the two
+/// cannot be mismatched by a caller.
+#[derive(Clone, Copy)]
+enum DecodeMode {
+    /// Historical (`legacy_compat`) decode: accepts on-curve points without
+    /// subgroup checks and tolerates trailing bytes. For already-finalized
+    /// pre-strict-format transactions only.
+    Legacy,
+    /// Strict decode: torsion-free points, trailing bytes tolerated. The
+    /// decoder for both live strict-format ingress and replay of
+    /// already-finalized strict-format transactions.
+    Strict,
+    /// Checked decode: strict points that must additionally be prime-order, and
+    /// the region must be fully drained. Callers pick this mode through
+    /// [`TxSkeleton::from_slice_checked`]. Which transactions are decoded
+    /// through it is a routing decision for the node: it selects this mode at
+    /// the protocol fork that introduces these checks, and leaves `Strict` to
+    /// decode the transactions finalized before the fork.
+    Checked,
+}
+
+impl DecodeMode {
+    fn read_note(self) -> fn(&mut &[u8]) -> Result<Note, BytesError> {
+        match self {
+            Self::Legacy => Note::read_legacy_compat,
+            Self::Strict => Note::read_strict,
+            Self::Checked => Note::read_checked,
+        }
+    }
+
+    fn reject_trailing(self) -> bool {
+        matches!(self, Self::Checked)
+    }
+}
+
 impl TxSkeleton {
     fn from_slice_with(
         buf: &[u8],
-        read_note: fn(&mut &[u8]) -> Result<Note, BytesError>,
+        mode: DecodeMode,
     ) -> Result<Self, BytesError> {
+        let read_note = mode.read_note();
         let mut buffer = buf;
         let root = BlsScalar::from_reader(&mut buffer)?;
 
@@ -86,6 +123,16 @@ impl TxSkeleton {
 
         let max_fee = u64::from_reader(&mut buffer)?;
         let deposit = u64::from_reader(&mut buffer)?;
+
+        // The skeleton is decoded from its own length-prefixed sub-region, so
+        // any residual byte is intra-region padding: a distinct, non-canonical
+        // wire-encoding of the same transaction. Hashes computed by re-encoding
+        // the decoded fields would normalize such padding away rather than
+        // reject it, so on the checked path require the region be fully drained
+        // to keep the encoding canonical for block acceptance.
+        if mode.reject_trailing() && !buffer.is_empty() {
+            return Err(BytesError::InvalidData);
+        }
 
         Ok(Self {
             root,
@@ -141,13 +188,25 @@ impl TxSkeleton {
 
     /// Deserialize the transaction from a bytes buffer.
     pub fn from_slice(buf: &[u8]) -> Result<Self, BytesError> {
-        Self::from_slice_with(buf, Note::read_strict)
+        Self::from_slice_with(buf, DecodeMode::Strict)
+    }
+
+    /// Deserialize the transaction from a bytes buffer, additionally rejecting
+    /// non-canonical trailing padding and non-prime-order stealth-address
+    /// points inside output notes.
+    ///
+    /// The buffer must contain exactly one skeleton and no trailing bytes.
+    /// Intended for the protocol fork that introduces these checks; the
+    /// existing [`Self::from_slice`] and [`Self::from_slice_legacy_compat`]
+    /// decoders are left as-is so already-finalized transactions still decode.
+    pub fn from_slice_checked(buf: &[u8]) -> Result<Self, BytesError> {
+        Self::from_slice_with(buf, DecodeMode::Checked)
     }
 
     /// Deserialize the transaction from a bytes buffer, accepting historical
     /// on-curve `JubJub` points inside output notes.
     pub fn from_slice_legacy_compat(buf: &[u8]) -> Result<Self, BytesError> {
-        Self::from_slice_with(buf, Note::read_legacy_compat)
+        Self::from_slice_with(buf, DecodeMode::Legacy)
     }
 
     /// Returns the inputs to the transaction.
@@ -173,7 +232,99 @@ impl TxSkeleton {
 
 #[cfg(test)]
 mod tests {
+    use dusk_jubjub::JubJubScalar;
+    use ff::Field;
+    use rand::SeedableRng;
+    use rand::rngs::StdRng;
+
     use super::*;
+    use crate::{NoteType, PublicKey, SecretKey, StealthAddress};
+
+    fn dummy_output(rng: &mut StdRng) -> Note {
+        let sender_pk = PublicKey::from(&SecretKey::random(&mut *rng));
+        let receiver_pk = PublicKey::from(&SecretKey::random(&mut *rng));
+        let sender_blinder = [
+            JubJubScalar::random(&mut *rng),
+            JubJubScalar::random(&mut *rng),
+        ];
+        let value_blinder = JubJubScalar::random(&mut *rng);
+        Note::new(
+            rng,
+            NoteType::Obfuscated,
+            &sender_pk,
+            &receiver_pk,
+            42,
+            value_blinder,
+            sender_blinder,
+        )
+    }
+
+    fn dummy_skeleton() -> TxSkeleton {
+        let mut rng = StdRng::seed_from_u64(0xbeef);
+
+        let nullifiers =
+            Vec::from([BlsScalar::from(2u64), BlsScalar::from(3u64)]);
+
+        TxSkeleton {
+            root: BlsScalar::from(1u64),
+            nullifiers,
+            outputs: [dummy_output(&mut rng), dummy_output(&mut rng)],
+            max_fee: 7,
+            deposit: 0,
+        }
+    }
+
+    #[test]
+    fn checked_rejects_trailing_bytes() {
+        let skeleton = dummy_skeleton();
+        let mut bytes = skeleton.to_var_bytes();
+
+        // The canonical encoding round-trips on the checked path.
+        assert_eq!(skeleton, TxSkeleton::from_slice_checked(&bytes).unwrap());
+
+        bytes.push(0u8);
+
+        // A single padding byte inside the length-prefixed region is a
+        // distinct, non-canonical encoding: the checked path rejects it, while
+        // the strict path — live strict-format ingress and replay of
+        // already-finalized transactions — must stay lenient.
+        let err = TxSkeleton::from_slice_checked(&bytes).unwrap_err();
+        assert_eq!(err, BytesError::InvalidData);
+        assert_eq!(skeleton, TxSkeleton::from_slice(&bytes).unwrap());
+    }
+
+    #[test]
+    fn checked_rejects_non_prime_order_output_stealth_point() {
+        let mut skeleton = dummy_skeleton();
+
+        // Replace one output with a note carrying the identity stealth address
+        // (a non-prime-order point) — accepted by the strict decoder (live
+        // ingress and replay), rejected by the checked decoder.
+        skeleton.outputs[0] = Note::transparent_stealth(
+            StealthAddress::default(),
+            1,
+            *skeleton.outputs[0].sender(),
+        );
+        let bytes = skeleton.to_var_bytes();
+
+        let err = TxSkeleton::from_slice_checked(&bytes).unwrap_err();
+        assert_eq!(err, BytesError::InvalidData);
+        assert_eq!(skeleton, TxSkeleton::from_slice(&bytes).unwrap());
+    }
+
+    #[test]
+    fn legacy_compat_tolerates_trailing_bytes() {
+        let skeleton = dummy_skeleton();
+        let mut bytes = skeleton.to_var_bytes();
+        bytes.push(0u8);
+
+        // The historical decode path must not tighten: appending padding
+        // still parses, so replaying already-finalized blocks stays valid.
+        assert_eq!(
+            skeleton,
+            TxSkeleton::from_slice_legacy_compat(&bytes).unwrap()
+        );
+    }
 
     #[test]
     fn from_slice_rejects_unbounded_nullifier_count() {

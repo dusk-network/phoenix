@@ -248,6 +248,20 @@ impl Note {
         Self::from_reader(reader)
     }
 
+    /// Read a note like [`Self::read_strict`], additionally requiring its
+    /// stealth-address points to lie in the prime-order subgroup — the same
+    /// membership rule [`StealthAddress::from_bytes_checked`] applies, which
+    /// documents it. Notes minted by a contract do not pass a byte decoder and
+    /// are not gated here.
+    #[cfg(feature = "alloc")]
+    pub(crate) fn read_checked(reader: &mut &[u8]) -> Result<Self, BytesError> {
+        let note = Self::read_strict(reader)?;
+        if note.stealth_address.has_identity_point() {
+            return Err(BytesError::InvalidData);
+        }
+        Ok(note)
+    }
+
     #[cfg(feature = "alloc")]
     pub(crate) fn read_legacy_compat(
         reader: &mut &[u8],

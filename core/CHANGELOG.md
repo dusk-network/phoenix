@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `TxSkeleton::from_slice_checked`, rejecting non-canonical skeleton padding
+  [#288]
 - Add `StealthAddress::from_bytes_checked`, rejecting non-prime-order stealth
   points [#288]
 
