@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add `TxSkeleton::from_slice_checked`, rejecting non-canonical skeleton padding
+  [#288]
+- Add `StealthAddress::from_bytes_checked`, rejecting non-prime-order stealth
+  points [#288]
+
+### Changed
+
+- Update `dusk-jubjub` to v0.15.2 for its torsion-rejecting point decoder [#288]
+
 ## [0.35.1] - 2026-06-15
 
 ### Fixed
@@ -444,6 +455,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#288]: https://github.com/dusk-network/phoenix/issues/288
 [#274]: https://github.com/dusk-network/phoenix/issues/274
 [#261]: https://github.com/dusk-network/phoenix/issues/261
 [#258]: https://github.com/dusk-network/phoenix/issues/258
