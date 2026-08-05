@@ -19,6 +19,8 @@ pub enum Error {
     MissingViewKey,
     /// Failure to encrypt / decrypt
     InvalidEncryption,
+    /// Recovered note opening does not match its value commitment
+    CommitmentMismatch,
     /// Dusk-bytes InvalidData error
     InvalidData,
     /// Dusk-bytes BadLength error
@@ -58,7 +60,9 @@ impl From<DuskBytesError> for Error {
 impl From<Error> for DuskBytesError {
     fn from(err: Error) -> Self {
         match err {
-            Error::InvalidData => DuskBytesError::InvalidData,
+            Error::CommitmentMismatch | Error::InvalidData => {
+                DuskBytesError::InvalidData
+            }
             Error::BadLength(found, expected) => {
                 DuskBytesError::BadLength { found, expected }
             }
