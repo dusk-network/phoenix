@@ -9,3 +9,4 @@ This library contains the implementation of the Phoenix-circuits, to prove, in z
 3. Nullification: the nullifier is calculated correctly.
 4. Minting: the value commitment for the newly minted notes are computed correctly.
 5. Balance integrity: the sum of the values of all spent notes is equal to the sum of the values of all minted notes + the gas fee + a deposit, where a deposit refers to funds being transfered to a contract.
+6. Value encryption: an auxiliary proof shows that every encrypted output contains the same value and blinder used for its public commitment.

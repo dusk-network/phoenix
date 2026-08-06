@@ -36,6 +36,7 @@ default = ["plonk"]
 plonk = [
     "dusk-plonk",
     "poseidon-merkle/zk",
+    "dusk-poseidon/encryption",
     "dusk-poseidon/zk",
     "jubjub-schnorr/zk",
     "jubjub-elgamal/zk",

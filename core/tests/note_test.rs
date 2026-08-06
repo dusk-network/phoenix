@@ -4,7 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::Serializable;
+use dusk_bls12_381::BlsScalar;
+use dusk_bytes::{DeserializableSlice, Serializable};
 use dusk_jubjub::{
     Fq, GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
 };
@@ -126,6 +127,45 @@ fn obfuscated_note() -> Result<(), Error> {
             .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
     );
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
+
+    Ok(())
+}
+
+#[test]
+fn obfuscated_note_rejects_tampered_authentication_tag() -> Result<(), Error> {
+    let mut rng = StdRng::seed_from_u64(0xc1f3);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_sk = SecretKey::random(&mut rng);
+    let receiver_pk = PublicKey::from(&receiver_sk);
+    let receiver_vk = ViewKey::from(&receiver_sk);
+    let value_blinder = JubJubScalar::random(&mut rng);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let note = Note::obfuscated(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        25,
+        value_blinder,
+        sender_blinder,
+    );
+
+    let mut bytes = note.to_bytes();
+    let value_enc_offset =
+        1 + JubJubAffine::SIZE + StealthAddress::SIZE + u64::SIZE;
+    let tag_offset = value_enc_offset + 2 * BlsScalar::SIZE;
+    let mut tag = BlsScalar::from_slice(
+        &bytes[tag_offset..tag_offset + BlsScalar::SIZE],
+    )?;
+    tag += BlsScalar::one();
+    bytes[tag_offset..tag_offset + BlsScalar::SIZE]
+        .copy_from_slice(&tag.to_bytes());
+
+    let tampered = Note::from_bytes(&bytes)?;
+    assert!(tampered.value(Some(&receiver_vk)).is_err());
 
     Ok(())
 }

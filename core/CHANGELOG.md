@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace output-value AES encryption with circuit-friendly authenticated
+  Poseidon encryption, changing the serialized note format [#292]
 - Update `dusk-jubjub` to v0.15.2 for its torsion-rejecting point decoder [#288]
 
 ## [0.35.1] - 2026-06-15
@@ -455,6 +457,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#292]: https://github.com/dusk-network/phoenix/issues/292
 [#288]: https://github.com/dusk-network/phoenix/issues/288
 [#274]: https://github.com/dusk-network/phoenix/issues/274
 [#261]: https://github.com/dusk-network/phoenix/issues/261

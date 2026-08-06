@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add an auxiliary proof binding each output's encrypted value and blinder to
+  its public commitment opening [#292]
+
 ## [0.8.1] - 2026-06-15
 
 ### Changed
@@ -146,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#292]: https://github.com/dusk-network/phoenix/issues/292
 [#280]: https://github.com/dusk-network/phoenix/issues/280
 [#255]: https://github.com/dusk-network/phoenix/issues/255
 [#235]: https://github.com/dusk-network/phoenix/issues/235

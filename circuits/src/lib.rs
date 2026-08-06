@@ -12,6 +12,7 @@
 
 #[cfg(feature = "plonk")]
 mod circuit_impl;
+mod output_encryption;
 #[cfg(feature = "plonk")]
 mod sender_enc;
 
@@ -26,6 +27,8 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 extern crate alloc;
 use alloc::vec::Vec;
+
+pub use output_encryption::{OutputEncryptionCircuit, OutputEncryptionInfo};
 
 /// Declaration of the transaction circuit calling the [`gadget`].
 #[derive(Debug, Clone, PartialEq)]
