@@ -13,7 +13,7 @@
             "value_commitment": "1b32e8cda88981d21c7fbfa0ce6827b1826c76d0266f7dff8617af9e43814919",
             "stealth_address": "5f5jAMNt2kcUaUXZkZTkTNTAtK7MMgButUXYcCofMiYH88cLp8B8ocwih3iP54JaEeChDgScPiwVvxbF6DJyNFws",
             "pos": "18446744073709551615",
-            "value_enc": "0788aeecb15dcada122f5c4068d9ac73208e6a3298f10243f4d055978f49fbc757ed76b704933f447a4cb56ff1c5b05e126263a5784d7e0db6013a4922df55d29e5ff87e",
+            "value_enc": "d92688987c158f3eb9adef935bced353c81e036546f2b0b2bf7f8aee9b71c454a548c54e743fa911af03f0908423fc3ed07e77a5103f14af76e817b1d9582936e94e232c3b8d43a9772c46d3e15e10caa402f4b1b0bb41010262cc36265b084215926c672126064e464814d52cdf3fb8874f5c09cc8663467fb567821d375032",
             "sender": {
                 "Encryption": [
                     [
@@ -30,23 +30,23 @@
         {
             "note_type": "Obfuscated",
             "value_commitment": "1b32e8cda88981d21c7fbfa0ce6827b1826c76d0266f7dff8617af9e43814919",
-            "stealth_address": "48Qy4vHWBnm9Qpqkreeypv6sXYFgk5HHAoygZ9mbmJJdGWtchDGXswNCqFL9MXS4hZq6aqSdFmKb6vvrB3kv57EQ",
+            "stealth_address": "2BCwvrkVPSPkUGCAhr2nJjYP8BKw3EUiRU7kFGddAvL7GgqpK73om3uHvC7pYVC8h4fxAo3dKKKvZ2pD5F9A9xr6",
             "pos": "18446744073709551615",
-            "value_enc": "43b20fbaf4c96d9bc68a175065f3b3c05bbe27cd8c2f41567326e407c20d0a884e2c5e766c41395205e115630b0bb4606847b0d1c09457acab5a94e93673d3c402aed3c0",
+            "value_enc": "e9626a4b029e3ed19617fe56e20d39bf0786c0e5d9ac130cbc487aa99b1a2a1bebc4ce27eb36e6a55757832998119fdec3ff85437e2b8b817e0741809c99f26b2b6c4b5d163924ea1d6953a04e5f5b48208e1c4fc9bebcf18100036688278d14f361898e80acfbafcae89da8d80a0d753e66463f3f71d71263d0600cdf4c0b3b",
             "sender": {
                 "Encryption": [
                     [
                         "391d595ec6366e6f7dfd01198b00d0c1811c6c826066cf88733e4ddfa8933b58",
-                        "8f3aecf39572005f080fb2bb7d9b907376f36384de83e2f87872fd3719378315"
+                        "b71a2a0e89b23a7044679f04401e91f674cdf4234acdf3119c78e91f0f5b0446"
                     ],
                     [
                         "8fae70481bf1c5e580c450e5a1483f4d7757d1c99dad3dd3adbbaf35ccf70ed7",
-                        "28b9f4b744e0e572b4946d2229fb1c238946abd158d30bf1e124e2778a04ca21"
+                        "a1756ccda8634920db3d97ac845ca1f20072f0094de461a5e8ab56e9908f9f80"
                     ]
                 ]
             }
         }
     ],
-    "max_fee": "622",
-    "deposit": "707"
+    "max_fee": "739",
+    "deposit": "678"
 }

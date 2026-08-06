@@ -9,7 +9,7 @@ use core::convert::{TryFrom, TryInto};
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar, dhke};
-use dusk_poseidon::{Domain, Hash};
+use dusk_poseidon::{Domain, Hash, decrypt, encrypt};
 use ff::Field;
 use jubjub_elgamal::{DecryptFrom, Encryption as ElGamal};
 use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
@@ -19,18 +19,31 @@ use rkyv::{Archive, Deserialize, Serialize};
 
 use crate::stealth_address::affine_from_slice_legacy_compat;
 use crate::{
-    Error, PublicKey, SecretKey, StealthAddress, ViewKey, aes,
+    Error, PublicKey, SecretKey, StealthAddress, ViewKey,
     transparent_value_commitment, value_commitment,
 };
 
 /// Blinder used for transparent notes.
 pub(crate) const TRANSPARENT_BLINDER: JubJubScalar = JubJubScalar::zero();
 
-/// Size of the Phoenix notes plaintext: value (8 bytes) + blinder (32 bytes)
-pub(crate) const PLAINTEXT_SIZE: usize = 40;
+/// Number of scalars in an encrypted Phoenix note opening: two encrypted
+/// message elements, an authentication tag, and a nonce.
+pub const VALUE_ENC_SCALARS: usize = 4;
 
-/// Size of the Phoenix notes value_enc
-pub const VALUE_ENC_SIZE: usize = PLAINTEXT_SIZE + aes::ENCRYPTION_EXTRA_SIZE;
+/// Size of the Phoenix notes value encryption.
+pub const VALUE_ENC_SIZE: usize = VALUE_ENC_SCALARS * BlsScalar::SIZE;
+
+fn encode_value_encryption(
+    scalars: [BlsScalar; VALUE_ENC_SCALARS],
+) -> [u8; VALUE_ENC_SIZE] {
+    let mut bytes = [0u8; VALUE_ENC_SIZE];
+    for (scalar, output) in
+        scalars.iter().zip(bytes.chunks_exact_mut(BlsScalar::SIZE))
+    {
+        output.copy_from_slice(&scalar.to_bytes());
+    }
+    bytes
+}
 
 /// The types of a Note
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -111,6 +124,33 @@ impl Note {
         value_blinder: JubJubScalar,
         sender_blinder: [JubJubScalar; 2],
     ) -> Self {
+        Self::new_with_ephemeral(
+            rng,
+            note_type,
+            sender_pk,
+            receiver_pk,
+            value,
+            value_blinder,
+            sender_blinder,
+        )
+        .0
+    }
+
+    /// Creates a new Phoenix output note and returns the ephemeral scalar used
+    /// to derive its stealth address and value-encryption key.
+    ///
+    /// The scalar is required by the output-encryption circuit to prove that
+    /// the encrypted opening and the public value commitment use the same
+    /// value and blinder.
+    pub fn new_with_ephemeral<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        note_type: NoteType,
+        sender_pk: &PublicKey,
+        receiver_pk: &PublicKey,
+        value: u64,
+        value_blinder: JubJubScalar,
+        sender_blinder: [JubJubScalar; 2],
+    ) -> (Self, JubJubScalar) {
         let r = JubJubScalar::random(&mut *rng);
         let stealth_address = receiver_pk.gen_stealth_address(&r);
 
@@ -120,38 +160,44 @@ impl Note {
         let pos = u64::MAX;
 
         let value_enc = match note_type {
-            NoteType::Transparent => {
-                let mut value_enc = [0u8; VALUE_ENC_SIZE];
-                value_enc[..u64::SIZE].copy_from_slice(&value.to_bytes());
-
-                value_enc
-            }
+            NoteType::Transparent => encode_value_encryption([
+                BlsScalar::from(value),
+                BlsScalar::zero(),
+                BlsScalar::zero(),
+                BlsScalar::zero(),
+            ]),
             NoteType::Obfuscated => {
                 let shared_secret = dhke(&r, receiver_pk.A());
-                let value_blinder = BlsScalar::from(value_blinder);
+                let nonce = BlsScalar::random(&mut *rng);
+                let message =
+                    [BlsScalar::from(value), BlsScalar::from(value_blinder)];
+                let cipher: [BlsScalar; 3] =
+                    encrypt(message, &shared_secret, &nonce)
+                        .expect("value encryption should succeed")
+                        .try_into()
+                        .expect("two elements produce three cipher elements");
 
-                let mut plaintext = value.to_bytes().to_vec();
-                plaintext.append(&mut value_blinder.to_bytes().to_vec());
-
-                let salt = stealth_address.to_bytes();
-
-                aes::encrypt(&shared_secret, &salt, &plaintext, rng)
-                    .expect("Encrypted correctly.")
+                encode_value_encryption([
+                    cipher[0], cipher[1], cipher[2], nonce,
+                ])
             }
         };
 
-        Note {
-            note_type,
-            value_commitment,
-            stealth_address,
-            pos,
-            value_enc,
-            sender: Sender::encrypt(
-                stealth_address.note_pk(),
-                sender_pk,
-                &sender_blinder,
-            ),
-        }
+        (
+            Note {
+                note_type,
+                value_commitment,
+                stealth_address,
+                pos,
+                value_enc,
+                sender: Sender::encrypt(
+                    stealth_address.note_pk(),
+                    sender_pk,
+                    &sender_blinder,
+                ),
+            },
+            r,
+        )
     }
 
     /// Creates a new transparent note
@@ -191,8 +237,12 @@ impl Note {
 
         let pos = u64::MAX;
 
-        let mut value_enc = [0u8; VALUE_ENC_SIZE];
-        value_enc[..u64::SIZE].copy_from_slice(&value.to_bytes());
+        let value_enc = encode_value_encryption([
+            BlsScalar::from(value),
+            BlsScalar::zero(),
+            BlsScalar::zero(),
+            BlsScalar::zero(),
+        ]);
 
         Note {
             note_type: NoteType::Transparent,
@@ -315,24 +365,44 @@ impl Note {
         let R = self.stealth_address.R();
         let shared_secret = dhke(vk.a(), R);
 
-        let salt = self.stealth_address.to_bytes();
+        let value_enc = self.value_enc_scalars()?;
+        let plaintext: [BlsScalar; 2] =
+            decrypt(&value_enc[..3], &shared_secret, &value_enc[3])
+                .map_err(|_| Error::InvalidEncryption)?
+                .try_into()
+                .map_err(|_| Error::InvalidData)?;
 
-        let dec_plaintext: [u8; PLAINTEXT_SIZE] =
-            aes::decrypt(&shared_secret, &salt, &self.value_enc)?;
+        let value_bytes = plaintext[0].to_bytes();
+        let value = u64::from_slice(&value_bytes[..u64::SIZE])?;
+        if plaintext[0] != BlsScalar::from(value) {
+            return Err(Error::InvalidData);
+        }
 
-        let value = u64::from_slice(&dec_plaintext[..u64::SIZE])?;
-
-        // Converts the BLS Scalar into a JubJub Scalar.
-        // If the `vk` is wrong it might fails since the resulting BLS Scalar
-        // might not fit into a JubJub Scalar.
-        let value_blinder =
-            match JubJubScalar::from_slice(&dec_plaintext[u64::SIZE..])?.into()
-            {
-                Some(scalar) => scalar,
-                None => return Err(Error::InvalidData),
-            };
+        let value_blinder = Option::<JubJubScalar>::from(
+            JubJubScalar::from_bytes(&plaintext[1].to_bytes()),
+        )
+        .ok_or(Error::InvalidData)?;
 
         Ok((value, value_blinder))
+    }
+
+    /// Decode the value encryption into three cipher scalars and its nonce.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidData`] if any field is not canonically encoded.
+    pub fn value_enc_scalars(
+        &self,
+    ) -> Result<[BlsScalar; VALUE_ENC_SCALARS], Error> {
+        let mut scalars = [BlsScalar::zero(); VALUE_ENC_SCALARS];
+        for (bytes, scalar) in self
+            .value_enc
+            .chunks_exact(BlsScalar::SIZE)
+            .zip(&mut scalars)
+        {
+            *scalar = BlsScalar::from_slice(bytes)?;
+        }
+        Ok(scalars)
     }
 
     /// Create a unique nullifier for the note
