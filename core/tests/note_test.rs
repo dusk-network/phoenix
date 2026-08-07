@@ -46,6 +46,7 @@ fn transparent_note() -> Result<(), Error> {
         value_commitment(value, TRANSPARENT_BLINDER),
         *note.value_commitment()
     );
+    assert_eq!((value, TRANSPARENT_BLINDER), note.value_opening(None)?);
     assert_eq!(value, note.value(None)?);
     assert_eq!(
         sender_pk,
@@ -53,6 +54,38 @@ fn transparent_note() -> Result<(), Error> {
             .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
     );
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
+
+    Ok(())
+}
+
+#[test]
+fn transparent_note_new_normalizes_blinder() -> Result<(), Error> {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let value = 25;
+    let nonzero_blinder = JubJubScalar::from(42u64);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+
+    let note = Note::new(
+        &mut rng,
+        NoteType::Transparent,
+        &sender_pk,
+        &receiver_pk,
+        value,
+        nonzero_blinder,
+        sender_blinder,
+    );
+
+    assert_eq!(
+        value_commitment(value, TRANSPARENT_BLINDER),
+        *note.value_commitment()
+    );
+    assert_eq!((value, TRANSPARENT_BLINDER), note.value_opening(None)?);
 
     Ok(())
 }
@@ -119,6 +152,10 @@ fn obfuscated_note() -> Result<(), Error> {
         *note.value_commitment()
     );
     assert_eq!(note.note_type(), NoteType::Obfuscated);
+    assert_eq!(
+        (value, value_blinder),
+        note.value_opening(Some(&receiver_vk))?
+    );
     assert_eq!(value, note.value(Some(&receiver_vk))?);
     assert_eq!(
         sender_pk,
@@ -170,6 +207,114 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
     Ok(())
+}
+
+fn obfuscated_note_with_commitment(
+    committed_value: u64,
+    committed_blinder: JubJubScalar,
+) -> (Note, ViewKey) {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_sk = SecretKey::random(&mut rng);
+    let receiver_pk = PublicKey::from(&receiver_sk);
+    let receiver_vk = ViewKey::from(&receiver_sk);
+    let encrypted_value = 25;
+    let encrypted_blinder = JubJubScalar::from(42u64);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+
+    let note = Note::obfuscated(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        encrypted_value,
+        encrypted_blinder,
+        sender_blinder,
+    );
+
+    let mut bytes = note.to_bytes();
+    bytes[1..1 + JubJubAffine::SIZE].copy_from_slice(
+        &value_commitment(committed_value, committed_blinder).to_bytes(),
+    );
+
+    (
+        Note::from_bytes(&bytes).expect("the note remains canonically encoded"),
+        receiver_vk,
+    )
+}
+
+fn assert_opening_mismatch_rejected(
+    committed_value: u64,
+    committed_blinder: JubJubScalar,
+) {
+    let (note, receiver_vk) =
+        obfuscated_note_with_commitment(committed_value, committed_blinder);
+
+    assert!(matches!(
+        note.value_opening(Some(&receiver_vk)),
+        Err(Error::CommitmentMismatch)
+    ));
+    assert!(matches!(
+        note.value(Some(&receiver_vk)),
+        Err(Error::CommitmentMismatch)
+    ));
+    assert!(matches!(
+        note.value_blinder(Some(&receiver_vk)),
+        Err(Error::CommitmentMismatch)
+    ));
+}
+
+#[test]
+fn obfuscated_note_rejects_value_mismatch() {
+    assert_opening_mismatch_rejected(26, JubJubScalar::from(42u64));
+}
+
+#[test]
+fn obfuscated_note_rejects_blinder_mismatch() {
+    assert_opening_mismatch_rejected(25, JubJubScalar::from(43u64));
+}
+
+#[test]
+fn obfuscated_note_rejects_value_and_blinder_mismatch() {
+    assert_opening_mismatch_rejected(26, JubJubScalar::from(43u64));
+}
+
+#[test]
+fn transparent_note_rejects_opening_mismatch() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let note = Note::transparent(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        25,
+        sender_blinder,
+    );
+
+    let mut bytes = note.to_bytes();
+    bytes[1..1 + JubJubAffine::SIZE].copy_from_slice(
+        &value_commitment(25, JubJubScalar::from(43u64)).to_bytes(),
+    );
+    let note = Note::from_bytes(&bytes)
+        .expect("the transparent note remains canonically encoded");
+
+    assert!(matches!(
+        note.value_opening(None),
+        Err(Error::CommitmentMismatch)
+    ));
+    assert!(matches!(note.value(None), Err(Error::CommitmentMismatch)));
+    assert!(matches!(
+        note.value_blinder(None),
+        Err(Error::CommitmentMismatch)
+    ));
 }
 
 #[test]

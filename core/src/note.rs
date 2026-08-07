@@ -102,6 +102,9 @@ impl PartialEq for Note {
 
 impl Note {
     /// Creates a new phoenix output note
+    ///
+    /// For transparent notes, `value_blinder` is ignored and the canonical
+    /// zero blinder is used instead.
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
@@ -114,6 +117,10 @@ impl Note {
         let r = JubJubScalar::random(&mut *rng);
         let stealth_address = receiver_pk.gen_stealth_address(&r);
 
+        let value_blinder = match note_type {
+            NoteType::Transparent => TRANSPARENT_BLINDER,
+            NoteType::Obfuscated => value_blinder,
+        };
         let value_commitment = value_commitment(value, value_blinder);
 
         // Output notes have undefined position, equals to u64's MAX value
@@ -407,37 +414,48 @@ impl Note {
         &self.sender
     }
 
-    /// Attempt to decrypt the note value provided a [`ViewKey`]. Always
-    /// succeeds for transparent notes, might fails or return random values for
-    /// obfuscated notes if the provided view key is wrong.
-    pub fn value(&self, vk: Option<&ViewKey>) -> Result<u64, Error> {
-        match (self.note_type, vk) {
+    /// Recover and validate the note's value-commitment opening.
+    ///
+    /// Obfuscated notes require a [`ViewKey`] to decrypt the opening. The
+    /// recovered value and blinder must reproduce the note's public value
+    /// commitment.
+    pub fn value_opening(
+        &self,
+        vk: Option<&ViewKey>,
+    ) -> Result<(u64, JubJubScalar), Error> {
+        let opening = match (self.note_type, vk) {
             (NoteType::Transparent, _) => {
-                let value =
-                    u64::from_slice(&self.value_enc[..u64::SIZE]).unwrap();
-                Ok(value)
+                let value = u64::from_slice(&self.value_enc[..u64::SIZE])?;
+                (value, TRANSPARENT_BLINDER)
             }
-            (NoteType::Obfuscated, Some(vk)) => {
-                self.decrypt_value(vk).map(|(value, _)| value)
-            }
-            _ => Err(Error::MissingViewKey),
+            (NoteType::Obfuscated, Some(vk)) => self.decrypt_value(vk)?,
+            _ => return Err(Error::MissingViewKey),
+        };
+
+        let commitment = match self.note_type {
+            NoteType::Transparent => transparent_value_commitment(opening.0),
+            NoteType::Obfuscated => value_commitment(opening.0, opening.1),
+        };
+
+        if commitment != self.value_commitment {
+            return Err(Error::CommitmentMismatch);
         }
+
+        Ok(opening)
     }
 
-    /// Decrypt the blinding factor with the provided [`ViewKey`]
-    ///
-    /// If the decrypt fails, a random value is returned
+    /// Attempt to recover and validate the note value provided a [`ViewKey`].
+    pub fn value(&self, vk: Option<&ViewKey>) -> Result<u64, Error> {
+        self.value_opening(vk).map(|(value, _)| value)
+    }
+
+    /// Attempt to recover and validate the note blinder provided a [`ViewKey`].
     pub fn value_blinder(
         &self,
         vk: Option<&ViewKey>,
     ) -> Result<JubJubScalar, Error> {
-        match (self.note_type, vk) {
-            (NoteType::Transparent, _) => Ok(TRANSPARENT_BLINDER),
-            (NoteType::Obfuscated, Some(vk)) => self
-                .decrypt_value(vk)
-                .map(|(_, value_blinder)| value_blinder),
-            _ => Err(Error::MissingViewKey),
-        }
+        self.value_opening(vk)
+            .map(|(_, value_blinder)| value_blinder)
     }
 }
 

@@ -13,10 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#288]
 - Add `StealthAddress::from_bytes_checked`, rejecting non-prime-order stealth
   points [#288]
+- Add `Note::value_opening` to recover and validate note openings [#290]
 
 ### Changed
 
+- Normalize transparent notes created with `Note::new` to the canonical zero
+  value blinder, ignoring the supplied blinder [#290]
+- Return `Error::CommitmentMismatch` when a recovered note opening does not
+  match its value commitment [#290]
 - Update `dusk-jubjub` to v0.15.2 for its torsion-rejecting point decoder [#288]
+
+### Fixed
+
+- Reject recovered note openings that do not match their value commitment
+  [#290]
 
 ## [0.35.1] - 2026-06-15
 
@@ -455,6 +465,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#290]: https://github.com/dusk-network/phoenix/issues/290
 [#288]: https://github.com/dusk-network/phoenix/issues/288
 [#274]: https://github.com/dusk-network/phoenix/issues/274
 [#261]: https://github.com/dusk-network/phoenix/issues/261
