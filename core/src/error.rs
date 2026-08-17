@@ -60,16 +60,17 @@ impl From<DuskBytesError> for Error {
 impl From<Error> for DuskBytesError {
     fn from(err: Error) -> Self {
         match err {
-            Error::CommitmentMismatch | Error::InvalidData => {
-                DuskBytesError::InvalidData
-            }
+            Error::InvalidNoteType(_)
+            | Error::MissingViewKey
+            | Error::InvalidEncryption
+            | Error::CommitmentMismatch
+            | Error::InvalidData => DuskBytesError::InvalidData,
             Error::BadLength(found, expected) => {
                 DuskBytesError::BadLength { found, expected }
             }
             Error::InvalidChar(ch, index) => {
                 DuskBytesError::InvalidChar { ch, index }
             }
-            _ => unreachable!(),
         }
     }
 }
@@ -83,5 +84,40 @@ impl BadLength for Error {
 impl InvalidChar for Error {
     fn invalid_char(ch: char, index: usize) -> Self {
         Error::InvalidChar(ch, index)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn conversion_to_dusk_bytes_error_is_total() {
+        let invalid_data = [
+            Error::InvalidNoteType(2),
+            Error::MissingViewKey,
+            Error::InvalidEncryption,
+            Error::CommitmentMismatch,
+            Error::InvalidData,
+        ];
+
+        for error in invalid_data {
+            assert_eq!(
+                DuskBytesError::from(error),
+                DuskBytesError::InvalidData
+            );
+        }
+
+        assert_eq!(
+            DuskBytesError::from(Error::BadLength(1, 2)),
+            DuskBytesError::BadLength {
+                found: 1,
+                expected: 2,
+            }
+        );
+        assert_eq!(
+            DuskBytesError::from(Error::InvalidChar('x', 3)),
+            DuskBytesError::InvalidChar { ch: 'x', index: 3 }
+        );
     }
 }
