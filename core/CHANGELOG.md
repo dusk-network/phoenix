@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reject recovered note openings that do not match their value commitment
   [#290]
+- Remove the panic when converting Phoenix errors into `dusk_bytes::Error`
+  [#294]
 
 ## [0.35.1] - 2026-06-15
 
@@ -465,6 +467,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#294]: https://github.com/dusk-network/phoenix/issues/294
 [#290]: https://github.com/dusk-network/phoenix/issues/290
 [#288]: https://github.com/dusk-network/phoenix/issues/288
 [#274]: https://github.com/dusk-network/phoenix/issues/274
