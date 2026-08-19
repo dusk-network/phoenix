@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [#290]
 - Remove the panic when converting Phoenix errors into `dusk_bytes::Error`
   [#294]
+- Return `Error::BadLength` instead of panicking when AES input and output
+  lengths are inconsistent [#296]
 
 ## [0.35.1] - 2026-06-15
 
@@ -467,6 +469,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#296]: https://github.com/dusk-network/phoenix/issues/296
 [#294]: https://github.com/dusk-network/phoenix/issues/294
 [#290]: https://github.com/dusk-network/phoenix/issues/290
 [#288]: https://github.com/dusk-network/phoenix/issues/288
