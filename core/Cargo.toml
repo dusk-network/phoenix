@@ -10,7 +10,7 @@ rust-version.workspace = true
 edition.workspace = true
 
 [dependencies]
-rand = { version = "0.8", default-features = false }
+rand_core = { version = "0.6", default-features = false }
 dusk-bytes = "0.1"
 dusk-bls12_381 = { version = "0.14", default-features = false }
 dusk-jubjub = { version = "0.15.2", default-features = false, features = [

@@ -13,7 +13,7 @@ use dusk_poseidon::{Domain, Hash};
 use ff::Field;
 use jubjub_elgamal::{DecryptFrom, Encryption as ElGamal};
 use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
-use rand::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, RngCore};
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 
