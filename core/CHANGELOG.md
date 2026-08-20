@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Depend directly on `rand_core` for production RNG traits [#298]
 - Normalize transparent notes created with `Note::new` to the canonical zero
   value blinder, ignoring the supplied blinder [#290]
 - Return `Error::CommitmentMismatch` when a recovered note opening does not
@@ -469,6 +470,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#298]: https://github.com/dusk-network/phoenix/issues/298
 [#296]: https://github.com/dusk-network/phoenix/issues/296
 [#294]: https://github.com/dusk-network/phoenix/issues/294
 [#290]: https://github.com/dusk-network/phoenix/issues/290

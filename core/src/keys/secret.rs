@@ -8,7 +8,7 @@ use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
-use rand::{CryptoRng, RngCore};
+use rand_core::{CryptoRng, RngCore};
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 use subtle::{Choice, ConstantTimeEq};
