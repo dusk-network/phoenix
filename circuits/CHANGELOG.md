@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Raise the MSRV to Rust 1.96.1 [#302]
+
 ## [0.8.1] - 2026-06-15
 
 ### Changed
@@ -146,6 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#302]: https://github.com/dusk-network/phoenix/issues/302
 [#280]: https://github.com/dusk-network/phoenix/issues/280
 [#255]: https://github.com/dusk-network/phoenix/issues/255
 [#235]: https://github.com/dusk-network/phoenix/issues/235

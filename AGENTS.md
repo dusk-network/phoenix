@@ -100,7 +100,7 @@ Phoenix uses a **UTXO model** where:
 - **Serialization**: Use `dusk-bytes` for canonical byte encoding, `rkyv` for zero-copy deserialization (feature-gated), `serde` for JSON (feature-gated).
 - **Field ordering**: Do not reorder fields in `rkyv`-serializable structs — it breaks archive compatibility.
 - **Constant-time**: Operations on secret data (keys, blinding factors) must remain constant-time. Do not introduce branches or early returns on secrets.
-- **Edition 2024**: The workspace uses Rust edition 2024 with MSRV 1.85.
+- **Edition 2024**: The workspace uses Rust edition 2024 with MSRV 1.96.1.
 
 ## Change Propagation
 
