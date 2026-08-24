@@ -7,6 +7,7 @@ test: ## Run core tests
 	@cargo test --release --no-default-features --features=serde
 
 test-no-std: ## Verify no_std compilation
+	@rustup target add wasm32-unknown-unknown
 	@cargo test --release --features=rkyv-impl,alloc --no-run
 	@cargo build --release --no-default-features --features serde --target wasm32-unknown-unknown
 
