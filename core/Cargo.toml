@@ -35,7 +35,7 @@ serde = { version = "1.0", default-features = false, features = [
 serde_with = { version = "3.9", default-features = false, features = [
     "hex",
 ], optional = true }
-bs58 = { version = "0.4", default-features = false, optional = true }
+bs58 = { version = "0.5", default-features = false, optional = true }
 base64 = { version = "0.22", default-features = false, optional = true }
 hex = { version = "0.4", default-features = false, optional = true }
 hkdf = "0.12"
