@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Raise the MSRV to Rust 1.96.1 [#302]
 - Update `bs58` to 0.5 [#301]
 - Depend directly on `rand_core` for production RNG traits [#298]
 - Normalize transparent notes created with `Note::new` to the canonical zero
@@ -471,6 +472,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#302]: https://github.com/dusk-network/phoenix/issues/302
 [#301]: https://github.com/dusk-network/phoenix/issues/301
 [#298]: https://github.com/dusk-network/phoenix/issues/298
 [#296]: https://github.com/dusk-network/phoenix/issues/296
