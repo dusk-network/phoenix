@@ -7,6 +7,7 @@
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
 use dusk_bls12_381::BlsScalar;
 use dusk_jubjub::{GENERATOR_NUMS_EXTENDED, JubJubAffine, JubJubScalar};
@@ -95,69 +96,69 @@ pub struct TestingParameters {
     pub sender_blinder: [[JubJubScalar; 2]; OUTPUT_NOTES],
 }
 
-lazy_static::lazy_static! {
-    pub static ref TP: TestingParameters = {
-        let mut rng = StdRng::seed_from_u64(0xc0b);
+pub static TP: LazyLock<TestingParameters> = LazyLock::new(|| {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
 
-        let pp = load_production_crs();
-        let sender_sk = SecretKey::random(&mut rng);
-        let sender_pk = PublicKey::from(&sender_sk);
-        let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let pp = load_production_crs();
+    let sender_sk = SecretKey::random(&mut rng);
+    let sender_pk = PublicKey::from(&sender_sk);
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
 
-        let mut tree = Tree::<(), HEIGHT>::new();
-        let payload_hash = BlsScalar::from(1234u64);
+    let mut tree = Tree::<(), HEIGHT>::new();
+    let payload_hash = BlsScalar::from(1234u64);
 
-        let input_notes_info = create_test_input_notes_information(
-            &mut rng,
-            &mut tree,
-            &sender_sk,
-            payload_hash
-        );
+    let input_notes_info = create_test_input_notes_information(
+        &mut rng,
+        &mut tree,
+        &sender_sk,
+        payload_hash,
+    );
 
-        let root = tree.root().hash;
+    let root = tree.root().hash;
 
-        let deposit = 5;
-        let max_fee = 5;
+    let deposit = 5;
+    let max_fee = 5;
 
-        let receiver_npk = *receiver_pk.gen_stealth_address(
-            &JubJubScalar::random(&mut rng)
-        ).note_pk().as_ref();
-        let sender_npk = *sender_pk.gen_stealth_address(
-            &JubJubScalar::random(&mut rng)
-        ).note_pk().as_ref();
-        let output_npk = [
-            JubJubAffine::from(receiver_npk),
-            JubJubAffine::from(sender_npk),
-        ];
+    let receiver_npk = *receiver_pk
+        .gen_stealth_address(&JubJubScalar::random(&mut rng))
+        .note_pk()
+        .as_ref();
+    let sender_npk = *sender_pk
+        .gen_stealth_address(&JubJubScalar::random(&mut rng))
+        .note_pk()
+        .as_ref();
+    let output_npk = [
+        JubJubAffine::from(receiver_npk),
+        JubJubAffine::from(sender_npk),
+    ];
 
-        let schnorr_sk_a = SchnorrSecretKey::from(sender_sk.a());
-        let sig_a = schnorr_sk_a.sign(&mut rng, payload_hash);
-        let schnorr_sk_b = SchnorrSecretKey::from(sender_sk.b());
-        let sig_b = schnorr_sk_b.sign(&mut rng, payload_hash);
+    let schnorr_sk_a = SchnorrSecretKey::from(sender_sk.a());
+    let sig_a = schnorr_sk_a.sign(&mut rng, payload_hash);
+    let schnorr_sk_b = SchnorrSecretKey::from(sender_sk.b());
+    let sig_b = schnorr_sk_b.sign(&mut rng, payload_hash);
 
-        let sender_blinder_0 = [
-            JubJubScalar::random(&mut rng),
-            JubJubScalar::random(&mut rng),
-        ];
-        let sender_blinder_1 = [
-            JubJubScalar::random(&mut rng),
-            JubJubScalar::random(&mut rng),
-        ];
+    let sender_blinder_0 = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let sender_blinder_1 = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
 
-        TestingParameters {
-            pp,
-            input_notes_info,
-            payload_hash,
-            root,
-            deposit,
-            max_fee,
-            sender_pk,
-            output_npk,
-            signatures: (sig_a, sig_b),
-            sender_blinder: [sender_blinder_0, sender_blinder_1]
-        }
-    };
-}
+    TestingParameters {
+        pp,
+        input_notes_info,
+        payload_hash,
+        root,
+        deposit,
+        max_fee,
+        sender_pk,
+        output_npk,
+        signatures: (sig_a, sig_b),
+        sender_blinder: [sender_blinder_0, sender_blinder_1],
+    }
+});
 
 fn create_and_insert_test_note(
     rng: &mut (impl RngCore + CryptoRng),

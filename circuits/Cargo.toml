@@ -25,7 +25,6 @@ bytecheck = { version = "0.6", default-features = false, optional = true }
 dusk-plonk = { version = "0.22.1", default-features = false, optional = true }
 
 [dev-dependencies]
-lazy_static = "1.4"
 rand = { version = "0.8", default-features = false, features = ["std_rng"] }
 ff = { version = "0.13", default-features = false }
 ureq = "3"
