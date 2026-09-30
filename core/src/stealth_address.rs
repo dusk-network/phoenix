@@ -56,13 +56,13 @@ impl StealthAddress {
     /// Decode a `StealthAddress` from 64 bytes, requiring `R` and `note_pk` to
     /// lie in the prime-order subgroup.
     ///
-    /// The transaction circuit constrains membership of neither point, so this
-    /// decoder is what rejects them: an identity `R` collapses the
-    /// value-encryption key `dhke(vk.a, R)` to a shared secret anyone can
-    /// derive, and an identity `note_pk` publishes the ElGamal-encrypted sender
-    /// public key. A stealth address that must reject these points has to be
-    /// decoded through here — [`Serializable::from_bytes`] does not, and the
-    /// archived/rkyv path validates layout only.
+    /// The transaction circuit does not constrain `R`, nor an output
+    /// `note_pk` to differ from the identity, so this decoder is what rejects
+    /// them: the value encryption derives its key from `R` and the sender
+    /// encryption encrypts to `note_pk`, which both take a point other than
+    /// the identity. A stealth address that must reject these points has to
+    /// be decoded through here — [`Serializable::from_bytes`] does not, and
+    /// the archived/rkyv path validates layout only.
     ///
     /// Membership is enforced in two halves, because a point is prime-order
     /// exactly when it is torsion-free and not the identity. The point decode
