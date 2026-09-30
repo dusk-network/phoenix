@@ -30,6 +30,12 @@ pub struct PublicKey {
 impl PublicKey {
     /// This method is used to construct a new `PublicKey` from the given
     /// public pair of `a·G` and `b·G`
+    ///
+    /// The points are not validated. A public key received from a
+    /// counterparty must be decoded with [`Serializable::from_bytes`], which
+    /// rejects keys whose `A` or `B` is the identity or lies outside the
+    /// prime-order subgroup. The archived (rkyv) path validates only the
+    /// layout.
     pub fn new(A: JubJubExtended, B: JubJubExtended) -> Self {
         Self { A, B }
     }
@@ -105,9 +111,18 @@ impl Serializable<64> for PublicKey {
         bytes
     }
 
+    /// Decode a `PublicKey`, requiring `A` and `B` to lie in the prime-order
+    /// subgroup.
+    ///
+    /// The point decoding rejects torsion, and this rejects encodings whose
+    /// `A` or `B` is the identity point, which no honest key has.
     fn from_bytes(bytes: &[u8; Self::SIZE]) -> Result<Self, Self::Error> {
         let A = JubJubExtended::from(JubJubAffine::from_slice(&bytes[..32])?);
         let B = JubJubExtended::from(JubJubAffine::from_slice(&bytes[32..])?);
+
+        if bool::from(A.is_identity() | B.is_identity()) {
+            return Err(Error::InvalidData);
+        }
 
         Ok(Self { A, B })
     }

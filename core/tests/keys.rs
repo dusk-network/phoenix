@@ -4,8 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_bytes::{DeserializableSlice, Serializable};
-use dusk_jubjub::JubJubScalar;
+use dusk_bytes::{DeserializableSlice, Error, Serializable};
+use dusk_jubjub::{JubJubExtended, JubJubScalar};
 use ff::Field;
 use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
 use rand::SeedableRng;
@@ -49,6 +49,24 @@ fn keys_encoding() {
     let pk = PublicKey::from(&sk);
 
     assert_eq!(vk, ViewKey::from_bytes(&vk.to_bytes()).unwrap());
+    assert_eq!(pk, PublicKey::from_bytes(&pk.to_bytes()).unwrap());
+}
+
+#[test]
+fn public_key_decoding_rejects_identity_points() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let identity = JubJubExtended::identity();
+
+    for (a, b) in [
+        (identity, *pk.B()),
+        (*pk.A(), identity),
+        (identity, identity),
+    ] {
+        let bytes = PublicKey::new(a, b).to_bytes();
+        assert_eq!(PublicKey::from_bytes(&bytes), Err(Error::InvalidData));
+    }
+
     assert_eq!(pk, PublicKey::from_bytes(&pk.to_bytes()).unwrap());
 }
 

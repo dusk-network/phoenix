@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject `PublicKey` encodings whose `A` or `B` is the identity [#312]
 - Reject recovered note openings that do not match their value commitment
   [#290]
 - Remove the panic when converting Phoenix errors into `dusk_bytes::Error`
@@ -482,6 +483,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#312]: https://github.com/dusk-network/phoenix/issues/312
 [#311]: https://github.com/dusk-network/phoenix/issues/311
 [#308]: https://github.com/dusk-network/phoenix/issues/308
 [#306]: https://github.com/dusk-network/phoenix/issues/306
