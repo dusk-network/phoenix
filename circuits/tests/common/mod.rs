@@ -83,6 +83,8 @@ pub static LABEL: &[u8; 12] = b"dusk-network";
 
 pub const HEIGHT: usize = 17;
 
+// Each test binary reads a different subset of the fields.
+#[allow(dead_code)]
 pub struct TestingParameters {
     pub pp: PublicParameters,
     pub input_notes_info: Vec<InputNoteInfo<HEIGHT>>,
@@ -90,6 +92,7 @@ pub struct TestingParameters {
     pub root: BlsScalar,
     pub deposit: u64,
     pub max_fee: u64,
+    pub sender_sk: SecretKey,
     pub sender_pk: PublicKey,
     pub output_npk: [JubJubAffine; OUTPUT_NOTES],
     pub signatures: (SchnorrSignature, SchnorrSignature),
@@ -153,6 +156,7 @@ pub static TP: LazyLock<TestingParameters> = LazyLock::new(|| {
         root,
         deposit,
         max_fee,
+        sender_sk,
         sender_pk,
         output_npk,
         signatures: (sig_a, sig_b),
@@ -236,6 +240,8 @@ fn create_test_input_notes_information(
     input_notes_info
 }
 
+// Each test binary uses a different subset of the helpers.
+#[allow(dead_code)]
 pub fn create_output_note_information(
     rng: &mut (impl RngCore + CryptoRng),
     value: u64,
@@ -251,7 +257,8 @@ pub fn create_output_note_information(
         TP.sender_pk.A(),
         None,
         &sender_blinder_a,
-    );
+    )
+    .expect("the sender key encrypts to the note public key");
 
     let sender_blinder_b = sender_blinder[1];
     let (sender_enc_b, _) = ElGamal::encrypt(
@@ -259,7 +266,8 @@ pub fn create_output_note_information(
         TP.sender_pk.B(),
         None,
         &sender_blinder_b,
-    );
+    )
+    .expect("the sender key encrypts to the note public key");
 
     let sender_enc_a = (sender_enc_a.c1().into(), sender_enc_a.c2().into());
     let sender_enc_b = (sender_enc_b.c1().into(), sender_enc_b.c2().into());

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Constrain `note_pk`, `note_pk_p`, the sender public key and the output note
+  public keys to the prime-order subgroup where they enter the transaction
+  circuit [#313]
 - Update `jubjub-schnorr` to v0.7.0 [#311]
 - Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-plonk` to v0.24.0,
   `dusk-poseidon` to v0.44.0, `poseidon-merkle` to v0.11.0 and
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject an input `note_pk_p` with a small-order component [#313]
 - Reject a sender public key whose `A` or `B` is the identity [#314]
 
 ## [0.8.1] - 2026-06-15
@@ -158,6 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#313]: https://github.com/dusk-network/phoenix/issues/313
 [#314]: https://github.com/dusk-network/phoenix/issues/314
 [#311]: https://github.com/dusk-network/phoenix/issues/311
 [#302]: https://github.com/dusk-network/phoenix/issues/302

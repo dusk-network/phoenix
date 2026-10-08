@@ -12,6 +12,8 @@ use jubjub_elgamal as elgamal;
 use jubjub_schnorr::{Signature as SchnorrSignature, gadgets};
 use phoenix_core::{OUTPUT_NOTES, PublicKey};
 
+use crate::circuit_impl::append_subgroup_point;
+
 /// Gadget to prove a valid origin for a given transaction.
 pub(crate) fn gadget(
     composer: &mut Composer,
@@ -26,14 +28,21 @@ pub(crate) fn gadget(
     payload_hash: Witness,
 ) -> Result<(), Error> {
     // VERIFY A SIGNATURE FOR EACH KEY 'A' AND 'B'
-    let sender_pk_A = composer.append_point(sender_pk.A());
-    let sender_pk_B = composer.append_point(sender_pk.B());
+    // The keys are prover-supplied, so their subgroup membership is
+    // constrained where they enter the circuit. The signature gadgets
+    // additionally constrain them to be non-identity.
+    let sender_pk_A = append_subgroup_point(composer, *sender_pk.A())?;
+    let sender_pk_B = append_subgroup_point(composer, *sender_pk.B())?;
 
     let sig_A_u = composer.append_witness(*signatures.0.u());
-    let sig_A_R = composer.append_point(signatures.0.R());
+    // The signature equation sets `R = u·G + c·A`, with `A` in the subgroup,
+    // so `R` is in it without a separate check.
+    let sig_A_R = composer.append_point(*signatures.0.R())?;
 
     let sig_B_u = composer.append_witness(*signatures.1.u());
-    let sig_B_R = composer.append_point(signatures.1.R());
+    // The signature equation sets `R = u·G + c·B`, with `B` in the subgroup,
+    // so `R` is in it without a separate check.
+    let sig_B_R = composer.append_point(*signatures.1.R())?;
 
     gadgets::verify_signature(
         composer,
@@ -51,8 +60,13 @@ pub(crate) fn gadget(
     )?;
 
     // ENCRYPT EACH KEY 'A' and 'B' USING EACH OUTPUT 'NPK'
-    let note_pk_0 = composer.append_public_point(output_npk[0]);
-    let note_pk_1 = composer.append_public_point(output_npk[1]);
+    // The output note-pks are public inputs. Their subgroup membership is
+    // constrained in-circuit rather than left to every verifier, since they
+    // are the ElGamal keys the sender public key is encrypted to.
+    let note_pk_0 = composer.append_public_point(output_npk[0])?;
+    let note_pk_0 = composer.assert_torsion_free_point(note_pk_0);
+    let note_pk_1 = composer.append_public_point(output_npk[1])?;
+    let note_pk_1 = composer.assert_torsion_free_point(note_pk_1);
 
     let blinder_A_0 = composer.append_witness(sender_blinder[0][0]);
     let blinder_B_0 = composer.append_witness(sender_blinder[0][1]);
@@ -87,9 +101,9 @@ pub(crate) fn gadget(
 
 fn assert_sender_enc(
     composer: &mut Composer,
-    sender_pk_A: WitnessPoint,
-    sender_pk_B: WitnessPoint,
-    note_pk: WitnessPoint,
+    sender_pk_A: TorsionFreeWitnessPoint,
+    sender_pk_B: TorsionFreeWitnessPoint,
+    note_pk: TorsionFreeWitnessPoint,
     blinder: (Witness, Witness),
     sender_enc: [(JubJubAffine, JubJubAffine); 2],
 ) -> Result<(), Error> {
@@ -112,11 +126,11 @@ fn assert_sender_enc(
     let sender_enc_A = sender_enc[0];
     let sender_enc_B = sender_enc[1];
 
-    composer.assert_equal_public_point(enc_A_c1, sender_enc_A.0);
-    composer.assert_equal_public_point(enc_A_c2, sender_enc_A.1);
+    composer.assert_equal_public_point(enc_A_c1.into(), sender_enc_A.0)?;
+    composer.assert_equal_public_point(enc_A_c2.into(), sender_enc_A.1)?;
 
-    composer.assert_equal_public_point(enc_B_c1, sender_enc_B.0);
-    composer.assert_equal_public_point(enc_B_c2, sender_enc_B.1);
+    composer.assert_equal_public_point(enc_B_c1.into(), sender_enc_B.0)?;
+    composer.assert_equal_public_point(enc_B_c2.into(), sender_enc_B.1)?;
 
     Ok(())
 }
