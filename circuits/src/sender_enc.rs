@@ -30,7 +30,8 @@ pub(crate) fn gadget(
     // VERIFY A SIGNATURE FOR EACH KEY 'A' AND 'B'
     // The keys are prover-supplied, so their subgroup membership is
     // constrained where they enter the circuit. The signature gadgets
-    // additionally constrain them to be non-identity.
+    // additionally constrain them to be non-identity, which the sender keys
+    // rely on.
     let sender_pk_A = append_subgroup_point(composer, *sender_pk.A())?;
     let sender_pk_B = append_subgroup_point(composer, *sender_pk.B())?;
 
