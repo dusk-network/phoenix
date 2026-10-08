@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `jubjub-schnorr` to v0.7.0 [#311]
+- Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-plonk` to v0.24.0,
+  `dusk-poseidon` to v0.44.0, `poseidon-merkle` to v0.11.0 and
+  `jubjub-elgamal` to v0.6.0 [#311]
 - Raise the MSRV to Rust 1.96.1 [#302]
+
+### Fixed
+
+- Reject a sender public key whose `A` or `B` is the identity [#314]
 
 ## [0.8.1] - 2026-06-15
 
@@ -150,6 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#314]: https://github.com/dusk-network/phoenix/issues/314
+[#311]: https://github.com/dusk-network/phoenix/issues/311
 [#302]: https://github.com/dusk-network/phoenix/issues/302
 [#280]: https://github.com/dusk-network/phoenix/issues/280
 [#255]: https://github.com/dusk-network/phoenix/issues/255

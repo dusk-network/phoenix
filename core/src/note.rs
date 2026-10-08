@@ -105,6 +105,11 @@ impl Note {
     ///
     /// For transparent notes, `value_blinder` is ignored and the canonical
     /// zero blinder is used instead.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an encryption degenerates, which takes a zero sender blinder
+    /// or a key point that is not of prime order.
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
@@ -134,7 +139,8 @@ impl Note {
                 value_enc
             }
             NoteType::Obfuscated => {
-                let shared_secret = dhke(&r, receiver_pk.A());
+                let shared_secret = dhke(&r, receiver_pk.A())
+                    .expect("The receiver key `A` is of prime order.");
                 let value_blinder = BlsScalar::from(value_blinder);
 
                 let mut plaintext = value.to_bytes().to_vec();
@@ -166,6 +172,10 @@ impl Note {
     /// The blinding factor will be constant zero since the value commitment
     /// exists only to shield the value. The value is not hidden for transparent
     /// notes, so this can be trivially treated as a constant.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`Note::new`] does.
     pub fn transparent<R: RngCore + CryptoRng>(
         rng: &mut R,
         sender_pk: &PublicKey,
@@ -217,6 +227,10 @@ impl Note {
     /// commitment of the note. The tuple (value, value_blinder), known by
     /// the caller of this function, must be later used to prove the
     /// knowledge of the value commitment of this note.
+    ///
+    /// # Panics
+    ///
+    /// Panics as [`Note::new`] does.
     pub fn obfuscated<R: RngCore + CryptoRng>(
         rng: &mut R,
         sender_pk: &PublicKey,
@@ -320,7 +334,9 @@ impl Note {
         vk: &ViewKey,
     ) -> Result<(u64, JubJubScalar), Error> {
         let R = self.stealth_address.R();
-        let shared_secret = dhke(vk.a(), R);
+        // An identity or small-order `R` yields no shared secret.
+        let shared_secret = Option::<JubJubAffine>::from(dhke(vk.a(), R))
+            .ok_or(Error::InvalidEncryption)?;
 
         let salt = self.stealth_address.to_bytes();
 
@@ -558,6 +574,11 @@ pub enum Sender {
 impl Sender {
     /// Create a new [`Sender`] enum by encrypting the sender's [`PublicKey`] in
     /// a way that only the receiver of the note can decrypt.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an encryption degenerates, which takes a zero blinder or a
+    /// point that is not of prime order.
     pub fn encrypt(
         note_pk: &NotePublicKey,
         sender_pk: &PublicKey,
@@ -568,14 +589,16 @@ impl Sender {
             sender_pk.A(),
             None,
             &blinder[0],
-        );
+        )
+        .expect("The sender key `A` encrypts to the note public key.");
 
         let (sender_enc_B, _) = ElGamal::encrypt(
             note_pk.as_ref(),
             sender_pk.B(),
             None,
             &blinder[1],
-        );
+        )
+        .expect("The sender key `B` encrypts to the note public key.");
 
         let sender_enc_A: (JubJubAffine, JubJubAffine) =
             (sender_enc_A.c1().into(), sender_enc_A.c2().into());

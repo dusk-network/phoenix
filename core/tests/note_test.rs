@@ -4,14 +4,15 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_jubjub::{
     Fq, GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
 };
 use ff::Field;
 use phoenix_core::{
-    Error, Note, NoteType, PublicKey, SecretKey, Sender, StealthAddress,
-    ViewKey, value_commitment,
+    Error, NOTE_VAL_ENC_SIZE, Note, NoteType, PublicKey, SecretKey, Sender,
+    StealthAddress, ViewKey, aes, value_commitment,
 };
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
@@ -425,4 +426,128 @@ fn note_not_owned() {
     let not_owner_vk = ViewKey::from(&not_owner_sk);
 
     assert!(note.value(Some(&not_owner_vk)).is_err());
+}
+
+#[test]
+#[should_panic(expected = "The receiver key `A` is of prime order.")]
+fn obfuscated_note_panics_on_identity_receiver_key() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk =
+        PublicKey::new(JubJubExtended::identity(), *receiver_pk.B());
+    let value_blinder = JubJubScalar::random(&mut rng);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+
+    Note::obfuscated(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        25,
+        value_blinder,
+        sender_blinder,
+    );
+}
+
+/// Creates a transparent note with `sender_blinder`.
+fn transparent_note_with_sender_blinder(sender_blinder: [JubJubScalar; 2]) {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_pk = PublicKey::from(&SecretKey::random(&mut rng));
+
+    Note::transparent(&mut rng, &sender_pk, &receiver_pk, 25, sender_blinder);
+}
+
+#[test]
+#[should_panic(
+    expected = "The sender key `A` encrypts to the note public key."
+)]
+fn note_panics_on_zero_sender_blinder_for_a() {
+    transparent_note_with_sender_blinder([
+        JubJubScalar::zero(),
+        JubJubScalar::one(),
+    ]);
+}
+
+#[test]
+#[should_panic(
+    expected = "The sender key `B` encrypts to the note public key."
+)]
+fn note_panics_on_zero_sender_blinder_for_b() {
+    transparent_note_with_sender_blinder([
+        JubJubScalar::one(),
+        JubJubScalar::zero(),
+    ]);
+}
+
+#[test]
+fn obfuscated_note_with_identity_r_has_no_opening() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sender_pk = PublicKey::from(&SecretKey::random(&mut rng));
+    let receiver_sk = SecretKey::random(&mut rng);
+    let receiver_pk = PublicKey::from(&receiver_sk);
+    let receiver_vk = ViewKey::from(&receiver_sk);
+
+    let value = 25;
+    let value_blinder = JubJubScalar::random(&mut rng);
+    let sender_blinder = [
+        JubJubScalar::random(&mut rng),
+        JubJubScalar::random(&mut rng),
+    ];
+    let note = Note::obfuscated(
+        &mut rng,
+        &sender_pk,
+        &receiver_pk,
+        value,
+        value_blinder,
+        sender_blinder,
+    );
+
+    // An identity `R`, with the opening encrypted under the shared secret it
+    // gives, the identity: without the check of `R`, the opening decrypts and
+    // matches the value commitment.
+    let stealth_address = StealthAddress::from_raw_unchecked(
+        JubJubExtended::identity(),
+        *note.stealth_address().note_pk(),
+    );
+    let mut plaintext = value.to_bytes().to_vec();
+    plaintext.extend_from_slice(&BlsScalar::from(value_blinder).to_bytes());
+    let value_enc: [u8; NOTE_VAL_ENC_SIZE] = aes::encrypt(
+        &JubJubAffine::identity(),
+        &stealth_address.to_bytes(),
+        &plaintext,
+        &mut rng,
+    )
+    .expect("the opening encrypts");
+
+    // The stealth address follows the note type and the value commitment,
+    // and the value encryption follows it and the position.
+    let mut bytes = note.to_bytes();
+    let stealth_start = 1 + JubJubAffine::SIZE;
+    let value_enc_start = stealth_start + StealthAddress::SIZE + u64::SIZE;
+    bytes[stealth_start..stealth_start + StealthAddress::SIZE]
+        .copy_from_slice(&stealth_address.to_bytes());
+    bytes[value_enc_start..value_enc_start + NOTE_VAL_ENC_SIZE]
+        .copy_from_slice(&value_enc);
+    let note = Note::from_bytes(&bytes).expect("the note decodes");
+    assert_eq!(note.stealth_address(), &stealth_address);
+
+    assert!(matches!(
+        note.value_opening(Some(&receiver_vk)),
+        Err(Error::InvalidEncryption)
+    ));
+    assert!(matches!(
+        note.value(Some(&receiver_vk)),
+        Err(Error::InvalidEncryption)
+    ));
+    assert!(matches!(
+        note.value_blinder(Some(&receiver_vk)),
+        Err(Error::InvalidEncryption)
+    ));
 }
