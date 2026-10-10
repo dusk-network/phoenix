@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-16
+
 ### Changed
 
+- Update `phoenix-core` to v0.36.0 [#311]
 - Redact private witnesses from `TxCircuit`, `InputNoteInfo` and
   `OutputNoteInfo` debug output [#316]
 - Constrain `note_pk`, `note_pk_p`, the sender public key and the output note
@@ -192,7 +195,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#169]: https://github.com/dusk-network/phoenix/issues/169
 
 <!-- VERSIONS -->
-[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.1...HEAD
+[Unreleased]: https://github.com/dusk-network/phoenix/compare/circuits_v0.9.0...HEAD
+[0.9.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.1...circuits_v0.9.0
 [0.8.1]: https://github.com/dusk-network/phoenix/compare/circuits_v0.8.0...circuits_v0.8.1
 [0.8.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.6.0...circuits_v0.8.0
 [0.6.0]: https://github.com/dusk-network/phoenix/compare/circuits_v0.5.0...circuits_v0.6.0
