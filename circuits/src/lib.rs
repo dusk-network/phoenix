@@ -15,6 +15,8 @@ mod circuit_impl;
 #[cfg(feature = "plonk")]
 mod sender_enc;
 
+use core::fmt;
+
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::{DeserializableSlice, Error as BytesError, Serializable};
 use dusk_jubjub::{JubJubAffine, JubJubScalar};
@@ -28,7 +30,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 
 /// Declaration of the transaction circuit calling the [`gadget`].
-#[derive(Debug, Clone, PartialEq)]
+///
+/// Its `Debug` output shows the public inputs of the circuit only.
+#[derive(Clone, PartialEq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -52,6 +56,19 @@ pub struct TxCircuit<const H: usize, const I: usize> {
     pub sender_pk: PublicKey,
     /// The signature of the payload-hash signed with sk.a and sk.b
     pub signatures: (SchnorrSignature, SchnorrSignature),
+}
+
+impl<const H: usize, const I: usize> fmt::Debug for TxCircuit<H, I> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TxCircuit")
+            .field("input_notes_info", &self.input_notes_info)
+            .field("output_notes_info", &self.output_notes_info)
+            .field("payload_hash", &self.payload_hash)
+            .field("root", &self.root)
+            .field("deposit", &self.deposit)
+            .field("max_fee", &self.max_fee)
+            .finish_non_exhaustive()
+    }
 }
 
 impl<const H: usize, const I: usize> TxCircuit<H, I> {
@@ -201,7 +218,9 @@ impl<const H: usize, const I: usize> Default for TxCircuit<H, I> {
 
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction input-notes.
-#[derive(Debug, Clone, PartialEq)]
+///
+/// Its `Debug` output shows the nullifier only, the input's public input.
+#[derive(Clone, PartialEq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -222,6 +241,14 @@ pub struct InputNoteInfo<const H: usize> {
     pub nullifier: BlsScalar,
     /// The signature of the payload-hash, signed with the note-sk
     pub signature: SignatureDouble,
+}
+
+impl<const H: usize> fmt::Debug for InputNoteInfo<H> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("InputNoteInfo")
+            .field("nullifier", &self.nullifier)
+            .finish_non_exhaustive()
+    }
 }
 
 impl<const H: usize> InputNoteInfo<H> {
@@ -296,7 +323,10 @@ impl<const H: usize> InputNoteInfo<H> {
 
 /// Struct holding all information needed by the transfer circuit regarding the
 /// transaction output-notes.
-#[derive(Debug, Clone, PartialEq)]
+///
+/// Its `Debug` output shows the output's public inputs only: the value
+/// commitment, the note public key and the encrypted sender.
+#[derive(Clone, PartialEq)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -315,6 +345,16 @@ pub struct OutputNoteInfo {
     pub sender_enc: [(JubJubAffine, JubJubAffine); 2],
     /// The blinder used to encrypt the sender
     pub sender_blinder: [JubJubScalar; 2],
+}
+
+impl fmt::Debug for OutputNoteInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OutputNoteInfo")
+            .field("value_commitment", &self.value_commitment)
+            .field("note_pk", &self.note_pk)
+            .field("sender_enc", &self.sender_enc)
+            .finish_non_exhaustive()
+    }
 }
 
 const OUTPUT_NOTE_INFO_SIZE: usize = u64::SIZE
