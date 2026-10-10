@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Redact secret scalar material from `SecretKey` and `ViewKey` debug output
+  [#316]
 - Update `jubjub-schnorr` to v0.7.0 [#311]
 - Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-poseidon` to
   v0.44.0 and `jubjub-elgamal` to v0.6.0 [#311]
@@ -489,6 +491,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#316]: https://github.com/dusk-network/phoenix/issues/316
 [#285]: https://github.com/dusk-network/phoenix/issues/285
 [#312]: https://github.com/dusk-network/phoenix/issues/312
 [#311]: https://github.com/dusk-network/phoenix/issues/311

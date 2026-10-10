@@ -62,6 +62,49 @@ fn vk_zeroize() {
 }
 
 #[test]
+fn secrets_debug_redacted() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
+    let vk = ViewKey::from(&sk);
+    let stealth = PublicKey::from(&sk)
+        .gen_stealth_address(&JubJubScalar::random(&mut rng));
+    let note_sk = sk.gen_note_sk(&stealth);
+
+    // The forms in which a `Debug` output could carry a secret scalar: the
+    // scalar's own `Debug`, and its bytes in hex, either way round.
+    let encodings = |s: &JubJubScalar| {
+        let bytes = s.to_bytes();
+        let le: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let be: String =
+            bytes.iter().rev().map(|b| format!("{b:02x}")).collect();
+        [format!("{s:?}"), le, be]
+    };
+
+    for (debug, secrets, redacted) in [
+        (
+            format!("{sk:?}"),
+            vec![*sk.a(), *sk.b()],
+            "SecretKey(REDACTED)",
+        ),
+        (format!("{vk:?}"), vec![*vk.a()], "ViewKey(REDACTED)"),
+        (
+            format!("{note_sk:?}"),
+            vec![*note_sk.as_ref()],
+            "SecretKey(REDACTED)",
+        ),
+    ] {
+        for encoding in secrets.iter().flat_map(encodings) {
+            assert!(
+                !debug.contains(&encoding),
+                "`{debug}` contains the secret `{encoding}`"
+            );
+        }
+        assert_eq!(debug, redacted);
+    }
+}
+
+#[test]
 fn keys_encoding() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 

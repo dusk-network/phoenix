@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use core::fmt;
+
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{
     GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
@@ -34,7 +36,7 @@ use crate::{SecretKey, StealthAddress};
 ///
 /// requires_clone::<ViewKey>();
 /// ```
-#[derive(Debug, Eq, Zeroize, ZeroizeOnDrop)]
+#[derive(Eq, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -44,6 +46,12 @@ pub struct ViewKey {
     a: JubJubScalar,
     #[zeroize(skip)]
     B: JubJubExtended,
+}
+
+impl fmt::Debug for ViewKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("ViewKey(REDACTED)")
+    }
 }
 
 impl ConstantTimeEq for ViewKey {
