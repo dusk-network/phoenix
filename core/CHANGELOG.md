@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Return an `Option` from `SecretKey::gen_note_sk` and `Note::gen_nullifier`,
+  `None` when the `R` of the stealth address is the identity or of small order
+  [#317]
 - Redact secret scalar material from `SecretKey` and `ViewKey` debug output
   [#316]
 - Update `jubjub-schnorr` to v0.7.0 [#311]
@@ -46,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Ignore a small-order component of `R` in `ViewKey::owns`, `SecretKey::owns`
+  and `SecretKey::gen_note_sk` [#317]
+- Reject a stealth address whose `R` is the identity or of small order in
+  `ViewKey::owns` and `SecretKey::owns` [#317]
 - Reject `PublicKey` encodings whose `A` or `B` is the identity [#312]
 - Reject recovered note openings that do not match their value commitment
   [#290]
@@ -491,6 +498,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#317]: https://github.com/dusk-network/phoenix/issues/317
 [#316]: https://github.com/dusk-network/phoenix/issues/316
 [#285]: https://github.com/dusk-network/phoenix/issues/285
 [#312]: https://github.com/dusk-network/phoenix/issues/312

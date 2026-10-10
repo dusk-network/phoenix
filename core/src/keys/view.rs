@@ -15,7 +15,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 use subtle::{Choice, ConstantTimeEq};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use crate::keys::hash;
+use crate::keys::hash_shared_secret;
 use crate::{SecretKey, StealthAddress};
 
 /// Pair of a secret `a` and public `b·G`
@@ -84,13 +84,19 @@ impl ViewKey {
     }
 
     /// Checks `note_pk = H(R · a) · G + B`
+    ///
+    /// `R · a` is derived through [`dhke`](dusk_jubjub::dhke), which ignores
+    /// a small-order component of `R`. A stealth address whose `R` is the
+    /// identity or of small order is owned by no key.
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
-        let aR = stealth_address.R() * self.a();
-        let hash_aR = hash(&aR);
-        let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
-        let note_pk = hash_aR_G + self.B();
+        hash_shared_secret(&self.a, stealth_address.R()).is_some_and(
+            |hash_aR| {
+                let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
+                let note_pk = hash_aR_G + self.B;
 
-        stealth_address.note_pk().as_ref() == &note_pk
+                stealth_address.note_pk().as_ref() == &note_pk
+            },
+        )
     }
 }
 

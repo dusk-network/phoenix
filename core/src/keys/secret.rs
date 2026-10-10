@@ -17,7 +17,7 @@ use subtle::{Choice, ConstantTimeEq};
 use zeroize::Zeroize;
 
 use crate::StealthAddress;
-use crate::keys::hash;
+use crate::keys::hash_shared_secret;
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]
 ///
@@ -93,19 +93,28 @@ impl SecretKey {
 
     /// Generates a [`NoteSecretKey`] using the `R` of the given
     /// [`StealthAddress`]. With the formula: `note_sk = H(a · R) + b`
-    pub fn gen_note_sk(&self, stealth: &StealthAddress) -> NoteSecretKey {
-        let aR = stealth.R() * self.a;
-
-        NoteSecretKey::from(hash(&aR) + self.b)
+    ///
+    /// `a · R` is derived through [`dhke`](dusk_jubjub::dhke), which ignores
+    /// a small-order component of `R`. Returns `None` if `R` is the identity
+    /// or of small order: no key owns such a stealth address.
+    pub fn gen_note_sk(
+        &self,
+        stealth: &StealthAddress,
+    ) -> Option<NoteSecretKey> {
+        hash_shared_secret(&self.a, stealth.R())
+            .map(|hash_aR| NoteSecretKey::from(hash_aR + self.b))
     }
 
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
+    ///
+    /// A stealth address whose `R` is the identity or of small order is owned
+    /// by no key, see [`SecretKey::gen_note_sk`].
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
-        let note_sk = self.gen_note_sk(stealth_address);
+        self.gen_note_sk(stealth_address).is_some_and(|note_sk| {
+            let note_pk = GENERATOR_EXTENDED * note_sk.as_ref();
 
-        let note_pk = GENERATOR_EXTENDED * note_sk.as_ref();
-
-        stealth_address.note_pk().as_ref() == &note_pk
+            stealth_address.note_pk().as_ref() == &note_pk
+        })
     }
 }
 

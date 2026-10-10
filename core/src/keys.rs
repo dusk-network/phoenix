@@ -4,7 +4,7 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar};
+use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar, dhke};
 
 pub mod public;
 pub mod secret;
@@ -16,5 +16,23 @@ pub mod view;
 /// Uses the legacy construction without a domain separator, which every
 /// existing note key is derived with.
 pub fn hash(p: &JubJubExtended) -> JubJubScalar {
-    JubJubScalar::hash_to_scalar(None, &JubJubAffine::from(p).to_bytes())
+    hash_affine(&JubJubAffine::from(p))
+}
+
+fn hash_affine(p: &JubJubAffine) -> JubJubScalar {
+    JubJubScalar::hash_to_scalar(None, &p.to_bytes())
+}
+
+/// Hashes the shared secret `a · R` of the secret `a` and the `R` of a
+/// stealth address, as [`hash`] does.
+///
+/// The shared secret is derived with [`dhke`], which clears the cofactor of
+/// `R`: a small-order component of `R` does not reach the result, and an
+/// identity or small-order `R` yields none. For an `R` of prime order the
+/// result is `H(a · R)`.
+pub(crate) fn hash_shared_secret(
+    a: &JubJubScalar,
+    R: &JubJubExtended,
+) -> Option<JubJubScalar> {
+    Option::from(dhke(a, R)).map(|aR| hash_affine(&aR))
 }
