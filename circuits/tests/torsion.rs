@@ -205,7 +205,10 @@ fn transaction<const I: usize>(
     if shifted == Shifted::NotePk {
         let input = &mut inputs[I - 1];
         let stealth_address = *input.note.stealth_address();
-        let note_sk = TP.sender_sk.gen_note_sk(&stealth_address);
+        let note_sk = TP
+            .sender_sk
+            .gen_note_sk(&stealth_address)
+            .expect("the sender owns the note");
         let note_pk = stealth_address.note_pk().as_ref() + offset;
         let stealth_address = StealthAddress::from_raw_unchecked(
             *stealth_address.R(),
@@ -224,7 +227,10 @@ fn transaction<const I: usize>(
     }
     if shifted == Shifted::NotePkP {
         let input = &mut inputs[0];
-        let note_sk = TP.sender_sk.gen_note_sk(input.note.stealth_address());
+        let note_sk = TP
+            .sender_sk
+            .gen_note_sk(input.note.stealth_address())
+            .expect("the sender owns the note");
         let note_pk = *input.note.stealth_address().note_pk().as_ref();
         let note_pk_p = JubJubExtended::from(input.note_pk_p) + offset;
 
