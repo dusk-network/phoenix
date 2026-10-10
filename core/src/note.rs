@@ -77,6 +77,10 @@ impl TryFrom<i32> for NoteType {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Note {
     pub(crate) note_type: NoteType,
+    #[cfg_attr(
+        feature = "serde",
+        serde(deserialize_with = "crate::serde_support::deserialize_point")
+    )]
     pub(crate) value_commitment: JubJubAffine,
     pub(crate) stealth_address: StealthAddress,
     #[cfg_attr(
@@ -562,7 +566,15 @@ impl Serializable<SIZE> for Note {
 pub enum Sender {
     /// The sender's [`PublicKey`], encrypted using the note_pk of the
     /// stealth-address.
-    Encryption([(JubJubAffine, JubJubAffine); 2]),
+    Encryption(
+        #[cfg_attr(
+            feature = "serde",
+            serde(
+                deserialize_with = "crate::serde_support::deserialize_sender_enc"
+            )
+        )]
+        [(JubJubAffine, JubJubAffine); 2],
+    ),
     /// Information to identify the origin of a `Note`, if it wasn't created as
     /// a phoenix-transaction output-note.
     ContractInfo(

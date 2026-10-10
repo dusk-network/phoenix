@@ -8,7 +8,9 @@
 
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
-use dusk_jubjub::{JubJubAffine, JubJubScalar};
+use dusk_jubjub::{
+    GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
+};
 use ff::Field;
 use jubjub_schnorr::{PublicKey as NotePublicKey, SecretKey as NoteSecretKey};
 use phoenix_core::{
@@ -157,6 +159,78 @@ fn serde_note() -> Result<(), Box<dyn std::error::Error>> {
     let ser = assert_canonical_json(&note, include_str!("./serde/note.json"))?;
     let deser = serde_json::from_str(&ser)?;
     assert_eq!(note, deser);
+    Ok(())
+}
+
+#[test]
+fn serde_rejects_points_outside_the_subgroup()
+-> Result<(), Box<dyn std::error::Error>> {
+    // The order-two point `(0, -1)`, and the generator plus it.
+    let order_two =
+        JubJubAffine::from_raw_unchecked(BlsScalar::zero(), -BlsScalar::one());
+    let mixed = JubJubAffine::from(
+        GENERATOR_EXTENDED + JubJubExtended::from(order_two),
+    );
+
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let note = create_note(&mut rng);
+    let honest = serde_json::to_value(&note)?;
+    assert_eq!(serde_json::from_value::<Note>(honest.clone())?, note);
+
+    for point in [order_two, mixed] {
+        let point = serde_json::to_value(point)?;
+
+        let mut json = honest.clone();
+        json["value_commitment"] = point.clone();
+        assert!(serde_json::from_value::<Note>(json).is_err());
+
+        for (i, j) in [(0, 0), (0, 1), (1, 0), (1, 1)] {
+            let mut json = honest.clone();
+            json["sender"]["Encryption"][i][j] = point.clone();
+            let sender = json["sender"].clone();
+            assert!(serde_json::from_value::<Sender>(sender).is_err());
+            assert!(serde_json::from_value::<Note>(json).is_err());
+        }
+    }
+
+    // The identity lies in the subgroup, as in the empty note.
+    let empty = Note::empty();
+    let json = serde_json::to_string(&empty)?;
+    assert_eq!(serde_json::from_str::<Note>(&json)?, empty);
+
+    Ok(())
+}
+
+#[test]
+fn serde_rejects_points_of_wrong_length()
+-> Result<(), Box<dyn std::error::Error>> {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let note = create_note(&mut rng);
+    let honest = serde_json::to_value(&note)?;
+
+    // An honest point with one byte more, and with one byte less.
+    let resized = |point: &serde_json::Value| {
+        let hex = point.as_str().expect("a point is encoded in hex");
+        [format!("{hex}00"), hex[..hex.len() - 2].to_string()]
+            .map(serde_json::Value::from)
+    };
+
+    for point in resized(&honest["value_commitment"]) {
+        let mut json = honest.clone();
+        json["value_commitment"] = point;
+        assert!(serde_json::from_value::<Note>(json).is_err());
+    }
+
+    for (i, j) in [(0, 0), (0, 1), (1, 0), (1, 1)] {
+        for point in resized(&honest["sender"]["Encryption"][i][j]) {
+            let mut json = honest.clone();
+            json["sender"]["Encryption"][i][j] = point;
+            let sender = json["sender"].clone();
+            assert!(serde_json::from_value::<Sender>(sender).is_err());
+            assert!(serde_json::from_value::<Note>(json).is_err());
+        }
+    }
+
     Ok(())
 }
 
