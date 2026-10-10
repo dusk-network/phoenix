@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reject an input `note_pk_p` with a small-order component [#313]
 - Reject a sender public key whose `A` or `B` is the identity [#314]
 - Reject an output note key equal to the identity [#314]
+- Reject a `TxCircuit` whose inputs repeat a note [#315]
 
 ## [0.8.1] - 2026-06-15
 
@@ -163,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#315]: https://github.com/dusk-network/phoenix/issues/315
 [#313]: https://github.com/dusk-network/phoenix/issues/313
 [#314]: https://github.com/dusk-network/phoenix/issues/314
 [#311]: https://github.com/dusk-network/phoenix/issues/311

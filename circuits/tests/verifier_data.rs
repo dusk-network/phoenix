@@ -50,13 +50,13 @@ const VD_1_2: &[u8] = include_bytes!(
     "assets/d2d0578d0167adadf3025e5d8cc6f41e73a68d47e9ad8aa8fcddc7ee8beaab9e.vd"
 );
 const VD_2_2: &[u8] = include_bytes!(
-    "assets/cc2bffe1693b1c1c01d6cacd586bff0553a45cb11065c4ef0821581ec376d297.vd"
+    "assets/757ba7194e191bc2818b2a5fb0d32314a22ea4984b6d945168c28116d7e216e4.vd"
 );
 const VD_3_2: &[u8] = include_bytes!(
-    "assets/7143e6a20dc8392f8fd0aebed4f72d407301aa7e7bd1d72ab9b852efbfbd2a07.vd"
+    "assets/dca73e6a72671f16a452992fcba5ad8c26b752497a7b616a302ed7b671a2cefd.vd"
 );
 const VD_4_2: &[u8] = include_bytes!(
-    "assets/7d39e8166eecde1a7f7ceb5ea268fddd282397e7c0e3d39c17d4fbb225a9f26c.vd"
+    "assets/5f7106b189bb0aaba1ddeadcfdcad8650c3fac70f3d31cf20f9912ac5d196fd8.vd"
 );
 
 /// Compiles the `I`-input circuit to `vd`, and proves a transaction whose

@@ -35,7 +35,8 @@ use alloc::vec::Vec;
     archive_attr(derive(bytecheck::CheckBytes))
 )]
 pub struct TxCircuit<const H: usize, const I: usize> {
-    /// All information needed in relation to the transaction input-notes
+    /// All information needed in relation to the transaction input-notes,
+    /// whose positions in the tree of notes must be pairwise distinct
     pub input_notes_info: [InputNoteInfo<H>; I],
     /// All information needed in relation to the transaction output-notes
     pub output_notes_info: [OutputNoteInfo; OUTPUT_NOTES],
