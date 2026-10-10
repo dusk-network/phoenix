@@ -47,16 +47,16 @@ const DEPLOYED_VD_4_2: &[u8] = include_bytes!(
 );
 
 const VD_1_2: &[u8] = include_bytes!(
-    "assets/bf184dc7e0569daef4e74bc6b681e5651b0d5a054b9cfc656d91b83d54343f71.vd"
+    "assets/d2d0578d0167adadf3025e5d8cc6f41e73a68d47e9ad8aa8fcddc7ee8beaab9e.vd"
 );
 const VD_2_2: &[u8] = include_bytes!(
-    "assets/456f644ee101e40eea33af55ad915f4e3c4fd04572da1b00cda57a09050080c3.vd"
+    "assets/cc2bffe1693b1c1c01d6cacd586bff0553a45cb11065c4ef0821581ec376d297.vd"
 );
 const VD_3_2: &[u8] = include_bytes!(
-    "assets/63cacc7adb37b19b6d10066e2d01ac2939422d9496d27f03dbc875b5458a36a5.vd"
+    "assets/7143e6a20dc8392f8fd0aebed4f72d407301aa7e7bd1d72ab9b852efbfbd2a07.vd"
 );
 const VD_4_2: &[u8] = include_bytes!(
-    "assets/929b3a0024cd60e3d56deb039e8a112e78caa3f23060193f21f533ad0557b8e2.vd"
+    "assets/7d39e8166eecde1a7f7ceb5ea268fddd282397e7c0e3d39c17d4fbb225a9f26c.vd"
 );
 
 /// Compiles the `I`-input circuit to `vd`, and proves a transaction whose

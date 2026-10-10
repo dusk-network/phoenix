@@ -4,12 +4,14 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
-//! Regression for an identity sender key.
+//! Regressions for identity keys in the transaction circuit.
 //!
 //! The signature gadgets constrain both keys of the sender to differ from the
-//! identity, so a transaction whose sender key has an identity `A` or `B` is
-//! unsatisfiable. The test signs for that key with a signature that satisfies
-//! the signature equation, so that only this constraint can fail.
+//! identity, and the circuit constrains the note keys of the outputs, which
+//! the sender is encrypted to, likewise. A transaction with any of these keys
+//! set to the identity is unsatisfiable. The tests give it signatures and
+//! encryptions that satisfy every other equation, so that only this
+//! constraint can fail.
 
 #![cfg(feature = "plonk")]
 #![allow(non_snake_case)]
@@ -20,9 +22,10 @@ use dusk_bytes::Serializable;
 use dusk_jubjub::{
     GENERATOR_EXTENDED, JubJubAffine, JubJubExtended, JubJubScalar,
 };
-use dusk_plonk::prelude::{Compiler, Error as PlonkError, PublicParameters};
+use dusk_plonk::prelude::{
+    Compiler, Error as PlonkError, Prover, PublicParameters, Verifier,
+};
 use ff::Field;
-use jubjub_elgamal::Encryption as ElGamal;
 use jubjub_schnorr::Signature as SchnorrSignature;
 use phoenix_circuits::TxCircuit;
 use phoenix_core::{PublicKey, value_commitment};
@@ -32,10 +35,14 @@ use rand::rngs::StdRng;
 mod common;
 use common::*;
 
-/// A test SRS for the 1-input circuit. Soundness does not depend on the SRS.
-static PP: LazyLock<PublicParameters> = LazyLock::new(|| {
-    PublicParameters::setup(1 << 16, &mut StdRng::seed_from_u64(0x0122))
-        .expect("failed to generate the test SRS")
+/// The 1-input circuit, compiled with a test SRS. Soundness does not depend
+/// on the SRS.
+static CIRCUIT: LazyLock<(Prover, Verifier)> = LazyLock::new(|| {
+    let pp =
+        PublicParameters::setup(1 << 16, &mut StdRng::seed_from_u64(0x0122))
+            .expect("failed to generate the test SRS");
+    Compiler::compile::<TxCircuit<HEIGHT, 1>>(&pp, LABEL)
+        .expect("failed to compile circuit")
 });
 
 /// A signature that verifies for the identity key under any challenge.
@@ -49,7 +56,8 @@ fn identity_key_signature(rng: &mut StdRng) -> SchnorrSignature {
     SchnorrSignature::from_bytes(&bytes).expect("R is a prime-order point")
 }
 
-/// Output note information encrypting `sender_pk`.
+/// Output note information encrypting `sender_pk` to `note_pk`, the
+/// encryption computed as the circuit computes it.
 fn output_note(
     rng: &mut StdRng,
     value: u64,
@@ -58,10 +66,10 @@ fn output_note(
     sender_blinder: [JubJubScalar; 2],
 ) -> OutputNoteInfo {
     let value_blinder = JubJubScalar::random(&mut *rng);
-    let encrypt = |key: &JubJubExtended, blinder| {
-        let (enc, _) =
-            ElGamal::encrypt(&note_pk.into(), key, None, blinder).unwrap();
-        (enc.c1().into(), enc.c2().into())
+    let encrypt = |key: &JubJubExtended, blinder: &JubJubScalar| {
+        let c1 = GENERATOR_EXTENDED * blinder;
+        let c2 = key + JubJubExtended::from(note_pk) * blinder;
+        (c1.into(), c2.into())
     };
 
     OutputNoteInfo {
@@ -77,59 +85,88 @@ fn output_note(
     }
 }
 
+/// Proves and verifies the 1-input transaction spending the first test note,
+/// with the given sender key, signatures and output note keys.
+fn prove(
+    sender_pk: PublicKey,
+    signatures: (SchnorrSignature, SchnorrSignature),
+    output_npk: [JubJubAffine; 2],
+) -> Result<(), PlonkError> {
+    let mut rng = StdRng::seed_from_u64(0x0122);
+    let (prover, verifier) = &*CIRCUIT;
+
+    let output_notes_info = [
+        output_note(
+            &mut rng,
+            10,
+            output_npk[0],
+            &sender_pk,
+            TP.sender_blinder[0],
+        ),
+        output_note(
+            &mut rng,
+            5,
+            output_npk[1],
+            &sender_pk,
+            TP.sender_blinder[1],
+        ),
+    ];
+    let circuit = TxCircuit {
+        input_notes_info: [TP.input_notes_info[0].clone()],
+        output_notes_info,
+        payload_hash: TP.payload_hash,
+        root: TP.root,
+        deposit: TP.deposit,
+        max_fee: TP.max_fee,
+        sender_pk,
+        signatures,
+    };
+    prover
+        .prove(&mut rng, &circuit)
+        .and_then(|(proof, pi)| verifier.verify(&proof, &pi))
+}
+
 #[test]
 fn identity_sender_key_rejected() {
-    let mut rng = StdRng::seed_from_u64(0x0122);
-    let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, 1>>(&PP, LABEL)
-            .expect("failed to compile circuit");
-
-    let mut prove = |sender_pk: PublicKey, signatures| {
-        let output_notes_info = [
-            output_note(
-                &mut rng,
-                10,
-                TP.output_npk[0],
-                &sender_pk,
-                TP.sender_blinder[0],
-            ),
-            output_note(
-                &mut rng,
-                5,
-                TP.output_npk[1],
-                &sender_pk,
-                TP.sender_blinder[1],
-            ),
-        ];
-        let circuit = TxCircuit {
-            input_notes_info: [TP.input_notes_info[0].clone()],
-            output_notes_info,
-            payload_hash: TP.payload_hash,
-            root: TP.root,
-            deposit: TP.deposit,
-            max_fee: TP.max_fee,
-            sender_pk,
-            signatures,
-        };
-        prover
-            .prove(&mut rng, &circuit)
-            .and_then(|(proof, pi)| verifier.verify(&proof, &pi))
-    };
-
     // The same construction proves for an honest sender key.
-    prove(TP.sender_pk, TP.signatures).expect("the honest sender proves");
+    prove(TP.sender_pk, TP.signatures, TP.output_npk)
+        .expect("the honest sender proves");
 
     let identity = JubJubExtended::identity();
     let (A, B) = (*TP.sender_pk.A(), *TP.sender_pk.B());
     let (sig_A, sig_B) = TP.signatures;
 
     let sig_identity = identity_key_signature(&mut StdRng::seed_from_u64(0xa));
-    let err = prove(PublicKey::new(identity, B), (sig_identity, sig_B))
-        .expect_err("an identity sender key A must be unsatisfiable");
+    let err = prove(
+        PublicKey::new(identity, B),
+        (sig_identity, sig_B),
+        TP.output_npk,
+    )
+    .expect_err("an identity sender key A must be unsatisfiable");
     assert_eq!(err, PlonkError::CircuitUnsatisfied);
 
     let sig_identity = identity_key_signature(&mut StdRng::seed_from_u64(0xb));
-    let err = prove(PublicKey::new(A, identity), (sig_A, sig_identity))
-        .expect_err("an identity sender key B must be unsatisfiable");
+    let err = prove(
+        PublicKey::new(A, identity),
+        (sig_A, sig_identity),
+        TP.output_npk,
+    )
+    .expect_err("an identity sender key B must be unsatisfiable");
     assert_eq!(err, PlonkError::CircuitUnsatisfied);
+}
+
+#[test]
+fn identity_output_note_key_rejected() {
+    // The same construction proves for honest output note keys.
+    prove(TP.sender_pk, TP.signatures, TP.output_npk)
+        .expect("the honest transaction proves");
+
+    let identity = JubJubAffine::identity();
+    let [npk_0, npk_1] = TP.output_npk;
+
+    for output_npk in [[identity, npk_1], [npk_0, identity]] {
+        let err = prove(TP.sender_pk, TP.signatures, output_npk)
+            .expect_err("an identity output note key must be unsatisfiable");
+        assert_eq!(err, PlonkError::CircuitUnsatisfied);
+    }
 }
