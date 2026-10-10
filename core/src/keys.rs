@@ -6,6 +6,7 @@
 
 use dusk_jubjub::{JubJubAffine, JubJubExtended, JubJubScalar, dhke};
 
+mod generator;
 pub mod public;
 pub mod secret;
 pub mod view;

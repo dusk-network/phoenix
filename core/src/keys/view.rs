@@ -15,6 +15,7 @@ use rkyv::{Archive, Deserialize, Serialize};
 use subtle::{Choice, ConstantTimeEq};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
+use crate::keys::generator::mul_generator;
 use crate::keys::hash_shared_secret;
 use crate::{SecretKey, StealthAddress};
 
@@ -91,7 +92,7 @@ impl ViewKey {
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
         hash_shared_secret(&self.a, stealth_address.R()).is_some_and(
             |hash_aR| {
-                let hash_aR_G = GENERATOR_EXTENDED * hash_aR;
+                let hash_aR_G = mul_generator(&hash_aR);
                 let note_pk = hash_aR_G + self.B;
 
                 stealth_address.note_pk().as_ref() == &note_pk

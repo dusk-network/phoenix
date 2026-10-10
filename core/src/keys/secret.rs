@@ -7,7 +7,7 @@
 use core::fmt;
 
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
-use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
+use dusk_jubjub::JubJubScalar;
 use ff::Field;
 use jubjub_schnorr::SecretKey as NoteSecretKey;
 use rand_core::{CryptoRng, RngCore};
@@ -17,6 +17,7 @@ use subtle::{Choice, ConstantTimeEq};
 use zeroize::Zeroize;
 
 use crate::StealthAddress;
+use crate::keys::generator::mul_generator;
 use crate::keys::hash_shared_secret;
 
 /// Secret pair of `a` and `b` defining a [`SecretKey`]
@@ -111,7 +112,7 @@ impl SecretKey {
     /// by no key, see [`SecretKey::gen_note_sk`].
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
         self.gen_note_sk(stealth_address).is_some_and(|note_sk| {
-            let note_pk = GENERATOR_EXTENDED * note_sk.as_ref();
+            let note_pk = mul_generator(note_sk.as_ref());
 
             stealth_address.note_pk().as_ref() == &note_pk
         })

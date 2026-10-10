@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Speed up `ViewKey::owns` and `SecretKey::owns` [#319]
 - Return an `Option` from `SecretKey::gen_note_sk` and `Note::gen_nullifier`,
   `None` when the `R` of the stealth address is the identity or of small order
   [#317]
@@ -498,6 +499,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#319]: https://github.com/dusk-network/phoenix/issues/319
 [#317]: https://github.com/dusk-network/phoenix/issues/317
 [#316]: https://github.com/dusk-network/phoenix/issues/316
 [#285]: https://github.com/dusk-network/phoenix/issues/285
