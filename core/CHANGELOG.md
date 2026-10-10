@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Implement `Zeroize` and `ZeroizeOnDrop` for `ViewKey`, wiping its secret `a`
+  [#285]
 - Add `TxSkeleton::from_slice_checked`, rejecting non-canonical skeleton padding
   [#288]
 - Add `StealthAddress::from_bytes_checked`, rejecting non-prime-order stealth
@@ -35,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   value blinder, ignoring the supplied blinder [#290]
 - Return `Error::CommitmentMismatch` when a recovered note opening does not
   match its value commitment [#290]
+
+### Removed
+
+- Remove the `Copy` and `Clone` implementations of `ViewKey` [#285]
 
 ### Fixed
 
@@ -483,6 +489,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#285]: https://github.com/dusk-network/phoenix/issues/285
 [#312]: https://github.com/dusk-network/phoenix/issues/312
 [#311]: https://github.com/dusk-network/phoenix/issues/311
 [#308]: https://github.com/dusk-network/phoenix/issues/308

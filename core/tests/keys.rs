@@ -10,7 +10,7 @@ use ff::Field;
 use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[test]
 fn sk_from_bytes() {
@@ -38,6 +38,27 @@ fn sk_zeroize() {
 
     sk.zeroize();
     assert_eq!(sk, sk_zeroized);
+}
+
+#[test]
+fn vk_zeroize() {
+    // Dropping a view key wipes its secret too.
+    fn zeroized_on_drop<T: ZeroizeOnDrop>() {}
+    zeroized_on_drop::<ViewKey>();
+
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
+    let mut vk = ViewKey::from(&sk);
+    let public_b = *vk.B();
+
+    // sanity check
+    assert_ne!(vk.a(), &JubJubScalar::zero());
+
+    // The secret `a` is wiped, the public `B` is kept.
+    vk.zeroize();
+    assert_eq!(vk.a(), &JubJubScalar::zero());
+    assert_eq!(vk.B(), &public_b);
 }
 
 #[test]

@@ -11,6 +11,7 @@ use dusk_jubjub::{
 #[cfg(feature = "rkyv-impl")]
 use rkyv::{Archive, Deserialize, Serialize};
 use subtle::{Choice, ConstantTimeEq};
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::keys::hash;
 use crate::{SecretKey, StealthAddress};
@@ -19,7 +20,21 @@ use crate::{SecretKey, StealthAddress};
 ///
 /// The notes are encrypted against secret a, so this is used to decrypt the
 /// blinding factor and value
-#[derive(Clone, Copy, Debug, Eq)]
+///
+/// ## Safety
+///
+/// The secret `a` is zeroized when the key is dropped. The key implements
+/// neither `Copy` nor `Clone`, so a second copy has to be derived again.
+/// Dropping does not reach the bytes a move of the key leaves behind.
+///
+/// ```compile_fail,E0277
+/// use phoenix_core::ViewKey;
+///
+/// fn requires_clone<T: Clone>() {}
+///
+/// requires_clone::<ViewKey>();
+/// ```
+#[derive(Debug, Eq, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -27,6 +42,7 @@ use crate::{SecretKey, StealthAddress};
 )]
 pub struct ViewKey {
     a: JubJubScalar,
+    #[zeroize(skip)]
     B: JubJubExtended,
 }
 
