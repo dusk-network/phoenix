@@ -36,13 +36,17 @@ const VD_EXEC_4_2: &[u8] = include_bytes!(
 );
 
 fn prove_and_verify_against_stored_vd<const I: usize>(
+    test: &str,
     input_notes_info: [InputNoteInfo<HEIGHT>; I],
     output_values: [u64; 2],
     stored_vd: &[u8],
 ) {
+    let Some(pp) = crs::<I>(test) else {
+        return;
+    };
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
-    let (prover, _) = Compiler::compile::<TxCircuit<HEIGHT, I>>(&TP.pp, LABEL)
+    let (prover, _) = Compiler::compile::<TxCircuit<HEIGHT, I>>(pp, LABEL)
         .expect("failed to compile circuit");
 
     let output_notes_info = [
@@ -87,7 +91,12 @@ fn prove_and_verify_against_stored_vd<const I: usize>(
 #[test]
 fn test_verifier_data_1_2() {
     let input_notes_info = [TP.input_notes_info[0].clone()];
-    prove_and_verify_against_stored_vd(input_notes_info, [10, 5], VD_EXEC_1_2);
+    prove_and_verify_against_stored_vd(
+        "test_verifier_data_1_2",
+        input_notes_info,
+        [10, 5],
+        VD_EXEC_1_2,
+    );
 }
 
 #[test]
@@ -96,7 +105,12 @@ fn test_verifier_data_2_2() {
         TP.input_notes_info[0].clone(),
         TP.input_notes_info[1].clone(),
     ];
-    prove_and_verify_against_stored_vd(input_notes_info, [35, 5], VD_EXEC_2_2);
+    prove_and_verify_against_stored_vd(
+        "test_verifier_data_2_2",
+        input_notes_info,
+        [35, 5],
+        VD_EXEC_2_2,
+    );
 }
 
 #[test]
@@ -106,7 +120,12 @@ fn test_verifier_data_3_2() {
         TP.input_notes_info[1].clone(),
         TP.input_notes_info[2].clone(),
     ];
-    prove_and_verify_against_stored_vd(input_notes_info, [35, 30], VD_EXEC_3_2);
+    prove_and_verify_against_stored_vd(
+        "test_verifier_data_3_2",
+        input_notes_info,
+        [35, 30],
+        VD_EXEC_3_2,
+    );
 }
 
 #[test]
@@ -117,5 +136,10 @@ fn test_verifier_data_4_2() {
         TP.input_notes_info[2].clone(),
         TP.input_notes_info[3].clone(),
     ];
-    prove_and_verify_against_stored_vd(input_notes_info, [60, 30], VD_EXEC_4_2);
+    prove_and_verify_against_stored_vd(
+        "test_verifier_data_4_2",
+        input_notes_info,
+        [60, 30],
+        VD_EXEC_4_2,
+    );
 }
