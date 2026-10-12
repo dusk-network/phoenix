@@ -23,20 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Speed up `ViewKey::owns` and `SecretKey::owns` [#319]
 - Return an `Option` from `SecretKey::gen_note_sk` and `Note::gen_nullifier`,
-  `None` when the `R` of the stealth address is the identity or of small order
-  [#317]
+  `None` when the `R` of the stealth address is the identity, of small order,
+  or not on the curve [#317]
 - Redact secret scalar material from `SecretKey` and `ViewKey` debug output
   [#316]
 - Update `jubjub-schnorr` to v0.7.0 [#311]
-- Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-poseidon` to
-  v0.44.0 and `jubjub-elgamal` to v0.6.0 [#311]
+- Update `dusk-bls12_381` to v0.16 [#311]
+- Update `dusk-jubjub` to v0.16 [#311]
+- Update `dusk-poseidon` to v0.44.0 [#311]
+- Update `jubjub-elgamal` to v0.6.0 [#311]
 - Panic in `Note::new`, `Note::transparent`, `Note::obfuscated` and
   `Sender::encrypt` when an encryption degenerates, which takes a zero sender
   blinder or a key point that is not of prime order [#311], or when the two
   sender blinders are equal [#330]
 - Return `Error::InvalidEncryption` from `Note::value`, `Note::value_blinder`
-  and `Note::value_opening` for an obfuscated note whose `R` is the identity or
-  of small order [#311]
+  and `Note::value_opening` for an obfuscated note whose `R` is the identity,
+  of small order, or not on the curve [#311]
 - Remove the unused direct `hex` and `assert_matches` dependencies [#308]
 - Remove the unused direct `base64` dependency [#306]
 - Raise the MSRV to Rust 1.96.1 [#302]
@@ -57,8 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or `Sender` with Serde [#318]
 - Ignore a small-order component of `R` in `ViewKey::owns`, `SecretKey::owns`
   and `SecretKey::gen_note_sk` [#317]
-- Reject a stealth address whose `R` is the identity or of small order in
-  `ViewKey::owns` and `SecretKey::owns` [#317]
+- Reject a stealth address whose `R` is the identity, of small order, or not
+  on the curve in `ViewKey::owns` and `SecretKey::owns` [#317]
 - Reject `PublicKey` encodings whose `A` or `B` is the identity [#312]
 - Reject recovered note openings that do not match their value commitment
   [#290]
@@ -505,8 +507,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ISSUES -->
 [#330]: https://github.com/dusk-network/phoenix/issues/330
-[#318]: https://github.com/dusk-network/phoenix/issues/318
 [#319]: https://github.com/dusk-network/phoenix/issues/319
+[#318]: https://github.com/dusk-network/phoenix/issues/318
 [#317]: https://github.com/dusk-network/phoenix/issues/317
 [#316]: https://github.com/dusk-network/phoenix/issues/316
 [#285]: https://github.com/dusk-network/phoenix/issues/285

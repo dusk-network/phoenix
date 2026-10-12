@@ -96,8 +96,9 @@ impl SecretKey {
     /// [`StealthAddress`]. With the formula: `note_sk = H(a · R) + b`
     ///
     /// `a · R` is derived through [`dhke`](dusk_jubjub::dhke), which ignores
-    /// a small-order component of `R`. Returns `None` if `R` is the identity
-    /// or of small order: no key owns such a stealth address.
+    /// a small-order component of `R`. Returns `None` if `R` is the identity,
+    /// of small order, or not on the curve: no key owns such a stealth
+    /// address.
     pub fn gen_note_sk(
         &self,
         stealth: &StealthAddress,
@@ -108,8 +109,8 @@ impl SecretKey {
 
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
     ///
-    /// A stealth address whose `R` is the identity or of small order is owned
-    /// by no key, see [`SecretKey::gen_note_sk`].
+    /// A stealth address whose `R` is the identity, of small order, or not on
+    /// the curve is owned by no key, see [`SecretKey::gen_note_sk`].
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
         self.gen_note_sk(stealth_address).is_some_and(|note_sk| {
             let note_pk = mul_generator(note_sk.as_ref());

@@ -15,6 +15,11 @@ use table::TABLE;
 /// Computes `s · G` for the generator `G`, the same point as
 /// `GENERATOR_EXTENDED * s`, in constant time.
 ///
+/// The result's extended coordinates differ from those of
+/// `GENERATOR_EXTENDED * s`, so use it only to compare points: a point that an
+/// rkyv archive stores, such as a stealth address or key, must keep the
+/// `GENERATOR_EXTENDED *` double-and-add, or its archived bytes change.
+///
 /// With `s` written in 64 signed digits as `s = Σ d_i · 16^i`, and with
 /// `i = 8j + m`, `s · G = Σ_m 16^m · Σ_j d_(8j+m) · 2^(32j) · G`. The table
 /// holds `1` to `8` times each `2^(32j) · G`, so Horner's rule over `m` takes

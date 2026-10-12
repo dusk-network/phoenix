@@ -29,7 +29,8 @@ fn hash_affine(p: &JubJubAffine) -> JubJubScalar {
 ///
 /// The shared secret is derived with [`dhke`], which clears the cofactor of
 /// `R`: a small-order component of `R` does not reach the result, and an
-/// identity or small-order `R` yields none. For an `R` of prime order the
+/// identity, small-order, or off-curve `R` yields none. For an `R` of prime
+/// order the
 /// result is `H(a · R)`.
 pub(crate) fn hash_shared_secret(
     a: &JubJubScalar,

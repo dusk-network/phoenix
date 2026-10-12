@@ -14,18 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `phoenix-core` to v0.36.0 [#311]
 - Redact private witnesses from `TxCircuit`, `InputNoteInfo` and
   `OutputNoteInfo` debug output [#316]
-- Constrain `note_pk`, `note_pk_p`, the sender public key and the output note
-  public keys to the prime-order subgroup where they enter the transaction
-  circuit [#313]
+- Constrain `note_pk`, the sender public key and the output note public keys to
+  the prime-order subgroup where they enter the transaction circuit [#313]
 - Update `jubjub-schnorr` to v0.7.0 [#311]
-- Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-plonk` to v0.24.0,
-  `dusk-poseidon` to v0.44.0, `poseidon-merkle` to v0.11.0 and
-  `jubjub-elgamal` to v0.6.0 [#311]
+- Update `dusk-bls12_381` to v0.16 [#311]
+- Update `dusk-jubjub` to v0.16 [#311]
+- Update `dusk-plonk` to v0.24.0 [#311]
+- Update `dusk-poseidon` to v0.44.0 [#311]
+- Update `poseidon-merkle` to v0.11.0 [#311]
+- Update `jubjub-elgamal` to v0.6.0 [#311]
 - Raise the MSRV to Rust 1.96.1 [#302]
 
 ### Fixed
 
 - Reject an input `note_pk_p` with a small-order component [#313]
+- Reject an input `note_pk` or `note_pk_p` that is the identity [#313]
 - Reject a sender public key whose `A` or `B` is the identity [#314]
 - Reject an output note key equal to the identity [#314]
 - Reject a sender encryption with a zero blinder [#330]
@@ -174,8 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#330]: https://github.com/dusk-network/phoenix/issues/330
 [#316]: https://github.com/dusk-network/phoenix/issues/316
 [#315]: https://github.com/dusk-network/phoenix/issues/315
-[#313]: https://github.com/dusk-network/phoenix/issues/313
 [#314]: https://github.com/dusk-network/phoenix/issues/314
+[#313]: https://github.com/dusk-network/phoenix/issues/313
 [#311]: https://github.com/dusk-network/phoenix/issues/311
 [#302]: https://github.com/dusk-network/phoenix/issues/302
 [#280]: https://github.com/dusk-network/phoenix/issues/280
