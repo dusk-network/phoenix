@@ -33,6 +33,8 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     ///    contract.
     /// 6. Sender-data: Verify that the sender was encrypted correctly for each
     ///    output-note.
+    /// 7. Uniqueness: the input-notes are distinct notes, as their positions in
+    ///    the Merkle tree of notes are pairwise distinct.
     ///
     /// The circuit has the following public inputs:
     /// - `payload_hash`
@@ -52,9 +54,12 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         let root_pi = composer.append_public(self.root);
 
         let mut input_notes_sum = Composer::ZERO;
+        let mut input_positions = [Composer::ZERO; I];
 
         // Check membership, ownership and nullification of all input notes
-        for input_note_info in &self.input_notes_info {
+        for (input_note_info, input_position) in
+            self.input_notes_info.iter().zip(&mut input_positions)
+        {
             let (
                 note_pk,
                 note_pk_p,
@@ -67,6 +72,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
                 signature_r,
                 signature_r_p,
             ) = input_note_info.append_to_circuit(composer)?;
+            *input_position = pos;
 
             // Verify: 2. Ownership
             gadgets::verify_signature_double(
@@ -126,6 +132,9 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             );
             composer.assert_equal(root, root_pi);
         }
+
+        // Verify: 7. Uniqueness
+        assert_distinct(composer, &input_positions);
 
         let mut tx_output_sum = Composer::ZERO;
 
@@ -268,6 +277,40 @@ impl<const H: usize> InputNoteInfo<H> {
             signature_r,
             signature_r_p,
         ))
+    }
+}
+
+/// Constrains the input-note positions to be pairwise distinct, two gates per
+/// pair.
+///
+/// The note hash and the nullifier of each input are both computed from its
+/// position witness, and the Merkle opening proves the note hash to be in the
+/// tree, so a note repeated as a second input repeats its position. Two
+/// positions differ exactly when their difference has an inverse, supplied by
+/// the prover. For equal positions none exists and the circuit is
+/// unsatisfiable, without branching on the witnesses.
+fn assert_distinct(composer: &mut Composer, positions: &[Witness]) {
+    for (i, &pos_i) in positions.iter().enumerate() {
+        for &pos_j in &positions[i + 1..] {
+            let diff = composer.gate_add(
+                Constraint::new()
+                    .left(1)
+                    .a(pos_i)
+                    .right(-BlsScalar::one())
+                    .b(pos_j),
+            );
+            let diff_inverse =
+                composer[diff].invert().unwrap_or(BlsScalar::zero());
+            let diff_inverse = composer.append_witness(diff_inverse);
+
+            composer.append_gate(
+                Constraint::new()
+                    .mult(1)
+                    .a(diff)
+                    .b(diff_inverse)
+                    .constant(-BlsScalar::one()),
+            );
+        }
     }
 }
 

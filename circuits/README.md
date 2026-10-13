@@ -9,6 +9,7 @@ This library contains the implementation of the Phoenix-circuits, to prove, in z
 3. Nullification: the nullifier is calculated correctly.
 4. Minting: the value commitment for the newly minted notes are computed correctly.
 5. Balance integrity: the sum of the values of all spent notes is equal to the sum of the values of all minted notes + the gas fee + a deposit, where a deposit refers to funds being transfered to a contract.
+6. Uniqueness: the notes about to be spent are distinct notes, as they sit at pairwise distinct positions in the Merkle tree of notes.
 
 ## Tests
 
