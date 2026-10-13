@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reject points outside the prime-order subgroup when deserializing a `Note`
+  or `Sender` with Serde [#318]
 - Ignore a small-order component of `R` in `ViewKey::owns`, `SecretKey::owns`
   and `SecretKey::gen_note_sk` [#317]
 - Reject a stealth address whose `R` is the identity or of small order in
@@ -499,6 +501,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#318]: https://github.com/dusk-network/phoenix/issues/318
 [#319]: https://github.com/dusk-network/phoenix/issues/319
 [#317]: https://github.com/dusk-network/phoenix/issues/317
 [#316]: https://github.com/dusk-network/phoenix/issues/316
