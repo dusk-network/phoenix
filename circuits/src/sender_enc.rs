@@ -30,7 +30,8 @@ pub(crate) fn gadget(
     // VERIFY A SIGNATURE FOR EACH KEY 'A' AND 'B'
     // The keys are prover-supplied, so their subgroup membership is
     // constrained where they enter the circuit. The signature gadgets
-    // additionally constrain them to be non-identity.
+    // additionally constrain them to be non-identity, which the sender keys
+    // rely on.
     let sender_pk_A = append_subgroup_point(composer, *sender_pk.A())?;
     let sender_pk_B = append_subgroup_point(composer, *sender_pk.B())?;
 
@@ -60,13 +61,12 @@ pub(crate) fn gadget(
     )?;
 
     // ENCRYPT EACH KEY 'A' and 'B' USING EACH OUTPUT 'NPK'
-    // The output note-pks are public inputs. Their subgroup membership is
-    // constrained in-circuit rather than left to every verifier, since they
-    // are the ElGamal keys the sender public key is encrypted to.
-    let note_pk_0 = composer.append_public_point(output_npk[0])?;
-    let note_pk_0 = composer.assert_torsion_free_point(note_pk_0);
-    let note_pk_1 = composer.append_public_point(output_npk[1])?;
-    let note_pk_1 = composer.assert_torsion_free_point(note_pk_1);
+    // The output note-pks are public inputs. Their subgroup membership, and
+    // their difference from the identity, are constrained in-circuit rather
+    // than left to every verifier, since they are the ElGamal keys the sender
+    // public key is encrypted to.
+    let note_pk_0 = append_note_pk(composer, output_npk[0])?;
+    let note_pk_1 = append_note_pk(composer, output_npk[1])?;
 
     let blinder_A_0 = composer.append_witness(sender_blinder[0][0]);
     let blinder_B_0 = composer.append_witness(sender_blinder[0][1]);
@@ -133,4 +133,38 @@ fn assert_sender_enc(
     composer.assert_equal_public_point(enc_B_c2.into(), sender_enc_B.1)?;
 
     Ok(())
+}
+
+/// Appends the note public key of an output as a public point, constrained to
+/// the prime-order subgroup and to differ from the identity.
+fn append_note_pk(
+    composer: &mut Composer,
+    note_pk: JubJubAffine,
+) -> Result<TorsionFreeWitnessPoint, Error> {
+    let note_pk = composer.append_public_point(note_pk)?;
+    let note_pk = composer.assert_torsion_free_point(note_pk);
+    assert_non_identity(composer, note_pk);
+    Ok(note_pk)
+}
+
+/// Constrains a point of the prime-order subgroup to differ from the
+/// identity, in one gate, as the signature gadgets of jubjub-schnorr do.
+///
+/// In the subgroup only the identity has `x = 0`, so proving that `x` has an
+/// inverse excludes it without branching on the witness.
+fn assert_non_identity(
+    composer: &mut Composer,
+    point: TorsionFreeWitnessPoint,
+) {
+    let x = *point.x();
+    let x_inverse = composer[x].invert().unwrap_or(BlsScalar::zero());
+    let x_inverse = composer.append_witness(x_inverse);
+
+    composer.append_gate(
+        Constraint::new()
+            .mult(1)
+            .a(x)
+            .b(x_inverse)
+            .constant(-BlsScalar::one()),
+    );
 }

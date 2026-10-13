@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reject an input `note_pk_p` with a small-order component [#313]
 - Reject a sender public key whose `A` or `B` is the identity [#314]
+- Reject an output note key equal to the identity [#314]
 
 ## [0.8.1] - 2026-06-15
 
