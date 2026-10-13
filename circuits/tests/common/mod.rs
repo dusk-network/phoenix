@@ -47,9 +47,8 @@ fn verify_crs(data: &[u8]) -> bool {
 
 /// The production CRS, read from the cache or downloaded.
 ///
-/// It has `2^17 + 6` powers, which fit the 1- and 2-input circuits only:
-/// `dusk-plonk` 0.24 needs `2^17 + 9` for the 3- and 4-input circuits, see
-/// [`EXTENDED_PP`].
+/// It has `2^17 + 6` powers. The 1- and 2-input circuits verify against it;
+/// the 3- and 4-input circuits need `2^17 + 9`, see [`EXTENDED_PP`].
 pub fn load_production_crs() -> PublicParameters {
     let cache_path = crs_cache_path();
 
