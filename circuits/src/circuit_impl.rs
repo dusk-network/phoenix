@@ -7,9 +7,10 @@
 //! The [`Circuit`] trait implementation on [`TxCircuit`].
 
 use dusk_bls12_381::BlsScalar;
-use dusk_jubjub::{GENERATOR, GENERATOR_NUMS};
+use dusk_jubjub::{GENERATOR, GENERATOR_NUMS, JubJubExtended};
 use dusk_plonk::prelude::{
-    Circuit, Composer, Constraint, Error as PlonkError, Witness, WitnessPoint,
+    Circuit, Composer, Constraint, Error as PlonkError,
+    TorsionFreeWitnessPoint, Witness, WitnessPoint,
 };
 use dusk_poseidon::{Domain, HashGadget};
 use jubjub_schnorr::gadgets;
@@ -65,7 +66,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
                 signature_u,
                 signature_r,
                 signature_r_p,
-            ) = input_note_info.append_to_circuit(composer);
+            ) = input_note_info.append_to_circuit(composer)?;
 
             // Verify: 2. Ownership
             gadgets::verify_signature_double(
@@ -87,7 +88,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             composer.assert_equal(computed_nullifier, nullifier);
 
             // Perform a range check ([0, 2^64 - 1]) on the value of the note
-            composer.component_range::<32>(value);
+            composer.component_range_bits::<64>(value);
 
             // Sum up all the input note values
             let constraint = Constraint::new()
@@ -133,13 +134,13 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             // Append the witnesses to the circuit
             let value = composer.append_witness(output_note_info.value);
             // Append the value-commitment as public input
-            let expected_value_commitment =
-                composer.append_public_point(output_note_info.value_commitment);
+            let expected_value_commitment = composer
+                .append_public_point(output_note_info.value_commitment)?;
             let value_blinder =
                 composer.append_witness(output_note_info.value_blinder);
 
             // Perform a range check ([0, 2^64 - 1]) on the value of the note
-            composer.component_range::<32>(value);
+            composer.component_range_bits::<64>(value);
 
             // Sum up all the output note values
             let constraint =
@@ -156,7 +157,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
             // Verify: 4. Minting
             composer.assert_equal_point(
                 expected_value_commitment,
-                computed_value_commitment,
+                computed_value_commitment.into(),
             );
         }
 
@@ -206,28 +207,38 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
     }
 }
 
+/// The witnesses [`InputNoteInfo::append_to_circuit`] appends: `note_pk`,
+/// `note_pk_p`, `note_type`, `pos`, `value`, `value_blinder`, `nullifier` and
+/// the signature's `u`, `R` and `R'`.
+type InputNoteWitnesses = (
+    TorsionFreeWitnessPoint,
+    TorsionFreeWitnessPoint,
+    Witness,
+    Witness,
+    Witness,
+    Witness,
+    Witness,
+    Witness,
+    WitnessPoint,
+    WitnessPoint,
+);
+
 impl<const H: usize> InputNoteInfo<H> {
     fn append_to_circuit(
         &self,
         composer: &mut Composer,
-    ) -> (
-        WitnessPoint,
-        WitnessPoint,
-        Witness,
-        Witness,
-        Witness,
-        Witness,
-        Witness,
-        Witness,
-        WitnessPoint,
-        WitnessPoint,
-    ) {
+    ) -> Result<InputNoteWitnesses, PlonkError> {
         // Append the nullifier as public-input
         let nullifier = composer.append_public(self.nullifier);
 
-        let note_pk = composer
-            .append_point(*self.note.stealth_address().note_pk().as_ref());
-        let note_pk_p = composer.append_point(self.note_pk_p);
+        // Each key is prover-supplied, so its subgroup membership is
+        // constrained where it enters the circuit. For `note_pk_p` this makes
+        // the nullifier, which hashes it, depend on the note alone.
+        let note_pk = append_subgroup_point(
+            composer,
+            *self.note.stealth_address().note_pk().as_ref(),
+        )?;
+        let note_pk_p = append_subgroup_point(composer, self.note_pk_p)?;
 
         let note_type = composer
             .append_witness(BlsScalar::from(self.note.note_type() as u64));
@@ -237,10 +248,15 @@ impl<const H: usize> InputNoteInfo<H> {
         let value_blinder = composer.append_witness(self.value_blinder);
 
         let signature_u = composer.append_witness(*self.signature.u());
-        let signature_r = composer.append_point(self.signature.R());
-        let signature_r_p = composer.append_point(self.signature.R_prime());
+        // The signature equation sets `R = u·G + c·note_pk`, with `note_pk` in
+        // the subgroup, so `R` is in it without a separate check.
+        let signature_r = composer.append_point(*self.signature.R())?;
+        // The signature equation sets `R' = u·G' + c·note_pk_p`, with
+        // `note_pk_p` in the subgroup, so `R'` is in it without a separate
+        // check.
+        let signature_r_p = composer.append_point(*self.signature.R_prime())?;
 
-        (
+        Ok((
             note_pk,
             note_pk_p,
             note_type,
@@ -251,6 +267,16 @@ impl<const H: usize> InputNoteInfo<H> {
             signature_u,
             signature_r,
             signature_r_p,
-        )
+        ))
     }
+}
+
+/// Appends a prover-supplied point and constrains it to the prime-order
+/// subgroup.
+pub(crate) fn append_subgroup_point(
+    composer: &mut Composer,
+    point: impl Into<JubJubExtended>,
+) -> Result<TorsionFreeWitnessPoint, PlonkError> {
+    let point = composer.append_point(point)?;
+    Ok(composer.assert_torsion_free_point(point))
 }

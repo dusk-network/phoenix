@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Update `jubjub-schnorr` to v0.7.0 [#311]
+- Update `dusk-bls12_381` and `dusk-jubjub` to v0.16, `dusk-poseidon` to
+  v0.44.0 and `jubjub-elgamal` to v0.6.0 [#311]
+- Panic in `Note::new`, `Note::transparent`, `Note::obfuscated` and
+  `Sender::encrypt` when an encryption degenerates, which takes a zero sender
+  blinder or a key point that is not of prime order [#311]
+- Return `Error::InvalidEncryption` from `Note::value`, `Note::value_blinder`
+  and `Note::value_opening` for an obfuscated note whose `R` is the identity or
+  of small order [#311]
 - Remove the unused direct `hex` and `assert_matches` dependencies [#308]
 - Remove the unused direct `base64` dependency [#306]
 - Raise the MSRV to Rust 1.96.1 [#302]
@@ -26,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   value blinder, ignoring the supplied blinder [#290]
 - Return `Error::CommitmentMismatch` when a recovered note opening does not
   match its value commitment [#290]
-- Update `dusk-jubjub` to v0.15.2 for its torsion-rejecting point decoder [#288]
 
 ### Fixed
 
@@ -474,6 +482,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#311]: https://github.com/dusk-network/phoenix/issues/311
 [#308]: https://github.com/dusk-network/phoenix/issues/308
 [#306]: https://github.com/dusk-network/phoenix/issues/306
 [#302]: https://github.com/dusk-network/phoenix/issues/302

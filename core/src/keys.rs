@@ -12,6 +12,9 @@ pub mod view;
 
 /// Hashes a JubJub's ExtendedPoint into a JubJub's Scalar using the JubJub's
 /// hash to scalar function
+///
+/// Uses the legacy construction without a domain separator, which every
+/// existing note key is derived with.
 pub fn hash(p: &JubJubExtended) -> JubJubScalar {
-    JubJubScalar::hash_to_scalar(&JubJubAffine::from(p).to_bytes())
+    JubJubScalar::hash_to_scalar(None, &JubJubAffine::from(p).to_bytes())
 }

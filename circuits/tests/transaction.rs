@@ -16,10 +16,13 @@ use common::*;
 
 #[test]
 fn test_transfer_circuit_1_2() {
+    let Some(pp) = crs::<1>("test_transfer_circuit_1_2") else {
+        return;
+    };
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, 1>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 1>>(pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes_info = [TP.input_notes_info[0].clone()];
@@ -63,10 +66,13 @@ fn test_transfer_circuit_1_2() {
 
 #[test]
 fn test_transfer_circuit_2_2() {
+    let Some(pp) = crs::<2>("test_transfer_circuit_2_2") else {
+        return;
+    };
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, 2>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 2>>(pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes_info = [
@@ -113,10 +119,13 @@ fn test_transfer_circuit_2_2() {
 
 #[test]
 fn test_transfer_circuit_3_2() {
+    let Some(pp) = crs::<3>("test_transfer_circuit_3_2") else {
+        return;
+    };
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, 3>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 3>>(pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes_info = [
@@ -164,10 +173,13 @@ fn test_transfer_circuit_3_2() {
 
 #[test]
 fn test_transfer_circuit_4_2() {
+    let Some(pp) = crs::<4>("test_transfer_circuit_4_2") else {
+        return;
+    };
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
-        Compiler::compile::<TxCircuit<HEIGHT, 4>>(&TP.pp, LABEL)
+        Compiler::compile::<TxCircuit<HEIGHT, 4>>(pp, LABEL)
             .expect("failed to compile circuit");
 
     let input_notes_info = [

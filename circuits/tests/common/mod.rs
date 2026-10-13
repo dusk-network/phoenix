@@ -5,7 +5,7 @@
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
 use std::fs;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
@@ -45,15 +45,20 @@ fn verify_crs(data: &[u8]) -> bool {
     hash == CRS_HASH
 }
 
+/// The production CRS, read from the cache or downloaded.
+///
+/// It has `2^17 + 6` powers, which fit the 1- and 2-input circuits only:
+/// `dusk-plonk` 0.24 needs `2^17 + 9` for the 3- and 4-input circuits, see
+/// [`EXTENDED_PP`].
 pub fn load_production_crs() -> PublicParameters {
     let cache_path = crs_cache_path();
 
     // try loading from cache
-    if let Ok(data) = fs::read(&cache_path) {
-        if verify_crs(&data) {
-            return PublicParameters::from_slice(&data)
-                .expect("failed to deserialize cached CRS");
-        }
+    if let Ok(data) = fs::read(&cache_path)
+        && verify_crs(&data)
+    {
+        return PublicParameters::from_slice(&data)
+            .expect("failed to deserialize cached CRS");
     }
 
     // download from network
@@ -79,10 +84,67 @@ pub fn load_production_crs() -> PublicParameters {
         .expect("failed to deserialize downloaded CRS")
 }
 
+/// The variable naming the file of the extended CRS.
+const EXTENDED_CRS_VAR: &str = "PHOENIX_EXTENDED_CRS";
+
+/// SHA-256 of the production CRS extended to `2^17 + 9` powers of the same
+/// secret: the production file with three more powers appended.
+const EXTENDED_CRS_HASH: &str =
+    "888fbab6c9d267c26199d9fd1a8c21f315590459ae180bc9e6a27aa433479d03";
+
+/// The extended CRS, read from the file `PHOENIX_EXTENDED_CRS` names and
+/// checked against its SHA-256, or `None` if the variable is unset.
+///
+/// The 3- and 4-input circuits need it. Until it is hosted publicly next to
+/// the production CRS, their tests skip when it is not given.
+pub static EXTENDED_PP: LazyLock<Option<PublicParameters>> =
+    LazyLock::new(|| {
+        let path = std::env::var_os(EXTENDED_CRS_VAR)?;
+        let data = fs::read(&path).unwrap_or_else(|e| {
+            panic!("failed to read the extended CRS at {path:?}: {e}")
+        });
+        let hash = format!("{:x}", Sha256::digest(&data));
+        assert_eq!(hash, EXTENDED_CRS_HASH, "extended CRS hash mismatch");
+
+        Some(
+            PublicParameters::from_slice(&data)
+                .expect("failed to deserialize the extended CRS"),
+        )
+    });
+
+/// The extended CRS, or `None` after telling that `test` skips without it.
+///
+/// The notice goes to the process' stderr, so it shows without
+/// `--nocapture`.
+pub fn extended_crs(test: &str) -> Option<&'static PublicParameters> {
+    let pp = EXTENDED_PP.as_ref();
+    if pp.is_none() {
+        let _ = writeln!(
+            std::io::stderr(),
+            "SKIPPED {test}: needs the CRS extended to 2^17 + 9 powers; set \
+             {EXTENDED_CRS_VAR} to its path"
+        );
+    }
+    pp
+}
+
+/// The CRS to compile an `I`-input circuit with: the production CRS for one
+/// and two inputs, the extended CRS for more, see [`extended_crs`].
+// Each test binary uses a different subset of the helpers.
+#[allow(dead_code)]
+pub fn crs<const I: usize>(test: &str) -> Option<&'static PublicParameters> {
+    match I {
+        0..=2 => Some(&TP.pp),
+        _ => extended_crs(test),
+    }
+}
+
 pub static LABEL: &[u8; 12] = b"dusk-network";
 
 pub const HEIGHT: usize = 17;
 
+// Each test binary reads a different subset of the fields.
+#[allow(dead_code)]
 pub struct TestingParameters {
     pub pp: PublicParameters,
     pub input_notes_info: Vec<InputNoteInfo<HEIGHT>>,
@@ -90,6 +152,7 @@ pub struct TestingParameters {
     pub root: BlsScalar,
     pub deposit: u64,
     pub max_fee: u64,
+    pub sender_sk: SecretKey,
     pub sender_pk: PublicKey,
     pub output_npk: [JubJubAffine; OUTPUT_NOTES],
     pub signatures: (SchnorrSignature, SchnorrSignature),
@@ -153,6 +216,7 @@ pub static TP: LazyLock<TestingParameters> = LazyLock::new(|| {
         root,
         deposit,
         max_fee,
+        sender_sk,
         sender_pk,
         output_npk,
         signatures: (sig_a, sig_b),
@@ -236,6 +300,8 @@ fn create_test_input_notes_information(
     input_notes_info
 }
 
+// Each test binary uses a different subset of the helpers.
+#[allow(dead_code)]
 pub fn create_output_note_information(
     rng: &mut (impl RngCore + CryptoRng),
     value: u64,
@@ -251,7 +317,8 @@ pub fn create_output_note_information(
         TP.sender_pk.A(),
         None,
         &sender_blinder_a,
-    );
+    )
+    .expect("the sender key encrypts to the note public key");
 
     let sender_blinder_b = sender_blinder[1];
     let (sender_enc_b, _) = ElGamal::encrypt(
@@ -259,7 +326,8 @@ pub fn create_output_note_information(
         TP.sender_pk.B(),
         None,
         &sender_blinder_b,
-    );
+    )
+    .expect("the sender key encrypts to the note public key");
 
     let sender_enc_a = (sender_enc_a.c1().into(), sender_enc_a.c2().into());
     let sender_enc_b = (sender_enc_b.c1().into(), sender_enc_b.c2().into());
