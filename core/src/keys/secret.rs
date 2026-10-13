@@ -4,6 +4,8 @@
 //
 // Copyright (c) DUSK NETWORK. All rights reserved.
 
+use core::fmt;
+
 use dusk_bytes::{DeserializableSlice, Error, Serializable};
 use dusk_jubjub::{GENERATOR_EXTENDED, JubJubScalar};
 use ff::Field;
@@ -46,7 +48,7 @@ use crate::keys::hash;
 /// Implementing `ZeroizeOnDrop` seems like an excellent way to lift the burden
 /// of manually zeroizing after use off the user, but unfortunately it doesn't
 /// delete the memory reliably. See #244
-#[derive(Clone, Eq, Debug, Zeroize)]
+#[derive(Clone, Eq, Zeroize)]
 #[cfg_attr(
     feature = "rkyv-impl",
     derive(Archive, Serialize, Deserialize),
@@ -55,6 +57,12 @@ use crate::keys::hash;
 pub struct SecretKey {
     a: JubJubScalar,
     b: JubJubScalar,
+}
+
+impl fmt::Debug for SecretKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("SecretKey(REDACTED)")
+    }
 }
 
 impl SecretKey {

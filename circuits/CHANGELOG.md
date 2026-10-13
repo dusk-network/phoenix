@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Redact private witnesses from `TxCircuit`, `InputNoteInfo` and
+  `OutputNoteInfo` debug output [#316]
 - Constrain `note_pk`, `note_pk_p`, the sender public key and the output note
   public keys to the prime-order subgroup where they enter the transaction
   circuit [#313]
@@ -164,6 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update `poseidon-merkle` to v0.6 [#179]
 
 <!-- ISSUES -->
+[#316]: https://github.com/dusk-network/phoenix/issues/316
 [#315]: https://github.com/dusk-network/phoenix/issues/315
 [#313]: https://github.com/dusk-network/phoenix/issues/313
 [#314]: https://github.com/dusk-network/phoenix/issues/314

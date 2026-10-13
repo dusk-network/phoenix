@@ -77,6 +77,80 @@ fn tx_circuit_4_2() -> Result<(), BytesError> {
     Ok(())
 }
 
+#[test]
+fn tx_circuit_debug_shows_public_inputs_only() {
+    let mut rng = StdRng::seed_from_u64(0xbeef);
+
+    let circuit = random_circuit::<2>(&mut rng);
+    let debug = format!("{circuit:?}");
+
+    // The output holds the public inputs of the circuit, and nothing else.
+    let inputs: Vec<String> = circuit
+        .input_notes_info
+        .iter()
+        .map(|info| {
+            format!("InputNoteInfo {{ nullifier: {:?}, .. }}", info.nullifier)
+        })
+        .collect();
+    let outputs: Vec<String> = circuit
+        .output_notes_info
+        .iter()
+        .map(|info| {
+            format!(
+                "OutputNoteInfo {{ value_commitment: {:?}, note_pk: {:?}, \
+                 sender_enc: {:?}, .. }}",
+                info.value_commitment, info.note_pk, info.sender_enc
+            )
+        })
+        .collect();
+    assert_eq!(
+        debug,
+        format!(
+            "TxCircuit {{ input_notes_info: [{}], output_notes_info: [{}], \
+             payload_hash: {:?}, root: {:?}, deposit: {}, max_fee: {}, .. }}",
+            inputs.join(", "),
+            outputs.join(", "),
+            circuit.payload_hash,
+            circuit.root,
+            circuit.deposit,
+            circuit.max_fee,
+        )
+    );
+
+    // The forms in which a `Debug` output could carry a private scalar: its
+    // own `Debug`, and its bytes in hex, either way round.
+    let encodings = |s: &JubJubScalar| {
+        let bytes = s.to_bytes();
+        let le: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let be: String =
+            bytes.iter().rev().map(|b| format!("{b:02x}")).collect();
+        [format!("{s:?}"), le, be]
+    };
+    let mut secrets = Vec::new();
+    let mut values = Vec::new();
+    for info in &circuit.input_notes_info {
+        secrets.extend([info.value_blinder, *info.signature.u()]);
+        values.push(info.value);
+    }
+    for info in &circuit.output_notes_info {
+        secrets.extend([info.value_blinder]);
+        secrets.extend(info.sender_blinder);
+        values.push(info.value);
+    }
+    secrets.extend([*circuit.signatures.0.u(), *circuit.signatures.1.u()]);
+    for encoding in secrets.iter().flat_map(encodings) {
+        assert!(
+            !debug.contains(&encoding),
+            "`{debug}` contains `{encoding}`"
+        );
+    }
+    for value in values {
+        assert!(!debug.contains(&value.to_string()));
+    }
+    let sender_pk = format!("{:?}", circuit.sender_pk);
+    assert!(!debug.contains(&sender_pk));
+}
+
 fn random_circuit<const I: usize>(
     rng: &mut (impl RngCore + CryptoRng),
 ) -> TxCircuit<HEIGHT, I> {

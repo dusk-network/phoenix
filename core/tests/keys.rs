@@ -10,7 +10,7 @@ use ff::Field;
 use phoenix_core::{Note, PublicKey, SecretKey, ViewKey};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 #[test]
 fn sk_from_bytes() {
@@ -38,6 +38,70 @@ fn sk_zeroize() {
 
     sk.zeroize();
     assert_eq!(sk, sk_zeroized);
+}
+
+#[test]
+fn vk_zeroize() {
+    // Dropping a view key wipes its secret too.
+    fn zeroized_on_drop<T: ZeroizeOnDrop>() {}
+    zeroized_on_drop::<ViewKey>();
+
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
+    let mut vk = ViewKey::from(&sk);
+    let public_b = *vk.B();
+
+    // sanity check
+    assert_ne!(vk.a(), &JubJubScalar::zero());
+
+    // The secret `a` is wiped, the public `B` is kept.
+    vk.zeroize();
+    assert_eq!(vk.a(), &JubJubScalar::zero());
+    assert_eq!(vk.B(), &public_b);
+}
+
+#[test]
+fn secrets_debug_redacted() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+
+    let sk = SecretKey::random(&mut rng);
+    let vk = ViewKey::from(&sk);
+    let stealth = PublicKey::from(&sk)
+        .gen_stealth_address(&JubJubScalar::random(&mut rng));
+    let note_sk = sk.gen_note_sk(&stealth);
+
+    // The forms in which a `Debug` output could carry a secret scalar: the
+    // scalar's own `Debug`, and its bytes in hex, either way round.
+    let encodings = |s: &JubJubScalar| {
+        let bytes = s.to_bytes();
+        let le: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+        let be: String =
+            bytes.iter().rev().map(|b| format!("{b:02x}")).collect();
+        [format!("{s:?}"), le, be]
+    };
+
+    for (debug, secrets, redacted) in [
+        (
+            format!("{sk:?}"),
+            vec![*sk.a(), *sk.b()],
+            "SecretKey(REDACTED)",
+        ),
+        (format!("{vk:?}"), vec![*vk.a()], "ViewKey(REDACTED)"),
+        (
+            format!("{note_sk:?}"),
+            vec![*note_sk.as_ref()],
+            "SecretKey(REDACTED)",
+        ),
+    ] {
+        for encoding in secrets.iter().flat_map(encodings) {
+            assert!(
+                !debug.contains(&encoding),
+                "`{debug}` contains the secret `{encoding}`"
+            );
+        }
+        assert_eq!(debug, redacted);
+    }
 }
 
 #[test]
