@@ -69,7 +69,7 @@ fn secrets_debug_redacted() {
     let vk = ViewKey::from(&sk);
     let stealth = PublicKey::from(&sk)
         .gen_stealth_address(&JubJubScalar::random(&mut rng));
-    let note_sk = sk.gen_note_sk(&stealth);
+    let note_sk = sk.gen_note_sk(&stealth).expect("`R` is of prime order");
 
     // The forms in which a `Debug` output could carry a secret scalar: the
     // scalar's own `Debug`, and its bytes in hex, either way round.
@@ -175,8 +175,9 @@ fn keys_consistency() {
 
     let sa = receiver_pk.gen_stealth_address(&r);
 
-    let note_sk = receiver_sk.gen_note_sk(&sa);
-    let wrong_note_sk = wrong_sk.gen_note_sk(&sa);
+    let note_sk = receiver_sk.gen_note_sk(&sa).expect("`R` is of prime order");
+    let wrong_note_sk =
+        wrong_sk.gen_note_sk(&sa).expect("`R` is of prime order");
 
     assert_eq!(
         sa.note_pk().as_ref(),

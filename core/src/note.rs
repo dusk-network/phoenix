@@ -361,14 +361,17 @@ impl Note {
     /// Create a unique nullifier for the note
     ///
     /// This nullifier is represeted as `H(note_sk · G', pos)`
-    pub fn gen_nullifier(&self, sk: &SecretKey) -> BlsScalar {
-        let note_sk = sk.gen_note_sk(&self.stealth_address);
+    ///
+    /// Returns `None` if the `R` of the note's stealth address is the identity
+    /// or of small order, which no key owns, see [`SecretKey::gen_note_sk`].
+    pub fn gen_nullifier(&self, sk: &SecretKey) -> Option<BlsScalar> {
+        let note_sk = sk.gen_note_sk(&self.stealth_address)?;
         let pk_prime = GENERATOR_NUMS_EXTENDED * note_sk.as_ref();
         let pk_prime = pk_prime.to_hash_inputs();
 
         let pos = BlsScalar::from(self.pos);
 
-        Hash::digest(Domain::Other, &[pk_prime[0], pk_prime[1], pos])[0]
+        Some(Hash::digest(Domain::Other, &[pk_prime[0], pk_prime[1], pos])[0])
     }
 
     /// Return the internal representation of scalars to be hashed

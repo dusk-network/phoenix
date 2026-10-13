@@ -272,7 +272,9 @@ fn create_test_input_notes_information(
 
     let mut input_notes_info = Vec::new();
     for note in notes.into_iter() {
-        let note_sk = sender_sk.gen_note_sk(note.stealth_address());
+        let note_sk = sender_sk
+            .gen_note_sk(note.stealth_address())
+            .expect("sender_sk should own the note");
         let merkle_opening = tree
             .opening(*note.pos())
             .expect("There should be a note at the given position");
@@ -284,7 +286,9 @@ fn create_test_input_notes_information(
         let value_blinder = note
             .value_blinder(Some(&sender_vk))
             .expect("sender_sk should own the note");
-        let nullifier = note.gen_nullifier(&sender_sk);
+        let nullifier = note
+            .gen_nullifier(sender_sk)
+            .expect("sender_sk should own the note");
         let signature = note_sk.sign_double(rng, payload_hash);
         input_notes_info.push(InputNoteInfo {
             merkle_opening,

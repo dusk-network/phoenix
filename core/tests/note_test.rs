@@ -51,8 +51,11 @@ fn transparent_note() -> Result<(), Error> {
     assert_eq!(value, note.value(None)?);
     assert_eq!(
         sender_pk,
-        note.sender()
-            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
+        note.sender().decrypt(
+            &receiver_sk
+                .gen_note_sk(note.stealth_address())
+                .expect("the receiver owns the note")
+        )?
     );
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
@@ -160,8 +163,11 @@ fn obfuscated_note() -> Result<(), Error> {
     assert_eq!(value, note.value(Some(&receiver_vk))?);
     assert_eq!(
         sender_pk,
-        note.sender()
-            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
+        note.sender().decrypt(
+            &receiver_sk
+                .gen_note_sk(note.stealth_address())
+                .expect("the receiver owns the note")
+        )?
     );
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
@@ -202,8 +208,11 @@ fn obfuscated_deterministic_note() -> Result<(), Error> {
     assert_eq!(value_blinder, note.value_blinder(Some(&receiver_vk))?);
     assert_eq!(
         sender_pk,
-        note.sender()
-            .decrypt(&receiver_sk.gen_note_sk(note.stealth_address()))?
+        note.sender().decrypt(
+            &receiver_sk
+                .gen_note_sk(note.stealth_address())
+                .expect("the receiver owns the note")
+        )?
     );
     assert_eq!(note, Note::from_bytes(&note.to_bytes())?);
 
