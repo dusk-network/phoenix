@@ -12,7 +12,9 @@ use jubjub_elgamal as elgamal;
 use jubjub_schnorr::{Signature as SchnorrSignature, gadgets};
 use phoenix_core::{OUTPUT_NOTES, PublicKey};
 
-use crate::circuit_impl::append_subgroup_point;
+use crate::circuit_impl::{
+    append_subgroup_point, assert_distinct, assert_nonzero,
+};
 
 /// Gadget to prove a valid origin for a given transaction.
 pub(crate) fn gadget(
@@ -107,6 +109,26 @@ fn assert_sender_enc(
     blinder: (Witness, Witness),
     sender_enc: [(JubJubAffine, JubJubAffine); 2],
 ) -> Result<(), Error> {
+    // The two component blinders must be nonzero and must differ (#330). A zero
+    // blinder encrypts its key to `(identity, key)`, leaving the sender key in
+    // the clear. Equal blinders give both encryptions the same `c1`, and their
+    // `c2` then differ by `A - B`, a value fixed by the sender public key, so a
+    // passive observer can fingerprint and link the sender. The note-key gadget
+    // excludes the identity for the same reason.
+    //
+    // These gates constrain the BLS-field witnesses, whereas the ElGamal gadget
+    // below reduces each blinder modulo the JubJub subgroup order `r`: a
+    // witness of `r` would pass `assert_nonzero` yet act as a zero blinder,
+    // and `a + r` would pass `assert_distinct` against `a`. Constraining
+    // the witness is enough because `encrypt_unchecked` builds `c1` with
+    // `component_mul_generator`, which pins each blinder to a canonical JubJub
+    // scalar (`< r`); so the scalar the encryption uses is the witness these
+    // gates constrain. A future change that builds `c1` without that gadget
+    // must re-establish canonicality here.
+    assert_nonzero(composer, blinder.0);
+    assert_nonzero(composer, blinder.1);
+    assert_distinct(composer, blinder.0, blinder.1);
+
     let blinder_A = blinder.0;
     let (enc_A_c1, enc_A_c2) = elgamal::zk::encrypt_unchecked(
         composer,
@@ -156,15 +178,5 @@ fn assert_non_identity(
     composer: &mut Composer,
     point: TorsionFreeWitnessPoint,
 ) {
-    let x = *point.x();
-    let x_inverse = composer[x].invert().unwrap_or(BlsScalar::zero());
-    let x_inverse = composer.append_witness(x_inverse);
-
-    composer.append_gate(
-        Constraint::new()
-            .mult(1)
-            .a(x)
-            .b(x_inverse)
-            .constant(-BlsScalar::one()),
-    );
+    assert_nonzero(composer, *point.x());
 }

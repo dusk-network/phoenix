@@ -134,7 +134,7 @@ impl<const H: usize, const I: usize> Circuit for TxCircuit<H, I> {
         }
 
         // Verify: 7. Uniqueness
-        assert_distinct(composer, &input_positions);
+        assert_pairwise_distinct(composer, &input_positions);
 
         let mut tx_output_sum = Composer::ZERO;
 
@@ -289,29 +289,38 @@ impl<const H: usize> InputNoteInfo<H> {
 /// positions differ exactly when their difference has an inverse, supplied by
 /// the prover. For equal positions none exists and the circuit is
 /// unsatisfiable, without branching on the witnesses.
-fn assert_distinct(composer: &mut Composer, positions: &[Witness]) {
+fn assert_pairwise_distinct(composer: &mut Composer, positions: &[Witness]) {
     for (i, &pos_i) in positions.iter().enumerate() {
         for &pos_j in &positions[i + 1..] {
-            let diff = composer.gate_add(
-                Constraint::new()
-                    .left(1)
-                    .a(pos_i)
-                    .right(-BlsScalar::one())
-                    .b(pos_j),
-            );
-            let diff_inverse =
-                composer[diff].invert().unwrap_or(BlsScalar::zero());
-            let diff_inverse = composer.append_witness(diff_inverse);
-
-            composer.append_gate(
-                Constraint::new()
-                    .mult(1)
-                    .a(diff)
-                    .b(diff_inverse)
-                    .constant(-BlsScalar::one()),
-            );
+            assert_distinct(composer, pos_i, pos_j);
         }
     }
+}
+
+/// Constrains two witnesses to differ, in two gates: it derives their
+/// difference and proves it nonzero.
+pub(crate) fn assert_distinct(composer: &mut Composer, a: Witness, b: Witness) {
+    let difference = composer
+        .gate_add(Constraint::new().left(1).a(a).right(-BlsScalar::one()).b(b));
+    assert_nonzero(composer, difference);
+}
+
+/// Constrains a witness to be nonzero, in one gate: the prover supplies its
+/// inverse, which exists only for a nonzero value.
+///
+/// The inverse is computed with `invert_ct`, the constant-time variant, as this
+/// helper is called on secret witnesses (blinders, position differences).
+pub(crate) fn assert_nonzero(composer: &mut Composer, w: Witness) {
+    let inverse = composer[w].invert_ct().unwrap_or(BlsScalar::zero());
+    let inverse = composer.append_witness(inverse);
+
+    composer.append_gate(
+        Constraint::new()
+            .mult(1)
+            .a(w)
+            .b(inverse)
+            .constant(-BlsScalar::one()),
+    );
 }
 
 /// Appends a prover-supplied point and constrains it to the prime-order
