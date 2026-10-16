@@ -13,7 +13,7 @@ This library contains the implementation of the Phoenix-circuits, to prove, in z
 
 ## Tests
 
-The circuit tests compile the 1- and 2-input circuits with the production CRS, which they download to `~/.dusk/rusk/devnet-piecrust.crs` once. The 3- and 4-input circuits need the CRS extended to `2^17 + 9` powers, three more than the production CRS has. Until that file is hosted next to the production CRS, their tests skip with a notice unless `PHOENIX_EXTENDED_CRS` names a local copy, which is checked against its SHA-256:
+The circuit tests compile the 1- and 2-input circuits with the production CRS, which they download to `~/.dusk/rusk/devnet-piecrust.crs` once. The 3- and 4-input circuits need the CRS extended to `2^17 + 9` powers, three more than the production CRS has; its source and the plan to host it in production are tracked in [#329](https://github.com/dusk-network/phoenix/issues/329). Until that file is hosted next to the production CRS, their tests skip with a notice unless `PHOENIX_EXTENDED_CRS` names a local copy, which is checked against its SHA-256:
 
 ```sh
 PHOENIX_EXTENDED_CRS=/path/to/devnet-piecrust-plus9.crs make test

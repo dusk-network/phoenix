@@ -349,7 +349,7 @@ impl Note {
         vk: &ViewKey,
     ) -> Result<(u64, JubJubScalar), Error> {
         let R = self.stealth_address.R();
-        // An identity or small-order `R` yields no shared secret.
+        // An identity, small-order, or off-curve `R` yields no shared secret.
         let shared_secret = Option::<JubJubAffine>::from(dhke(vk.a(), R))
             .ok_or(Error::InvalidEncryption)?;
 
@@ -377,8 +377,9 @@ impl Note {
     ///
     /// This nullifier is represeted as `H(note_sk · G', pos)`
     ///
-    /// Returns `None` if the `R` of the note's stealth address is the identity
-    /// or of small order, which no key owns, see [`SecretKey::gen_note_sk`].
+    /// Returns `None` if the `R` of the note's stealth address is the identity,
+    /// of small order, or not on the curve, which no key owns, see
+    /// [`SecretKey::gen_note_sk`].
     pub fn gen_nullifier(&self, sk: &SecretKey) -> Option<BlsScalar> {
         let note_sk = sk.gen_note_sk(&self.stealth_address)?;
         let pk_prime = GENERATOR_NUMS_EXTENDED * note_sk.as_ref();

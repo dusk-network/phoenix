@@ -88,7 +88,7 @@ impl ViewKey {
     ///
     /// `R · a` is derived through [`dhke`](dusk_jubjub::dhke), which ignores
     /// a small-order component of `R`. A stealth address whose `R` is the
-    /// identity or of small order is owned by no key.
+    /// identity, of small order, or not on the curve is owned by no key.
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
         hash_shared_secret(&self.a, stealth_address.R()).is_some_and(
             |hash_aR| {

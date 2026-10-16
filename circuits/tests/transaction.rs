@@ -6,13 +6,25 @@
 
 #![cfg(feature = "plonk")]
 
-use dusk_plonk::prelude::Compiler;
+use std::sync::LazyLock;
+
+use dusk_plonk::prelude::{Compiler, PublicParameters};
 use phoenix_circuits::TxCircuit;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 
 mod common;
 use common::*;
+
+/// A generated test SRS for the 3- and 4-input circuits, which the production
+/// CRS cannot fit under `dusk-plonk`'s blinding degree. Soundness does not
+/// depend on the SRS, so these tests prove and verify against it and run in
+/// CI; the verifier-data tests, which pin the production descriptions, use the
+/// real CRS and skip without it.
+static PP: LazyLock<PublicParameters> = LazyLock::new(|| {
+    PublicParameters::setup(1 << 17, &mut StdRng::seed_from_u64(0x7042))
+        .expect("failed to generate the test SRS")
+});
 
 #[test]
 fn test_transfer_circuit_1_2() {
@@ -119,9 +131,7 @@ fn test_transfer_circuit_2_2() {
 
 #[test]
 fn test_transfer_circuit_3_2() {
-    let Some(pp) = crs::<3>("test_transfer_circuit_3_2") else {
-        return;
-    };
+    let pp = &*PP;
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
@@ -173,9 +183,7 @@ fn test_transfer_circuit_3_2() {
 
 #[test]
 fn test_transfer_circuit_4_2() {
-    let Some(pp) = crs::<4>("test_transfer_circuit_4_2") else {
-        return;
-    };
+    let pp = &*PP;
     let mut rng = StdRng::seed_from_u64(0xc0b);
 
     let (prover, verifier) =
