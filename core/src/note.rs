@@ -110,10 +110,15 @@ impl Note {
     /// For transparent notes, `value_blinder` is ignored and the canonical
     /// zero blinder is used instead.
     ///
+    /// The two `sender_blinder` scalars must be distinct. See
+    /// [`Sender::encrypt`] for why equal blinders let a passive observer link
+    /// the sender.
+    ///
     /// # Panics
     ///
     /// Panics if an encryption degenerates, which takes a zero sender blinder
-    /// or a key point that is not of prime order.
+    /// or a key point that is not of prime order, or if the two sender blinders
+    /// are equal.
     pub fn new<R: RngCore + CryptoRng>(
         rng: &mut R,
         note_type: NoteType,
@@ -177,6 +182,9 @@ impl Note {
     /// exists only to shield the value. The value is not hidden for transparent
     /// notes, so this can be trivially treated as a constant.
     ///
+    /// The two `sender_blinder` scalars must be distinct, as described on
+    /// [`Note::new`].
+    ///
     /// # Panics
     ///
     /// Panics as [`Note::new`] does.
@@ -231,6 +239,9 @@ impl Note {
     /// commitment of the note. The tuple (value, value_blinder), known by
     /// the caller of this function, must be later used to prove the
     /// knowledge of the value commitment of this note.
+    ///
+    /// The two `sender_blinder` scalars must be distinct, as described on
+    /// [`Note::new`].
     ///
     /// # Panics
     ///
@@ -590,10 +601,19 @@ impl Sender {
     /// Create a new [`Sender`] enum by encrypting the sender's [`PublicKey`] in
     /// a way that only the receiver of the note can decrypt.
     ///
+    /// The two blinders must be distinct, and this constructor enforces it.
+    /// Equal blinders give both component ciphertexts the same first coordinate
+    /// `c1`, so their second coordinates differ by the sender-fixed `A - B`,
+    /// letting a passive observer link the sender (see issue #330). The check
+    /// compares the two published `c1` points, not the secret blinders, so it
+    /// branches on no secret, and it is the only check that reaches every
+    /// sender: the transaction circuit covers the two output notes, but not the
+    /// gas-refund sender that `Transaction::new` also encrypts.
+    ///
     /// # Panics
     ///
     /// Panics if an encryption degenerates, which takes a zero blinder or a
-    /// point that is not of prime order.
+    /// point that is not of prime order, or if the two blinders are equal.
     pub fn encrypt(
         note_pk: &NotePublicKey,
         sender_pk: &PublicKey,
@@ -619,6 +639,14 @@ impl Sender {
             (sender_enc_A.c1().into(), sender_enc_A.c2().into());
         let sender_enc_B: (JubJubAffine, JubJubAffine) =
             (sender_enc_B.c1().into(), sender_enc_B.c2().into());
+
+        // Reject equal blinders, which leak the sender (see issue #330). The
+        // published `c1` points are equal exactly when the blinders are, so
+        // this branches on no secret.
+        assert!(
+            sender_enc_A.0 != sender_enc_B.0,
+            "The sender blinders are distinct."
+        );
 
         Self::Encryption([sender_enc_A, sender_enc_B])
     }

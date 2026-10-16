@@ -495,6 +495,15 @@ fn note_panics_on_zero_sender_blinder_for_b() {
 }
 
 #[test]
+#[should_panic(expected = "The sender blinders are distinct.")]
+fn note_panics_on_equal_sender_blinders() {
+    transparent_note_with_sender_blinder([
+        JubJubScalar::one(),
+        JubJubScalar::one(),
+    ]);
+}
+
+#[test]
 fn obfuscated_note_with_identity_r_has_no_opening() {
     let mut rng = StdRng::seed_from_u64(0xc0b);
 

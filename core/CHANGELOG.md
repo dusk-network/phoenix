@@ -30,7 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   v0.44.0 and `jubjub-elgamal` to v0.6.0 [#311]
 - Panic in `Note::new`, `Note::transparent`, `Note::obfuscated` and
   `Sender::encrypt` when an encryption degenerates, which takes a zero sender
-  blinder or a key point that is not of prime order [#311]
+  blinder or a key point that is not of prime order [#311], or when the two
+  sender blinders are equal [#330]
 - Return `Error::InvalidEncryption` from `Note::value`, `Note::value_blinder`
   and `Note::value_opening` for an obfuscated note whose `R` is the identity or
   of small order [#311]
@@ -501,6 +502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Canonical implementation shielded by feature.
 
 <!-- ISSUES -->
+[#330]: https://github.com/dusk-network/phoenix/issues/330
 [#318]: https://github.com/dusk-network/phoenix/issues/318
 [#319]: https://github.com/dusk-network/phoenix/issues/319
 [#317]: https://github.com/dusk-network/phoenix/issues/317
