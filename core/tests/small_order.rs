@@ -177,3 +177,65 @@ fn note_sk_ignores_small_order_component_of_R() {
         assert_eq!(note.gen_nullifier(&sk), None::<BlsScalar>, "R = {j} · T");
     }
 }
+
+#[test]
+fn owns_rejects_off_curve_note_pk() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let sk = SecretKey::random(&mut rng);
+    let vk = ViewKey::from(&sk);
+    let R = GENERATOR_EXTENDED * JubJubScalar::random(&mut rng);
+
+    let off_curve = JubJubExtended::from(JubJubAffine::from_raw_unchecked(
+        BlsScalar::zero(),
+        BlsScalar::zero(),
+    ));
+    assert!(!bool::from(off_curve.is_on_curve()));
+    let stealth = StealthAddress::from_raw_unchecked(
+        R,
+        NotePublicKey::from_raw_unchecked(off_curve),
+    );
+    assert!(!sk.owns(&stealth));
+    assert!(!vk.owns(&stealth));
+
+    #[cfg(feature = "rkyv-impl")]
+    {
+        use dusk_bytes::Serializable;
+        use rkyv::{Deserialize, Infallible};
+
+        #[repr(align(8))]
+        struct Aligned([u8; 5 * BlsScalar::SIZE]);
+
+        let bytes = Aligned([0u8; 5 * BlsScalar::SIZE]);
+        // SAFETY: `bytes` is 8-byte aligned and matches the archived layout of
+        // `JubJubExtended` (five `BlsScalar`s, all zero -> Z = 0).
+        let archived =
+            unsafe { rkyv::archived_root::<JubJubExtended>(&bytes.0) };
+        let zero_z: JubJubExtended =
+            archived.deserialize(&mut Infallible).unwrap();
+        assert!(!bool::from(zero_z.is_on_curve()));
+        let stealth = StealthAddress::from_raw_unchecked(
+            R,
+            NotePublicKey::from_raw_unchecked(zero_z),
+        );
+        assert!(!sk.owns(&stealth));
+        assert!(!vk.owns(&stealth));
+    }
+}
+
+#[test]
+fn gen_stealth_address_clears_small_order_component_of_A() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let T = order_eight_point();
+    let sk = SecretKey::random(&mut rng);
+    let vk = ViewKey::from(&sk);
+    let pk = PublicKey::from(&sk);
+    let torsioned_pk = PublicKey::new(pk.A() + T, *pk.B());
+
+    let r = JubJubScalar::from(3u64);
+    let expected = pk.gen_stealth_address(&r);
+    let from_torsioned = torsioned_pk.gen_stealth_address(&r);
+
+    assert_eq!(from_torsioned, expected);
+    assert!(sk.owns(&from_torsioned));
+    assert!(vk.owns(&from_torsioned));
+}
