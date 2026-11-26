@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Report over-long Serde Base58 strings as an invalid value and wipe temporary
+  buffers in Serde `Serialize` and `Deserialize` implementations [#333]
+- Clear the cofactor of `PublicKey::A` via `dhke` in
+  `PublicKey::gen_stealth_address` [#333]
+- Update stale documentation on `Note::hash` and
+  `StealthAddress::from_bytes_checked` [#333]
+
+### Fixed
+
+- Return `false` from `SecretKey::owns` and `ViewKey::owns` when `note_pk` is
+  not on the curve [#333]
+- Reject over-long Serde Base58 strings before decoding [#333]
+- Reject out-of-range `i32` values in `TryFrom<i32> for NoteType` instead of
+  truncating to `u8` [#333]
+
 ## [0.36.0] - 2026-10-16
 
 ### Added
@@ -507,6 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ISSUES -->
 [#330]: https://github.com/dusk-network/phoenix/issues/330
+[#333]: https://github.com/dusk-network/phoenix/issues/333
 [#319]: https://github.com/dusk-network/phoenix/issues/319
 [#318]: https://github.com/dusk-network/phoenix/issues/318
 [#317]: https://github.com/dusk-network/phoenix/issues/317

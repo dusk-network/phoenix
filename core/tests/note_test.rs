@@ -569,3 +569,16 @@ fn obfuscated_note_with_identity_r_has_no_opening() {
         Err(Error::InvalidEncryption)
     ));
 }
+
+#[test]
+fn note_type_try_from_i32_rejects_out_of_range() {
+    assert_eq!(NoteType::try_from(0i32).unwrap(), NoteType::Transparent);
+    assert_eq!(NoteType::try_from(1i32).unwrap(), NoteType::Obfuscated);
+
+    for invalid in [-256i32, -255, -1, 2, 255, 256, 257, i32::MIN, i32::MAX] {
+        assert!(
+            NoteType::try_from(invalid).is_err(),
+            "NoteType::try_from({invalid}) must fail"
+        );
+    }
+}

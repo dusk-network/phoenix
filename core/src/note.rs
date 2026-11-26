@@ -63,7 +63,9 @@ impl TryFrom<i32> for NoteType {
     type Error = Error;
 
     fn try_from(note_type: i32) -> Result<Self, Self::Error> {
-        (note_type as u8).try_into()
+        u8::try_from(note_type)
+            .map_err(|_| Error::InvalidNoteType(u8::MAX))?
+            .try_into()
     }
 }
 
@@ -405,8 +407,8 @@ impl Note {
         ]
     }
 
-    /// Return a hash represented by `H(note_type, value_commitment,
-    /// H(StealthAddress), pos, encrypted_data)
+    /// Return a hash represented by `H(note_type, value_commitment.u,
+    /// value_commitment.v, note_pk.u, note_pk.v, pos)`
     pub fn hash(&self) -> BlsScalar {
         Hash::digest(Domain::Other, &self.hash_inputs())[0]
     }
