@@ -6,6 +6,10 @@
 
 #![cfg(feature = "serde")]
 
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::cell::Cell;
+use std::fmt::Debug;
+
 use dusk_bls12_381::BlsScalar;
 use dusk_bytes::Serializable;
 use dusk_jubjub::{
@@ -20,6 +24,74 @@ use phoenix_core::{
 use rand::rngs::StdRng;
 use rand::{Rng, RngCore, SeedableRng};
 use serde::Serialize;
+use serde::de::DeserializeOwned;
+use serde::de::value::{BorrowedStrDeserializer, Error as ValueError};
+
+thread_local! {
+    static ALLOCATED_BYTES: Cell<Option<usize>> = const { Cell::new(None) };
+}
+
+struct Allocator;
+
+fn record(size: usize) {
+    let _ = ALLOCATED_BYTES.try_with(|allocated| {
+        if let Some(previous) = allocated.get() {
+            allocated.set(Some(previous.saturating_add(size)));
+        }
+    });
+}
+
+unsafe impl GlobalAlloc for Allocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        record(layout.size());
+        unsafe { System.alloc(layout) }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        unsafe { System.dealloc(ptr, layout) }
+    }
+}
+
+#[global_allocator]
+static ALLOCATOR: Allocator = Allocator;
+
+fn decode_borrowed<T: DeserializeOwned>(
+    input: &str,
+) -> (Result<T, ValueError>, usize) {
+    ALLOCATED_BYTES.set(Some(0));
+    let result =
+        T::deserialize(BorrowedStrDeserializer::<ValueError>::new(input));
+    (result, ALLOCATED_BYTES.replace(None).unwrap())
+}
+
+fn encoded<T: Serialize>(value: &T) -> String {
+    serde_json::to_string(value)
+        .unwrap()
+        .trim_matches('"')
+        .to_string()
+}
+
+fn check_bounded<T: DeserializeOwned + Serialize + Debug + PartialEq>(
+    value: T,
+    bound: usize,
+) {
+    let encoded = encoded(&value);
+    assert!(encoded.len() <= bound);
+    let (decoded, allocated) = decode_borrowed::<T>(&encoded);
+    assert_eq!(decoded.unwrap(), value);
+    assert_eq!(allocated, 0, "valid borrowed input must not allocate");
+
+    let (decoded, _) = decode_borrowed::<T>(&"0".repeat(bound + 1));
+    assert!(decoded.unwrap_err().to_string().contains("over-long"));
+    let (decoded, _) = decode_borrowed::<T>(&"z".repeat(bound));
+    assert!(decoded.unwrap_err().to_string().contains("over-long"));
+
+    for oversized in ["1".repeat(1 << 20), "z".repeat(1 << 16)] {
+        let (decoded, allocated) = decode_borrowed::<T>(&oversized);
+        assert!(decoded.is_err());
+        assert!(allocated < 1024, "oversized input was copied or decoded");
+    }
+}
 
 fn create_note(rng: &mut StdRng) -> Note {
     let sender_pk = PublicKey::from(&SecretKey::random(rng));
@@ -322,4 +394,18 @@ fn serde_unknown_variant() {
 
     let note_type: Result<NoteType, _> = serde_json::from_str(&unknown);
     assert!(note_type.is_err());
+}
+
+#[test]
+fn serde_decoding_is_bounded() {
+    let mut rng = StdRng::seed_from_u64(0xc0b);
+    let sk = SecretKey::random(&mut rng);
+    let vk = ViewKey::from(&sk);
+    let pk = PublicKey::from(&sk);
+    let stealth = pk.gen_stealth_address(&JubJubScalar::random(&mut rng));
+
+    check_bounded(pk, 88);
+    check_bounded(sk, 88);
+    check_bounded(vk, 88);
+    check_bounded(stealth, 88);
 }

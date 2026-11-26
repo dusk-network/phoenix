@@ -12,7 +12,7 @@ use dusk_jubjub::{
 use rkyv::{Archive, Deserialize, Serialize};
 use subtle::{Choice, ConstantTimeEq};
 
-use crate::keys::hash;
+use crate::keys::{hash, hash_shared_secret};
 use crate::{SecretKey, StealthAddress, ViewKey};
 
 /// Public pair of `a·G` and `b·G` defining a [`PublicKey`]
@@ -55,8 +55,8 @@ impl PublicKey {
         let G = GENERATOR_EXTENDED;
         let R = G * r;
 
-        let rA = self.A * r;
-        let rA = hash(&rA);
+        let rA = hash_shared_secret(r, &self.A)
+            .unwrap_or_else(|| hash(&(self.A * r)));
         let rA = G * rA;
 
         let note_pk = rA + self.B;

@@ -110,8 +110,12 @@ impl SecretKey {
     /// Checks if `note_pk ?= (H(R · a) + b) · G`
     ///
     /// A stealth address whose `R` is the identity, of small order, or not on
-    /// the curve is owned by no key, see [`SecretKey::gen_note_sk`].
+    /// the curve, or whose `note_pk` is not on the curve, is owned by no key;
+    /// see [`SecretKey::gen_note_sk`].
     pub fn owns(&self, stealth_address: &StealthAddress) -> bool {
+        if !bool::from(stealth_address.note_pk().as_ref().is_on_curve()) {
+            return false;
+        }
         self.gen_note_sk(stealth_address).is_some_and(|note_sk| {
             let note_pk = mul_generator(note_sk.as_ref());
 
